@@ -1,10 +1,11 @@
 package com.cupk.controller;
 
 import com.cupk.common.Result;
+import com.cupk.util.AuthUtil;
 import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
@@ -19,12 +20,12 @@ import java.util.*;
  */
 @RestController
 @RequestMapping("/writing")
+@RequiredArgsConstructor
 public class WritingController {
 
     private static final Logger log = LoggerFactory.getLogger(WritingController.class);
 
-    @Autowired
-    private JdbcTemplate jdbcTemplate;
+    private final JdbcTemplate jdbcTemplate;
 
     @PostConstruct
     public void init() {
@@ -54,24 +55,24 @@ public class WritingController {
 
     @PostMapping("/submit")
     public Result<Map<String, Object>> submitWriting(@RequestBody Map<String, Object> body) {
-        Long userId = parseLong(body.get("userId"));
-        if (userId == null) return Result.error(400, "缺少 userId");
+        Long userId = AuthUtil.getCurrentUserId();
+        if (userId == null) return Result.error(401, "未登录");
 
-        String text = body.getOrDefault("text", "").toString();
+        String text = String.valueOf(body.getOrDefault("text", ""));
         if (text.isBlank()) return Result.error(400, "写作内容不能为空");
 
         Integer revisionCount = parseInt(body.get("revisionCount"), 0);
-        String langCode = body.getOrDefault("langCode", "en").toString();
+        String langCode = String.valueOf(body.getOrDefault("langCode", "en"));
         Integer level = parseInt(body.get("level"), 1);
-        String type = body.getOrDefault("type", "").toString();
-        String promptJson = body.getOrDefault("promptJson", "").toString();
+        String type = String.valueOf(body.getOrDefault("type", ""));
+        String promptJson = String.valueOf(body.getOrDefault("promptJson", ""));
 
         // 仿写无 topic → 自动从 template 截取
-        String topic = body.getOrDefault("topic", "").toString();
+        String topic = String.valueOf(body.getOrDefault("topic", ""));
         if (topic.isBlank()) {
             try {
-                Map<String, Object> prompt = new com.fasterxml.jackson.databind.ObjectMapper().readValue(promptJson, Map.class);
-                String template = prompt.getOrDefault("template", "").toString();
+                Map<String, Object> prompt = new com.fasterxml.jackson.databind.ObjectMapper().readValue(promptJson, new com.fasterxml.jackson.core.type.TypeReference<Map<String, Object>>() {});
+                String template = String.valueOf(prompt.getOrDefault("template", ""));
                 if (!template.isBlank()) {
                     topic = (langCode.equals("ja") || langCode.equals("ko") || langCode.equals("zh"))
                         ? (template.length() > 20 ? template.substring(0, 20) + "…" : template)
@@ -119,11 +120,11 @@ public class WritingController {
 
     @PostMapping("/save-score")
     public Result<Map<String, Object>> saveScore(@RequestBody Map<String, Object> body) {
-        Long userId = parseLong(body.get("userId"));
-        if (userId == null) return Result.error(400, "缺少 userId");
+        Long userId = AuthUtil.getCurrentUserId();
+        if (userId == null) return Result.error(401, "未登录");
 
         Integer score = parseInt(body.get("score"), 0);
-        String scoreDetail = body.getOrDefault("scoreDetail", "").toString();
+        String scoreDetail = String.valueOf(body.getOrDefault("scoreDetail", ""));
         Long historyId = parseLong(body.get("historyId"));
 
         int updated;

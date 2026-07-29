@@ -77,23 +77,24 @@ function changeSize(e) {
     <!-- 页码按钮组 -->
     <div class="pagination">
       <!-- 首页 -->
-      <button :disabled="currentPage <= 1" @click="go(1)" title="首页">«</button>
+      <button class="btn btn-ghost btn-sm" :disabled="currentPage <= 1" @click="go(1)" title="首页">«</button>
       <!-- 上一页 -->
-      <button :disabled="currentPage <= 1" @click="go(currentPage - 1)">‹</button>
+      <button class="btn btn-ghost btn-sm" :disabled="currentPage <= 1" @click="go(currentPage - 1)">‹</button>
 
       <template v-for="p in visiblePages" :key="p">
         <span v-if="p === '...'" class="ellipsis">…</span>
         <button
           v-else
-          :class="{ active: p === currentPage }"
+          class="btn"
+          :class="p === currentPage ? 'btn-secondary btn-sm' : 'btn-ghost btn-sm'"
           @click="go(p)"
         >{{ p }}</button>
       </template>
 
       <!-- 下一页 -->
-      <button :disabled="currentPage >= totalPages" @click="go(currentPage + 1)">›</button>
+      <button class="btn btn-ghost btn-sm" :disabled="currentPage >= totalPages" @click="go(currentPage + 1)">›</button>
       <!-- 末页 -->
-      <button :disabled="currentPage >= totalPages" @click="go(totalPages)" title="末页">»</button>
+      <button class="btn btn-ghost btn-sm" :disabled="currentPage >= totalPages" @click="go(totalPages)" title="末页">»</button>
     </div>
 
     <!-- 每页条数切换 (可选) -->

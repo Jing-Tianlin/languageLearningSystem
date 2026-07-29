@@ -14,6 +14,8 @@ import { getExamLevels } from '@/data/examLevels'
 import { API_BASE_URL } from '@/config'
 import { toast } from '@/composables/useToast'
 import LetterSwapTitle from '@/components/effects/LetterSwapTitle.vue'
+import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
+import EmptyState from '@/components/common/EmptyState.vue'
 import { LANG_NAMES } from '@/config/languages'
 
 const authStore = useAuthStore()
@@ -213,8 +215,9 @@ function goAiReading(item) {
 
 function goGrammar() { router.push('/grammar') }
 function goWriting() { router.push('/writing') }
-function goPractice() { router.push('/practice') }
+function goPractice() { router.push('/flashcards') }
 function goFlashcards() { router.push('/flashcards') }
+function goWrongBook() { router.push({ path: '/flashcards', query: { wrongOnly: '1' } }) }
 function goStats() { router.push('/stats') }
 </script>
 
@@ -225,13 +228,16 @@ function goStats() { router.push('/stats') }
       <p class="page-sub">发现短板，精准提升</p>
     </div>
 
-    <div v-if="loading" class="loading">分析中...</div>
+    <LoadingSpinner v-if="loading" />
 
-    <div v-else-if="!hasData" class="empty-block">
-      <p class="empty-title">暂无学习数据</p>
-      <p class="empty-desc">完成一些练习后，这里会显示你的薄弱点和待复习词汇</p>
-      <button class="cta-btn" @click="goPractice">开始每日练习</button>
-    </div>
+    <EmptyState
+      v-else-if="!hasData"
+      icon="search"
+      title="暂无学习数据"
+      description="完成一些练习后，这里会显示你的薄弱点和待复习词汇"
+      action-text="去背单词"
+      @action="goFlashcards"
+    />
 
     <template v-else>
       <!-- ===== 第一行：待复习 + 薄弱点 ===== -->
@@ -248,7 +254,10 @@ function goStats() { router.push('/stats') }
             </span>
           </div>
           <p v-else class="card-empty">暂无待复习词汇</p>
-          <button class="card-action" @click="goFlashcards">去背单词</button>
+          <div class="card-actions">
+            <button class="btn btn-ghost btn-sm" @click="goWrongBook">错题重练</button>
+            <button class="btn btn-primary btn-sm" @click="goFlashcards">去背单词</button>
+          </div>
         </div>
 
         <!-- 薄弱维度 -->
@@ -266,7 +275,7 @@ function goStats() { router.push('/stats') }
             </div>
           </div>
           <p v-else class="card-empty">暂未检测到薄弱维度，继续加油</p>
-          <button class="card-action" @click="goGrammar">语法专项练习</button>
+          <button class="btn btn-primary" @click="goGrammar">语法专项练习</button>
         </div>
       </div>
 
@@ -339,11 +348,11 @@ function goStats() { router.push('/stats') }
 
       <!-- 快捷操作 -->
       <div class="quick-row">
-        <button @click="goPractice">每日练习</button>
-        <button @click="goFlashcards">背单词</button>
-        <button @click="goGrammar">语法中心</button>
-        <button @click="goWriting">写作训练</button>
-        <button @click="goStats">详细分析</button>
+        <button class="btn btn-ghost" @click="goPractice">巩固练习</button>
+        <button class="btn btn-ghost" @click="goFlashcards">背单词</button>
+        <button class="btn btn-ghost" @click="goGrammar">语法中心</button>
+        <button class="btn btn-ghost" @click="goWriting">写作训练</button>
+        <button class="btn btn-ghost" @click="goStats">详细分析</button>
       </div>
     </template>
   </div>
@@ -377,6 +386,7 @@ function goStats() { router.push('/stats') }
 .card-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
 .card-head h3 { font-size: 15px; font-weight: 700; color: var(--color-text); margin: 0; }
 .card-badge { font-size: 11px; padding: 3px 10px; border-radius: 10px; background: rgba(90,125,150,0.08); color: #5a7d96; font-weight: 600; }
+.card-actions { display: flex; gap: 8px; justify-content: center; margin-top: 14px; }
 .card-empty { font-size: 13px; color: #bbb; text-align: center; padding: 16px 0; }
 .card-action {
   display: block; width: 100%; margin-top: 12px; padding: 9px 0; border-radius: 8px;

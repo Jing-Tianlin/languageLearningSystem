@@ -8,10 +8,11 @@ import com.cupk.mapper.UserMapper;
 import com.cupk.pojo.LoginLog;
 import com.cupk.pojo.User;
 import com.cupk.utils.PasswordUtil;
+import com.cupk.util.AuthUtil;
 import com.cupk.util.JwtUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,20 +23,17 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/user")
+@RequiredArgsConstructor
 public class UserController {
 
     private static final Logger log = LoggerFactory.getLogger(UserController.class);
-    @Autowired
-    private UserMapper userMapper;
+    private final UserMapper userMapper;
 
-    @Autowired
-    private JdbcTemplate jdbcTemplate;
+    private final JdbcTemplate jdbcTemplate;
 
-    @Autowired
-    private LoginLogMapper loginLogMapper;
+    private final LoginLogMapper loginLogMapper;
 
-    @Autowired
-    private JwtUtil jwtUtil;
+    private final JwtUtil jwtUtil;
 
     @GetMapping("/users")
     public Result<Page<User>> selectPages(@RequestParam(defaultValue = "") String username,
@@ -66,15 +64,25 @@ public class UserController {
 
     @GetMapping("/users/{id}")
     public Result<User> selectById(@PathVariable Long id) {
+        // 只能查询自己的信息
+        Long currentUserId = AuthUtil.getCurrentUserId();
+        if (currentUserId == null || !currentUserId.equals(id)) {
+            return Result.error(403, "无权访问其他用户信息");
+        }
         User user = userMapper.selectById(id);
         if (user == null) {
             return Result.error(404, "用户不存在");
         }
+        user.setPassword(null);
         return Result.success(user);
     }
 
     @PostMapping("/users")
     public Result<User> insert(@RequestBody User user) {
+        // 创建用户属于管理操作
+        if (!AuthUtil.hasRole("ROLE_ADMIN")) {
+            return Result.error(403, "无管理员权限");
+        }
         user.setId(null);
         int rows = userMapper.insert(user);
         if (rows > 0) {
@@ -85,6 +93,16 @@ public class UserController {
 
     @PutMapping("/users")
     public Result<Void> update(@RequestBody User user) {
+        if (user.getId() == null) {
+            return Result.error(400, "用户ID不能为空");
+        }
+        // 只能修改自己的信息
+        Long currentUserId = AuthUtil.getCurrentUserId();
+        if (currentUserId == null || !currentUserId.equals(user.getId())) {
+            return Result.error(403, "无权修改其他用户信息");
+        }
+        // 防止通过该接口篡改密码，密码变更必须走专门的修改密码流程
+        user.setPassword(null);
         int rows = userMapper.updateById(user);
         if (rows > 0) {
             return Result.success("修改成功");
@@ -93,10 +111,15 @@ public class UserController {
     }
 
     @PutMapping("/preferences")
-    public Result<Void> updatePreferences(@RequestParam Long userId,
+    public Result<Void> updatePreferences(@RequestParam(required = false) Long userId,
                                           @RequestParam(required = false) String langCode,
                                           @RequestParam(required = false) String level) {
-        User user = userMapper.selectById(userId);
+        // 只能修改自己的偏好设置，userId 强制取 token
+        Long currentUserId = AuthUtil.getCurrentUserId();
+        if (currentUserId == null) {
+            return Result.error(401, "未登录");
+        }
+        User user = userMapper.selectById(currentUserId);
         if (user == null) {
             return Result.error(404, "用户不存在");
         }
@@ -111,12 +134,21 @@ public class UserController {
     }
 
     @DeleteMapping("/users/{id}")
+    @org.springframework.transaction.annotation.Transactional(rollbackFor = Exception.class)
     public Result<Void> delete(@PathVariable Long id) {
+        // 用户只能注销自己的账号
+        Long currentUserId = AuthUtil.getCurrentUserId();
+        if (currentUserId == null || !currentUserId.equals(id)) {
+            return Result.error(403, "无权删除其他用户账号");
+        }
         jdbcTemplate.update("DELETE FROM favorites WHERE user_id = ?", id);
         jdbcTemplate.update("DELETE FROM user_progress WHERE user_id = ?", id);
         jdbcTemplate.update("DELETE FROM ai_chat_history WHERE user_id = ?", id);
         jdbcTemplate.update("DELETE FROM writing_history WHERE user_id = ?", id);
+        jdbcTemplate.update("DELETE FROM writing_submissions WHERE user_id = ?", id);
         jdbcTemplate.update("DELETE FROM reading_history WHERE user_id = ?", id);
+        jdbcTemplate.update("DELETE FROM user_reading_records WHERE user_id = ?", id);
+        jdbcTemplate.update("DELETE FROM practice_records WHERE user_id = ?", id);
         jdbcTemplate.update("DELETE FROM user_role WHERE user_id = ?", id);
         jdbcTemplate.update("DELETE FROM user_profile WHERE user_id = ?", id);
         jdbcTemplate.update("DELETE FROM login_log WHERE user_id = ?", id);

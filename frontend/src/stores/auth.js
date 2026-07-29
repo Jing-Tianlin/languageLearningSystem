@@ -12,7 +12,33 @@ export const useAuthStore = defineStore('auth', () => {
   // 目标学习语言 (响应式全局状态)
   const targetLanguage = ref(localStorage.getItem('lastLangCode') || null)
   // 目标考试等级 (响应式全局状态, -1=全部等级)
-  const targetLevel = ref(localStorage.getItem('lastLevel') !== null && localStorage.getItem('lastLevel') !== '' ? parseInt(localStorage.getItem('lastLevel')) : null)
+  const targetLevel = ref(loadStoredLevel())
+
+  function loadStoredLevel() {
+    const raw = localStorage.getItem('lastLevel')
+    if (raw === null || raw === '') return null
+    const parsed = parseInt(raw, 10)
+    return isNaN(parsed) ? null : parsed
+  }
+
+  // 登录/注册成功后统一写入会话状态（user、token、语言等级偏好）
+  function applyUserSession(u, tokenStr) {
+    user.value = u
+    token.value = tokenStr
+    localStorage.setItem('token', tokenStr)
+    localStorage.setItem('userId', u.id)
+    if (u.currentLangCode) {
+      targetLanguage.value = u.currentLangCode
+      localStorage.setItem('lastLangCode', u.currentLangCode)
+    }
+    if (u.currentLevel !== null && u.currentLevel !== undefined && u.currentLevel !== '') {
+      const lv = parseInt(u.currentLevel, 10)
+      if (!isNaN(lv)) {
+        targetLevel.value = lv
+        localStorage.setItem('lastLevel', u.currentLevel)
+      }
+    }
+  }
 
   function setTargetLanguage(code) {
     targetLanguage.value = code
@@ -43,23 +69,8 @@ export const useAuthStore = defineStore('auth', () => {
     })
     const json = await res.json()
     if (json.code === 200 && json.data) {
-      const u = json.data.user
-      user.value = u
-      token.value = json.data.token
-      localStorage.setItem('token', token.value)
-      localStorage.setItem('userId', u.id)
-      if (u.currentLangCode) {
-        targetLanguage.value = u.currentLangCode
-        localStorage.setItem('lastLangCode', u.currentLangCode)
-      }
-      if (u.currentLevel !== null && u.currentLevel !== undefined && u.currentLevel !== '') {
-        const lv = parseInt(u.currentLevel)
-        if (!isNaN(lv)) {
-          targetLevel.value = lv
-          localStorage.setItem('lastLevel', u.currentLevel)
-        }
-      }
-      return u
+      applyUserSession(json.data.user, json.data.token)
+      return json.data.user
     }
     throw new Error(json.message || '用户名或密码错误')
   }
@@ -79,35 +90,23 @@ export const useAuthStore = defineStore('auth', () => {
     })
     const json = await res.json()
     if (json.code === 200 && json.data) {
-      const u = json.data.user
-      user.value = u
-      token.value = json.data.token
-      localStorage.setItem('token', token.value)
-      localStorage.setItem('userId', u.id)
-      if (u.currentLangCode) {
-        targetLanguage.value = u.currentLangCode
-        localStorage.setItem('lastLangCode', u.currentLangCode)
-      }
-      if (u.currentLevel !== null && u.currentLevel !== undefined && u.currentLevel !== '') {
-        const lv = parseInt(u.currentLevel)
-        if (!isNaN(lv)) {
-          targetLevel.value = lv
-          localStorage.setItem('lastLevel', u.currentLevel)
-        }
-      }
-      return u
+      applyUserSession(json.data.user, json.data.token)
+      return json.data.user
     }
     throw new Error(json.message || '注册失败')
   }
 
-  async function logLogin(uid, name, success) { try { await fetch(API_BASE_URL+'/admin/logs', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({userId:uid,module:'auth',action:success?'login_success':'login_fail',detail:name}) }) } catch(e) {} }
-function setDefaultRole(uid) { fetch(API_BASE_URL+'/admin/user-roles', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({userId:uid,roleId:1}) }).catch(()=>{}) }
-
-function logout() {
+  function logout() {
     user.value = null
     token.value = null
+    targetLanguage.value = null
+    targetLevel.value = null
     localStorage.removeItem('token')
     localStorage.removeItem('userId')
+    // 清理语言/等级偏好，避免换账号后沿用上一账号的设置
+    localStorage.removeItem('lastLangCode')
+    localStorage.removeItem('lastLevel')
+    localStorage.removeItem('flashcards-settings')
   }
 
   async function fetchProfile() {

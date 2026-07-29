@@ -27,6 +27,8 @@ public class UserProgress {
     private Double easeFactor;       // SM-2 难度因子(1.3~2.5)
     private Integer stability;       // 稳定性(连续正确次数)
     private Integer consecutiveCorrect; // 连续正确次数
+    private Integer intervalDays;    // SM-2 上次复习间隔天数
+    private Integer repetition;      // SM-2 重复次数
     @TableField(fill = FieldFill.INSERT)
     private LocalDateTime createTime;
     @TableField(fill = FieldFill.INSERT_UPDATE)

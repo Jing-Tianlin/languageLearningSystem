@@ -1,6 +1,6 @@
 package com.cupk.service;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,10 +13,10 @@ import java.util.Map;
  * GrammarPracticeService — 语法练习与记录服务
  */
 @Service
+@RequiredArgsConstructor
 public class GrammarPracticeService {
 
-    @Autowired
-    private JdbcTemplate jdbcTemplate;
+    private final JdbcTemplate jdbcTemplate;
 
     /**
      * 获取某语言某级别的练习题

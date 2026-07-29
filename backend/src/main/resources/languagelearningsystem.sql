@@ -674,12 +674,21 @@ CREATE TABLE `user_progress` (
   `ease_factor` double DEFAULT '2.5' COMMENT 'SM-2 难度因子(1.3~2.5)',
   `stability` int(11) DEFAULT '0' COMMENT '稳定性(连续正确次数)',
   `consecutive_correct` int(11) DEFAULT '0' COMMENT '连续正确次数',
+  `interval_days` int(11) DEFAULT '0' COMMENT 'SM-2 上次复习间隔天数',
+  `repetition` int(11) DEFAULT '0' COMMENT 'SM-2 重复次数',
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_user_vocab` (`user_id`,`vocab_id`),
   KEY `idx_user_lang_review` (`user_id`,`lang_code`,`next_review_time`),
   KEY `idx_user_mastery` (`user_id`,`mastery_level`)
 ) ENGINE=InnoDB AUTO_INCREMENT=63 DEFAULT CHARSET=utf8mb4 COMMENT='用户学习进度表';
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- 商业化 SRS 改造：新增 SM-2 间隔字段（已存在的数据库可执行以下 ALTER）
+--
+-- ALTER TABLE `user_progress` ADD COLUMN `interval_days` int(11) DEFAULT '0' COMMENT 'SM-2 上次复习间隔天数' AFTER `consecutive_correct`;
+-- ALTER TABLE `user_progress` ADD COLUMN `repetition` int(11) DEFAULT '0' COMMENT 'SM-2 重复次数' AFTER `interval_days`;
+--
 
 --
 -- Dumping data for table `user_progress`

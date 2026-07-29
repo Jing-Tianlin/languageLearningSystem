@@ -12,7 +12,7 @@ const props = defineProps({
   langCode: { type: String, default: 'en' },
 })
 
-const emit = defineEmits(['toggle-favorite', 'generate-example'])
+const emit = defineEmits(['toggle-favorite', 'generate-example', 'select'])
 
 const speaking = ref(false)
 
@@ -53,13 +53,18 @@ function stopSpeaking() {
 </script>
 
 <template>
-  <div class="vocab-card">
+  <div class="vocab-card" @click="emit('select')">
+    <!-- 收藏按钮：固定在卡片右上角 -->
+    <button class="vocab-fav-btn btn btn-icon btn-ghost" :class="{ active: isFavorite }" @click.stop="$emit('toggle-favorite')">
+      {{ isFavorite ? '★' : '☆' }}
+    </button>
+
     <div class="card-header">
       <div class="word-section">
         <span class="vocab-word">{{ word }}</span>
-        <button class="vocab-speak-btn" @click.stop="speakWord" :class="{ speaking }">
+        <button class="btn btn-icon btn-ghost" @click.stop="speakWord" :class="{ speaking }">
           <span v-if="speaking" class="sound-wave">♪</span>
-          <span v-else>🔊</span>
+          <span v-else class="icon-svg speaker" />
         </button>
       </div>
       <div class="meta-row">
@@ -74,24 +79,20 @@ function stopSpeaking() {
       <div v-if="exampleSentence" class="example-block">
         <div class="example-header">
           <span class="example-label">例句</span>
-          <button class="vocab-speak-btn-sm" @click.stop="speakExample" :class="{ speaking }">🔊</button>
+          <button class="btn btn-icon btn-sm btn-ghost" @click.stop="speakExample" :class="{ speaking }"><span class="icon-svg speaker" /></button>
         </div>
         <p class="vocab-example">{{ exampleSentence }}</p>
         <p v-if="exampleTranslation" class="vocab-example-tr">{{ exampleTranslation }}</p>
       </div>
       
       <div v-else class="no-example">
-        <span class="no-example-icon">📝</span>
+        <span class="no-example-icon icon-svg notebook" />
         <span class="no-example-text">暂无例句</span>
-        <button class="gen-example-btn" @click.stop="emit('generate-example')">
-          ✨ AI生成
+        <button class="btn btn-primary btn-sm" @click.stop="emit('generate-example')">
+          <span class="icon-svg sparkles" /> AI生成
         </button>
       </div>
     </div>
-    
-    <button class="vocab-fav-btn" @click.stop="$emit('toggle-favorite')">
-      {{ isFavorite ? '★' : '☆' }}
-    </button>
   </div>
 </template>
 
@@ -124,6 +125,7 @@ function stopSpeaking() {
   align-items: center;
   gap: 10px;
   margin-bottom: 6px;
+  padding-right: 36px; /* 为右上角收藏按钮留出空间 */
 }
 
 .vocab-word {
@@ -306,22 +308,24 @@ function stopSpeaking() {
 
 .vocab-fav-btn {
   position: absolute;
-  top: 12px;
+  top: 14px;
   right: 14px;
   z-index: 2;
-  background: none;
-  border: none;
-  font-size: 22px;
+  font-size: 20px;
   line-height: 1;
-  padding: 4px 6px;
-  color: #f39c12;
-  cursor: pointer;
+  color: var(--color-text-muted);
+  background: transparent;
+  border-color: transparent;
   transition: all 0.25s ease;
-  filter: drop-shadow(0 1px 3px rgba(243, 156, 18, 0.2));
 }
-.vocab-fav-btn:hover {
-  transform: scale(1.25) rotate(10deg);
-  color: #e67e22;
+.vocab-fav-btn:hover:not(:disabled) {
+  transform: scale(1.18);
+  color: var(--color-gold, #b07c4f);
+  background: transparent;
+  border-color: transparent;
+}
+.vocab-fav-btn.active {
+  color: var(--color-gold, #b07c4f);
 }
 
 @keyframes vocabPulse {

@@ -1,6 +1,6 @@
 package com.cupk.service;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
@@ -11,10 +11,10 @@ import java.util.Map;
  * GrammarLessonService — 语法教程查询服务
  */
 @Service
+@RequiredArgsConstructor
 public class GrammarLessonService {
 
-    @Autowired
-    private JdbcTemplate jdbcTemplate;
+    private final JdbcTemplate jdbcTemplate;
 
     /**
      * 获取某语言的全部语法教程（包含章节）

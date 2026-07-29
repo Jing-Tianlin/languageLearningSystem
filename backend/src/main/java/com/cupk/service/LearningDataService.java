@@ -5,12 +5,14 @@ import com.cupk.mapper.UserMapper;
 import com.cupk.mapper.UserProgressMapper;
 import com.cupk.mapper.InspectionLogMapper;
 import com.cupk.pojo.*;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
+import java.util.Map;
 
 /**
  * LearningDataService — 统一数据写入服务（SM-2 自适应间隔重复算法）
@@ -21,28 +23,24 @@ import java.time.temporal.ChronoUnit;
  *   - 用户统计更新（积分、学习天数）
  */
 @Service
+@RequiredArgsConstructor
 public class LearningDataService {
 
     /** SM-2 算法常量 */
     private static final double EF_MIN = 1.3;
     private static final double EF_INIT = 2.5;
     private static final double EF_MAX = 2.5;
-    /** 响应质量 → 间隔乘数: q=0→无间隔, q=1→1天, q=2→1天, q=3→EF*间隔, q=4→EF*1.25*间隔, q=5→EF*1.5*间隔 */
-    private static final double[] Q_MULTIPLIER = {0, 1.0, 1.0, 1.0, 1.25, 1.5};
-    /** 最短间隔（小时） */
+    /** 最短间隔（小时）：答错/重置后最快 4 小时可再次复习 */
     private static final int MIN_INTERVAL_HOURS = 4;
-    /** 初始间隔（小时） */
+    /** 新词首次复习前的初始间隔（小时） */
     private static final int INIT_INTERVAL_HOURS = 8;
 
-    @Autowired
-    private UserProgressMapper progressMapper;
-    @Autowired
-    private UserMapper userMapper;
-    @Autowired
-    private InspectionLogMapper inspectionLogMapper;
+    private final UserProgressMapper progressMapper;
+    private final UserMapper userMapper;
+    private final InspectionLogMapper inspectionLogMapper;
 
     /**
-     * SM-2 自适应间隔重复算法核心
+     * SM-2 自适应间隔重复算法核心（商业化 SRS）
      *
      * @param responseQuality 响应质量 0-5:
      *        0=完全遗忘, 1=模糊记得, 2=勉强正确,
@@ -51,6 +49,16 @@ public class LearningDataService {
     @Transactional
     public UserProgress recordPracticeAnswer(Long userId, Long vocabId, String langCode,
                                              boolean correct, int hesitationMs, String errorType) {
+        int qScore = calcQualityScore(correct, hesitationMs);
+        return recordPracticeAnswer(userId, vocabId, langCode, qScore, hesitationMs, errorType);
+    }
+
+    /**
+     * SM-2 自适应间隔重复算法核心（支持前端直接传入自评质量）
+     */
+    @Transactional
+    public UserProgress recordPracticeAnswer(Long userId, Long vocabId, String langCode,
+                                             int quality, int hesitationMs, String errorType) {
         QueryWrapper<UserProgress> q = new QueryWrapper<>();
         q.eq("user_id", userId).eq("vocab_id", vocabId);
         UserProgress p = progressMapper.selectOne(q);
@@ -67,6 +75,8 @@ public class LearningDataService {
             p.setEaseFactor(EF_INIT);
             p.setStability(0);
             p.setConsecutiveCorrect(0);
+            p.setIntervalDays(0);
+            p.setRepetition(0);
         }
 
         // 基础更新
@@ -76,17 +86,16 @@ public class LearningDataService {
         if (hesitationMs > 0) p.setLastHesitationAt(LocalDateTime.now());
 
         // 错误标签
-        if (!correct && errorType != null && !errorType.isEmpty()) {
+        if (quality < 3 && errorType != null && !errorType.isEmpty()) {
             p.setErrorTags(mergeTags(p.getErrorTags(), errorType));
         }
 
-        // ===== SM-2 响应质量计算 =====
-        int qScore = calcQualityScore(correct, hesitationMs);
+        int qScore = Math.max(0, Math.min(5, quality));
 
-        // ===== 连续正确/稳定性更新 =====
+        // ===== 连续正确/稳定性更新（兼容旧字段） =====
         int consecutive = (p.getConsecutiveCorrect() != null ? p.getConsecutiveCorrect() : 0);
         int stability = (p.getStability() != null ? p.getStability() : 0);
-        if (correct) {
+        if (qScore >= 3) {
             consecutive++;
             stability = Math.min(20, stability + 1);
         } else {
@@ -101,16 +110,42 @@ public class LearningDataService {
         ef = calcNewEF(ef, qScore);
         p.setEaseFactor(Math.max(EF_MIN, Math.min(EF_MAX, ef)));
 
-        // ===== Familiarity (基于稳定性和响应质量) =====
-        int fam = calcFamiliarity(stability, consecutive, qScore, correct);
-        p.setFamiliarity(Math.max(0, Math.min(100, fam)));
+        // ===== 标准 SM-2 间隔与重复次数 =====
+        int repetition = (p.getRepetition() != null ? p.getRepetition() : 0);
+        int intervalDays = (p.getIntervalDays() != null ? p.getIntervalDays() : 0);
 
-        // ===== Mastery Level (基于 familiarity + stability) =====
+        if (qScore < 3) {
+            // 答错或模糊：重置 SM-2
+            repetition = 0;
+            intervalDays = 0;
+        } else {
+            repetition = repetition + 1;
+            if (repetition == 1) {
+                intervalDays = 1;
+            } else if (repetition == 2) {
+                intervalDays = 6;
+            } else {
+                intervalDays = Math.max(1, (int) Math.round(intervalDays * ef));
+            }
+        }
+        p.setRepetition(repetition);
+        p.setIntervalDays(intervalDays);
+
+        // ===== Familiarity / Mastery（用于前端展示与统计） =====
+        int fam = calcFamiliarity(stability, consecutive, qScore, qScore >= 3);
+        p.setFamiliarity(Math.max(0, Math.min(100, fam)));
         p.setMasteryLevel(calcMastery(fam, stability, consecutive));
 
-        // ===== SM-2 间隔计算 =====
-        long intervalMillis = calcSM2Interval(p);
-        p.setNextReviewTime(LocalDateTime.now().plusSeconds(intervalMillis / 1000));
+        // ===== 下次复习时间 =====
+        int nextHours;
+        if (qScore < 3) {
+            nextHours = MIN_INTERVAL_HOURS; // 答错最快 4 小时后重见
+        } else if (intervalDays <= 0) {
+            nextHours = INIT_INTERVAL_HOURS; // 新词首次 8 小时后
+        } else {
+            nextHours = intervalDays * 24;
+        }
+        p.setNextReviewTime(LocalDateTime.now().plusHours(nextHours));
 
         if (isNew) progressMapper.insert(p);
         else progressMapper.updateById(p);
@@ -161,29 +196,6 @@ public class LearningDataService {
         return 0;                                                         // 新词
     }
 
-    /** SM-2 间隔计算：间隔 = 上次间隔 × EF × 质量乘数 */
-    private long calcSM2Interval(UserProgress p) {
-        int stability = p.getStability() != null ? p.getStability() : 0;
-        double ef = p.getEaseFactor() != null ? p.getEaseFactor() : EF_INIT;
-        int consecutive = p.getConsecutiveCorrect() != null ? p.getConsecutiveCorrect() : 0;
-
-        // 基础间隔随稳定性指数增长
-        long baseHours;
-        if (stability >= 15) baseHours = 720;      // 30天
-        else if (stability >= 12) baseHours = 336; // 14天
-        else if (stability >= 9)  baseHours = 168;  // 7天
-        else if (stability >= 6)  baseHours = 72;   // 3天
-        else if (stability >= 3)  baseHours = 24;   // 1天
-        else                      baseHours = INIT_INTERVAL_HOURS;
-
-        // EF 微调间隔
-        long adjustedHours = (long) (baseHours * (ef / EF_INIT));
-        // 连续正确加速扩展间隔
-        if (consecutive >= 3) adjustedHours = (long) (adjustedHours * 1.3);
-
-        return Math.max(MIN_INTERVAL_HOURS * 3600L, adjustedHours * 3600L);
-    }
-
     // ---- 用户统计 ----
 
     /** 多维度积分: 掌握*10 + 稳定性*2 + 连续学习天*5 */
@@ -202,7 +214,7 @@ public class LearningDataService {
         // 总稳定性加成
         QueryWrapper<UserProgress> stableQ = new QueryWrapper<>();
         stableQ.eq("user_id", userId).select("COALESCE(SUM(stability),0) as totalStability");
-        var stableResult = progressMapper.selectMaps(stableQ);
+        List<Map<String, Object>> stableResult = progressMapper.selectMaps(stableQ);
         long totalStability = stableResult.isEmpty() ? 0 :
             Long.parseLong(stableResult.get(0).getOrDefault("totalStability", "0").toString());
 

@@ -1,6 +1,6 @@
 <script setup>
 defineProps({
-  icon: { type: String, default: '📭' },
+  icon: { type: String, default: 'inbox' },
   title: { type: String, default: '暂无数据' },
   description: { type: String, default: '' },
   actionText: { type: String, default: '' },
@@ -11,12 +11,12 @@ defineEmits(['action'])
 
 <template>
   <div class="empty-state">
-    <div class="empty-icon">{{ icon }}</div>
+    <div class="empty-icon"><span class="icon-svg" :class="icon" /></div>
     <h3 class="empty-title">{{ title }}</h3>
     <p v-if="description" class="empty-desc">{{ description }}</p>
     <button
       v-if="actionText"
-      class="empty-action"
+      class="btn btn-primary"
       @click="$emit('action')"
     >
       {{ actionText }}

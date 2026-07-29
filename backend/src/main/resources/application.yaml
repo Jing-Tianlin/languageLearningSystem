@@ -3,8 +3,8 @@ spring:
     name: backend
   datasource:
     url: jdbc:mysql://localhost:3306/languagelearningsystem?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=utf8
-    username: root
-    password: ***************
+    username: ${DB_USERNAME:root}
+    password: REDACTED_PASSWORD
     driver-class-name: com.mysql.cj.jdbc.Driver
   jackson:
     date-format: yyyy-MM-dd
@@ -17,7 +17,7 @@ mybatis-plus:
 
 deepseek:
   api:
-    key: ********************
+    key: REDACTED_API_KEY
 
 jwt:
-  secret: REDACTED
+  secret: REDACTED_SECRET

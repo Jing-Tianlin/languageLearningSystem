@@ -139,12 +139,14 @@ onMounted(async () => {
       <!-- 语言标签 -->
       <div class="lang-tabs">
         <button
-          :class="{ active: activeLang === '' }"
+          class="btn"
+          :class="activeLang === '' ? 'btn-secondary btn-sm' : 'btn-ghost btn-sm'"
           @click="activeLang = ''"
         >全部 ({{ favoriteStore.favorites.length }})</button>
         <button
           v-for="t in langTabs" :key="t.code"
-          :class="{ active: activeLang === t.code }"
+          class="btn"
+          :class="activeLang === t.code ? 'btn-secondary btn-sm' : 'btn-ghost btn-sm'"
           @click="activeLang = t.code"
         >{{ t.name }} ({{ t.count }})</button>
       </div>
@@ -152,13 +154,13 @@ onMounted(async () => {
       <!-- 搜索 + 批量操作 -->
       <div class="toolbar">
         <input v-model="searchText" class="search-input" placeholder="搜索收藏的单词或释义..." />
-        <button v-if="!batchMode" class="batch-enter-btn" @click="enterBatchMode">批量管理</button>
+        <button v-if="!batchMode" class="btn btn-secondary btn-sm" @click="enterBatchMode">批量管理</button>
         <template v-else>
           <label class="select-all-label">
             <input type="checkbox" v-model="selectAll" @change="toggleAll" /> 全选
           </label>
-          <button class="batch-btn" :disabled="selectedIds.size === 0" @click="batchRemove">取消收藏 ({{ selectedIds.size }})</button>
-          <button class="batch-cancel-btn" @click="exitBatchMode">完成</button>
+          <button class="btn btn-danger btn-sm" :disabled="selectedIds.size === 0" @click="batchRemove">取消收藏 ({{ selectedIds.size }})</button>
+          <button class="btn btn-secondary btn-sm" @click="exitBatchMode">完成</button>
         </template>
       </div>
 
@@ -185,7 +187,7 @@ onMounted(async () => {
                   :style="{ color: masteryColors[progressMeta(fav.vocabId).masteryLevel] || '#bbb' }"
                 >{{ masteryLabels[progressMeta(fav.vocabId).masteryLevel] || '' }}</span>
               </div>
-              <button class="fav-unstar" @click.stop="removeFav(fav)" title="取消收藏">★</button>
+              <button class="btn btn-icon btn-danger" @click.stop="removeFav(fav)" title="取消收藏">★</button>
             </div>
             <div v-if="revealedIds.has(fav.id)" class="fav-revealed">
               <p class="fav-def">{{ vocabMeta(fav.vocabId).definition || '暂无释义' }}</p>

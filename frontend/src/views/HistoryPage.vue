@@ -3,6 +3,8 @@ import { ref, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { API_BASE_URL } from '@/config'
 import LetterSwapTitle from '@/components/effects/LetterSwapTitle.vue'
+import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
+import EmptyState from '@/components/common/EmptyState.vue'
 
 const authStore = useAuthStore()
 const BASE = API_BASE_URL
@@ -39,12 +41,12 @@ onMounted(async () => {
     </div>
 
     <div class="tab-bar">
-      <button :class="{ active: tab === 'chat' }" @click="tab = 'chat'">AI 对话</button>
-      <button :class="{ active: tab === 'writing' }" @click="tab = 'writing'">写作记录</button>
-      <button :class="{ active: tab === 'reading' }" @click="tab = 'reading'">阅读记录</button>
+      <button class="btn" :class="tab === 'chat' ? 'btn-secondary btn-sm' : 'btn-ghost btn-sm'" @click="tab = 'chat'">AI 对话</button>
+      <button class="btn" :class="tab === 'writing' ? 'btn-secondary btn-sm' : 'btn-ghost btn-sm'" @click="tab = 'writing'">写作记录</button>
+      <button class="btn" :class="tab === 'reading' ? 'btn-secondary btn-sm' : 'btn-ghost btn-sm'" @click="tab = 'reading'">阅读记录</button>
     </div>
 
-    <div v-if="loading" class="loading">加载中...</div>
+    <LoadingSpinner v-if="loading" />
 
     <!-- AI 对话 -->
     <div v-else-if="tab === 'chat'">
@@ -55,7 +57,7 @@ onMounted(async () => {
           <span class="chat-time">{{ (m.created_at || '').substring(0, 16) }}</span>
         </div>
       </div>
-      <p v-else class="empty">暂无对话记录</p>
+      <EmptyState v-else icon="chat" title="暂无对话记录" description="与 AI 助手对话后，历史会显示在这里" />
     </div>
 
     <!-- 写作 -->
@@ -72,7 +74,7 @@ onMounted(async () => {
           </div>
         </div>
       </div>
-      <p v-else class="empty">暂无写作记录</p>
+      <EmptyState v-else icon="pen" title="暂无写作记录" description="完成写作训练后，记录会显示在这里" />
     </div>
 
     <!-- 阅读 -->
@@ -89,7 +91,7 @@ onMounted(async () => {
           </div>
         </div>
       </div>
-      <p v-else class="empty">暂无阅读记录</p>
+      <EmptyState v-else icon="book" title="暂无阅读记录" description="完成阅读训练后，记录会显示在这里" />
     </div>
   </div>
 </template>

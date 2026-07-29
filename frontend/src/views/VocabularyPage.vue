@@ -30,11 +30,34 @@ const selectedLevel = ref(null)
 const showAddModal = ref(false)
 const showDetailModal = ref(false)
 const showEditModal = ref(false)
+const addTab = ref('manual') // manual | import
 const addForm = ref({ word: '', definition: '', partOfSpeech: '', phonetic: '', exampleSentence: '', exampleTranslation: '', langCode: '', level: '' })
 const editForm = ref({ id: '', word: '', definition: '', partOfSpeech: '', phonetic: '', exampleSentence: '', exampleTranslation: '', langCode: '', level: '' })
 const detailWord = ref(null)
 const addSaving = ref(false)
 const editSaving = ref(false)
+
+// ===== 批量导入 =====
+const importFileName = ref('')
+const importList = ref([])
+const importPreview = ref([])
+const importTotal = ref(0)
+const importResult = ref(null)
+const importError = ref('')
+const importLoading = ref(false)
+
+// CSV 列名别名映射（大小写不敏感）
+const CSV_COL_ALIASES = {
+  word: ['word', '单词', '词汇'],
+  phonetic: ['phonetic', '音标'],
+  romanization: ['romanization', '罗马音'],
+  definition: ['definition', '释义', '含义', '中文释义'],
+  partOfSpeech: ['partofspeech', 'part_of_speech', '词性'],
+  level: ['level', '等级'],
+  exampleSentence: ['examplesentence', 'example_sentence', '例句'],
+  exampleTranslation: ['exampletranslation', 'example_translation', '例句翻译', '翻译'],
+  langCode: ['langcode', 'lang_code', '语言', '语言代码'],
+}
 
 function openAddModal() {
   addForm.value = {
@@ -43,7 +66,180 @@ function openAddModal() {
     langCode: authStore.targetLanguage || filter.value.langCode || 'en',
     level: selectedLevel.value || '',
   }
+  // 重置导入状态
+  addTab.value = 'manual'
+  importFileName.value = ''
+  importList.value = []
+  importPreview.value = []
+  importTotal.value = 0
+  importResult.value = null
+  importError.value = ''
   showAddModal.value = true
+}
+
+/** 简易 CSV 行解析：支持双引号包裹含逗号/换行的字段 */
+function parseCsvLine(line) {
+  const cells = []
+  let cur = ''
+  let inQuote = false
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i]
+    if (inQuote) {
+      if (ch === '"') {
+        if (line[i + 1] === '"') { cur += '"'; i++ }
+        else inQuote = false
+      } else cur += ch
+    } else if (ch === '"') {
+      inQuote = true
+    } else if (ch === ',') {
+      cells.push(cur.trim()); cur = ''
+    } else {
+      cur += ch
+    }
+  }
+  cells.push(cur.trim())
+  return cells
+}
+
+/** 将表头行映射为字段索引：{ field: index } */
+function mapHeaderToIndex(headerCells) {
+  const map = {}
+  headerCells.forEach((h, i) => {
+    const key = h.trim().toLowerCase().replace(/\s+/g, '')
+    for (const [field, aliases] of Object.entries(CSV_COL_ALIASES)) {
+      if (aliases.includes(key) || aliases.includes(h.trim())) {
+        map[field] = i
+        break
+      }
+    }
+  })
+  return map
+}
+
+/** 常见词性集合（用于无表头 CSV 智能识别次要字段） */
+const POS_SET = ['noun', 'verb', 'adjective', 'adverb', 'phrase', 'preposition', 'conjunction', 'pronoun', 'interjection']
+
+/** 解析 CSV/TXT 文件内容为词汇对象数组（单词为最高优先级，其余字段容错） */
+function parseImportText(text) {
+  const lines = text.split(/\r?\n/).filter((l) => l.trim().length > 0)
+  if (lines.length === 0) return []
+  const hasComma = lines[0].includes(',')
+  const firstCells = hasComma ? parseCsvLine(lines[0]) : []
+  const headerIndexMap = firstCells.length > 1 ? mapHeaderToIndex(firstCells) : {}
+  // 表头判定：识别出已知列名，或首行各列均为纯列名形态（英文/下划线/空格，不含音标等符号）
+  const looksLikeHeader = firstCells.length > 1 && firstCells.every((c) => /^[a-zA-Z][a-zA-Z_ ]*$/.test(c.trim()))
+  const isHeaderRow = firstCells.length > 1 && (Object.keys(headerIndexMap).length > 0 || looksLikeHeader)
+  // 兜底：表头未识别出 word/definition 列时，按"第一列=单词、第二列=释义"处理（单词最高优先级）
+  if (isHeaderRow && headerIndexMap.word === undefined) headerIndexMap.word = 0
+  if (isHeaderRow && headerIndexMap.definition === undefined) headerIndexMap.definition = 1
+  const dataStart = isHeaderRow ? 1 : 0
+  const defaultLang = authStore.targetLanguage || filter.value.langCode || 'en'
+
+  const result = []
+  for (let i = dataStart; i < lines.length; i++) {
+    let cells
+    if (hasComma) {
+      cells = parseCsvLine(lines[i])
+    } else {
+      cells = [lines[i].trim()] // 纯文本模式：每行一个单词
+    }
+    const get = (field) => {
+      const idx = headerIndexMap[field]
+      return idx !== undefined && cells[idx] !== undefined ? cells[idx] : ''
+    }
+    let word = ''
+    let definition = ''
+    let phonetic = ''
+    let partOfSpeech = ''
+    let level = ''
+    let exampleSentence = ''
+    let exampleTranslation = ''
+    let langCode = ''
+    if (Object.keys(headerIndexMap).length > 0) {
+      word = get('word')
+      definition = get('definition')
+      phonetic = get('phonetic')
+      partOfSpeech = get('partOfSpeech')
+      level = get('level')
+      exampleSentence = get('exampleSentence')
+      exampleTranslation = get('exampleTranslation')
+      langCode = get('langCode')
+    } else if (hasComma) {
+      // 无表头 CSV：第一列永远是单词（最高优先级），其余列智能归位，无法识别则丢弃而非错位
+      word = cells[0] || ''
+      const rest = cells.slice(1)
+      for (const c of rest) {
+        const val = c.trim()
+        if (!val) continue
+        const lower = val.toLowerCase()
+        if (!phonetic && /^\/.+\/$/.test(val)) phonetic = val
+        else if (!partOfSpeech && POS_SET.includes(lower)) partOfSpeech = lower
+        else if (!definition) definition = val
+        else if (!exampleSentence) exampleSentence = val
+        else if (!exampleTranslation) exampleTranslation = val
+        else if (!level) level = val
+      }
+    } else {
+      word = cells[0] || ''
+    }
+    if (!word) continue
+    result.push({
+      word: word.trim(),
+      definition: definition.trim() || null,
+      phonetic: phonetic.trim() || null,
+      partOfSpeech: partOfSpeech.trim() || null,
+      level: level.trim() || null,
+      exampleSentence: exampleSentence.trim() || null,
+      exampleTranslation: exampleTranslation.trim() || null,
+      langCode: langCode.trim() || defaultLang,
+    })
+  }
+  return result
+}
+
+function onImportFileChange(e) {
+  const file = e.target.files?.[0]
+  if (!file) return
+  importFileName.value = file.name
+  importError.value = ''
+  importResult.value = null
+  const reader = new FileReader()
+  reader.onload = () => {
+    try {
+      const list = parseImportText(String(reader.result || ''))
+      if (list.length === 0) {
+        importError.value = '未解析到有效词汇，请检查文件格式'
+        importList.value = []
+        importPreview.value = []
+        importTotal.value = 0
+        return
+      }
+      importList.value = list
+      importTotal.value = list.length
+      importPreview.value = list.slice(0, 5)
+    } catch (err) {
+      importError.value = '文件解析失败：' + err.message
+    }
+  }
+  reader.onerror = () => { importError.value = '文件读取失败，请重试' }
+  reader.readAsText(file)
+  e.target.value = ''
+}
+
+async function doBatchImport() {
+  if (importList.value.length === 0) return
+  importLoading.value = true
+  importError.value = ''
+  try {
+    const res = await vocabularyApi.batchImportVocabulary(importList.value)
+    importResult.value = res
+    toast.success(`导入完成：新增 ${res.added} 个${res.skipped ? `，跳过已存在 ${res.skipped} 个` : ''}`)
+    loadData()
+  } catch (err) {
+    importError.value = err.message || '导入失败，请重试'
+  } finally {
+    importLoading.value = false
+  }
 }
 
 function openDetailModal(vocab) {
@@ -281,11 +477,11 @@ async function toggleFavorite(vocab) {
     <div class="toolbar-row">
       <div class="level-filter-bar">
         <span class="level-filter-label">等级:</span>
-        <button class="level-filter-chip" :class="{ active: !selectedLevel }" @click="selectedLevel = null; pageNo = 1; loadData()">全部</button>
-        <button v-for="lv in examLevels" :key="lv.examLabel" class="level-filter-chip" :class="{ active: selectedLevel === lv.examLabel }" @click="selectLevel(lv.examLabel)">{{ lv.examLabel }}</button>
+        <button class="level-filter-chip btn" :class="!selectedLevel ? 'btn-secondary' : 'btn-ghost btn-sm'" @click="selectedLevel = null; pageNo = 1; loadData()">全部</button>
+        <button v-for="lv in examLevels" :key="lv.examLabel" class="level-filter-chip btn" :class="selectedLevel === lv.examLabel ? 'btn-secondary' : 'btn-ghost btn-sm'" @click="selectLevel(lv.examLabel)">{{ lv.examLabel }}</button>
       </div>
       <div class="toolbar-actions">
-        <button class="add-btn-inline" @click="openAddModal">+ 添加词汇</button>
+        <button class="add-btn-inline btn btn-primary btn-sm" @click="openAddModal">+ 添加词汇</button>
       </div>
     </div>
 
@@ -304,18 +500,18 @@ async function toggleFavorite(vocab) {
           :lang-code="vocab.langCode || 'en'"
           @toggle-favorite="toggleFavorite(vocab)"
           @generate-example="generateExample(vocab)"
-          @click.native="openDetailModal(vocab)"
+          @select="openDetailModal(vocab)"
         />
         <div class="card-actions">
-          <button class="action-btn edit" @click.stop="openEditModal(vocab)">✎</button>
-          <button class="action-btn delete" @click.stop="doDelete(vocab.id, vocab.word)">🗑</button>
+          <button class="action-btn edit btn btn-icon btn-ghost" @click.stop="openEditModal(vocab)"><span class="icon-svg pencil" /></button>
+          <button class="action-btn delete btn btn-icon btn-danger" @click.stop="doDelete(vocab.id, vocab.word)"><span class="icon-svg trash" /></button>
         </div>
       </div>
     </div>
 
     <EmptyState
       v-else
-      icon=""
+      icon="search"
       title="暂未找到词汇"
       description="尝试调整筛选条件或添加更多词汇"
     />
@@ -335,61 +531,99 @@ async function toggleFavorite(vocab) {
           <div class="modal-card">
             <div class="modal-header">
               <h3>添加新词汇</h3>
-              <button class="modal-close" @click="showAddModal = false">✕</button>
+              <button class="modal-close btn btn-icon btn-ghost" @click="showAddModal = false">✕</button>
+            </div>
+            <div class="modal-tabs">
+              <button class="btn btn-sm" :class="addTab === 'manual' ? 'btn-secondary' : 'btn-ghost'" @click="addTab = 'manual'">手动添加</button>
+              <button class="btn btn-sm" :class="addTab === 'import' ? 'btn-secondary' : 'btn-ghost'" @click="addTab = 'import'">批量导入</button>
             </div>
             <div class="modal-body">
-              <div class="form-row-dual">
-                <div class="form-group flex-2">
-                  <label>单词 <span class="req">*</span></label>
-                  <input v-model="addForm.word" placeholder="如: beautiful" @keyup.enter="doCreate" />
+              <template v-if="addTab === 'manual'">
+                <div class="form-row-dual">
+                  <div class="form-group flex-2">
+                    <label>单词 <span class="req">*</span></label>
+                    <input v-model="addForm.word" placeholder="如: beautiful" @keyup.enter="doCreate" />
+                  </div>
+                  <div class="form-group flex-1">
+                    <label>语言</label>
+                    <select v-model="addForm.langCode">
+                      <option v-for="l in languageStore.languages" :key="l.code" :value="l.code">{{ l.nameCn }}</option>
+                    </select>
+                  </div>
                 </div>
-                <div class="form-group flex-1">
-                  <label>语言</label>
-                  <select v-model="addForm.langCode">
-                    <option v-for="l in languageStore.languages" :key="l.code" :value="l.code">{{ l.nameCn }}</option>
-                  </select>
+                <div class="form-row-dual">
+                  <div class="form-group flex-1">
+                    <label>等级</label>
+                    <select v-model="addForm.level">
+                      <option value="">自动</option>
+                      <option v-for="lv in examLevels" :key="lv.examLabel" :value="lv.examLabel">{{ lv.examLabel }}</option>
+                    </select>
+                  </div>
+                  <div class="form-group flex-1">
+                    <label>词性</label>
+                    <select v-model="addForm.partOfSpeech">
+                      <option value="">不指定</option>
+                      <option value="noun">名词</option>
+                      <option value="verb">动词</option>
+                      <option value="adjective">形容词</option>
+                      <option value="adverb">副词</option>
+                      <option value="phrase">短语</option>
+                    </select>
+                  </div>
                 </div>
-              </div>
-              <div class="form-row-dual">
-                <div class="form-group flex-1">
-                  <label>等级</label>
-                  <select v-model="addForm.level">
-                    <option value="">自动</option>
-                    <option v-for="lv in examLevels" :key="lv.examLabel" :value="lv.examLabel">{{ lv.examLabel }}</option>
-                  </select>
+                <div class="form-group">
+                  <label>释义 <span class="req">*</span></label>
+                  <input v-model="addForm.definition" placeholder="如: 美丽的" />
                 </div>
-                <div class="form-group flex-1">
-                  <label>词性</label>
-                  <select v-model="addForm.partOfSpeech">
-                    <option value="">不指定</option>
-                    <option value="noun">名词</option>
-                    <option value="verb">动词</option>
-                    <option value="adjective">形容词</option>
-                    <option value="adverb">副词</option>
-                    <option value="phrase">短语</option>
-                  </select>
+                <div class="form-group">
+                  <label>音标</label>
+                  <input v-model="addForm.phonetic" placeholder="如: /ˈbjuːtɪfl/" />
                 </div>
-              </div>
-              <div class="form-group">
-                <label>释义 <span class="req">*</span></label>
-                <input v-model="addForm.definition" placeholder="如: 美丽的" />
-              </div>
-              <div class="form-group">
-                <label>音标</label>
-                <input v-model="addForm.phonetic" placeholder="如: /ˈbjuːtɪfl/" />
-              </div>
-              <div class="form-group">
-                <label>例句</label>
-                <textarea v-model="addForm.exampleSentence" placeholder="如: She has a beautiful smile." rows="2"></textarea>
-              </div>
-              <div class="form-group">
-                <label>例句翻译</label>
-                <textarea v-model="addForm.exampleTranslation" placeholder="如: 她有一个美丽的微笑。" rows="2"></textarea>
+                <div class="form-group">
+                  <label>例句</label>
+                  <textarea v-model="addForm.exampleSentence" placeholder="如: She has a beautiful smile." rows="2"></textarea>
+                </div>
+                <div class="form-group">
+                  <label>例句翻译</label>
+                  <textarea v-model="addForm.exampleTranslation" placeholder="如: 她有一个美丽的微笑。" rows="2"></textarea>
+                </div>
+              </template>
+
+              <!-- 批量导入 -->
+              <div v-else class="import-area">
+                <p class="import-tip">选择 CSV / TXT 文件，已存在的单词将自动跳过，不会重复导入。</p>
+                <div class="import-example">
+                  格式说明：
+                  <span class="import-example-code">word,definition,phonetic,partOfSpeech,exampleSentence,exampleTranslation,level</span>
+                  <span class="import-example-sub">单词必填、最高优先级；音标/释义/词性等为次要字段，缺失或无法识别时自动跳过该项，不影响单词导入。列名也支持中文：单词/释义/音标/词性/例句/等级。</span>
+                </div>
+                <div class="import-file-row">
+                  <label class="btn btn-secondary btn-sm import-file-label">
+                    选择文件
+                    <input type="file" accept=".csv,.txt" hidden @change="onImportFileChange" />
+                  </label>
+                  <span class="import-file-name">{{ importFileName || '未选择文件' }}</span>
+                </div>
+                <div v-if="importPreview.length" class="import-preview">
+                  <p class="import-preview-title">预览（前 {{ importPreview.length }} 条，共 {{ importTotal }} 条）：</p>
+                  <div v-for="(v, i) in importPreview" :key="i" class="import-preview-item">
+                    <span class="pv-word">{{ v.word }}</span>
+                    <span class="pv-def">{{ v.definition || '' }}</span>
+                  </div>
+                </div>
+                <p v-if="importError" class="import-error">{{ importError }}</p>
+                <p v-if="importResult" class="import-result">
+                  导入完成：新增 {{ importResult.added }} 个，跳过已存在 {{ importResult.skipped }} 个
+                  <span v-if="importResult.skippedWords?.length" class="import-skipped">（{{ importResult.skippedWords.slice(0, 5).join('、') }}<template v-if="importResult.skippedWords.length > 5"> 等</template>）</span>
+                </p>
+                <button class="btn btn-primary btn-block" :disabled="importLoading || importTotal === 0" @click="doBatchImport">
+                  {{ importLoading ? '导入中...' : '开始导入' }}
+                </button>
               </div>
             </div>
             <div class="modal-footer">
-              <button class="cancel-btn" @click="showAddModal = false">取消</button>
-              <button class="save-btn" :disabled="addSaving" @click="doCreate">
+              <button class="cancel-btn btn btn-secondary" @click="showAddModal = false">取消</button>
+              <button v-if="addTab === 'manual'" class="save-btn btn btn-primary" :disabled="addSaving" @click="doCreate">
                 {{ addSaving ? '添加中...' : '✓ 添加' }}
               </button>
             </div>
@@ -404,7 +638,7 @@ async function toggleFavorite(vocab) {
           <div class="modal-card">
             <div class="modal-header">
               <h3>编辑词汇</h3>
-              <button class="modal-close" @click="showEditModal = false">✕</button>
+              <button class="modal-close btn btn-icon btn-ghost" @click="showEditModal = false">✕</button>
             </div>
             <div class="modal-body">
               <div class="form-row-dual">
@@ -457,8 +691,8 @@ async function toggleFavorite(vocab) {
               </div>
             </div>
             <div class="modal-footer">
-              <button class="cancel-btn" @click="showEditModal = false">取消</button>
-              <button class="save-btn" :disabled="editSaving" @click="doUpdate">
+              <button class="cancel-btn btn btn-secondary" @click="showEditModal = false">取消</button>
+              <button class="save-btn btn btn-primary" :disabled="editSaving" @click="doUpdate">
                 {{ editSaving ? '更新中...' : '✓ 更新' }}
               </button>
             </div>
@@ -473,12 +707,12 @@ async function toggleFavorite(vocab) {
           <div class="detail-card">
             <div class="detail-header">
               <div class="detail-title-row">
-                <button class="detail-speak-btn" @click="speakWordDetail" :class="{ speaking }">🔊</button>
+                <button class="detail-speak-btn btn btn-icon btn-ghost" @click="speakWordDetail" :class="{ speaking }"><span class="icon-svg speaker" /></button>
                 <h2 class="detail-word">{{ detailWord.word }}</h2>
-                <button v-if="favoriteStore.isFavorite(detailWord.id)" class="fav-btn active" @click="toggleFavorite(detailWord)">★</button>
-                <button v-else class="fav-btn" @click="toggleFavorite(detailWord)">☆</button>
+                <button v-if="favoriteStore.isFavorite(detailWord.id)" class="fav-btn btn btn-icon btn-secondary" @click="toggleFavorite(detailWord)">★</button>
+                <button v-else class="fav-btn btn btn-icon btn-ghost" @click="toggleFavorite(detailWord)">☆</button>
               </div>
-              <button class="modal-close" @click="showDetailModal = false">✕</button>
+              <button class="modal-close btn btn-icon btn-ghost" @click="showDetailModal = false">✕</button>
             </div>
             <div class="detail-body">
               <div v-if="detailWord.phonetic" class="detail-phonetic">{{ detailWord.phonetic }}</div>
@@ -488,7 +722,7 @@ async function toggleFavorite(vocab) {
                 <h4>例句</h4>
                 <div class="detail-example-row">
                   <p class="detail-example">{{ detailWord.exampleSentence }}</p>
-                  <button class="detail-speak-btn-sm" @click="speakExampleDetail" :class="{ speaking }">🔊</button>
+                  <button class="detail-speak-btn-sm btn btn-icon btn-ghost" @click="speakExampleDetail" :class="{ speaking }"><span class="icon-svg speaker" /></button>
                 </div>
                 <p v-if="detailWord.exampleTranslation" class="detail-example-tr">{{ detailWord.exampleTranslation }}</p>
               </div>
@@ -498,8 +732,8 @@ async function toggleFavorite(vocab) {
               </div>
             </div>
             <div class="detail-footer">
-              <button class="outline-btn" @click="openEditModal(detailWord)">编辑</button>
-              <button class="delete-btn" @click="doDelete(detailWord.id, detailWord.word); showDetailModal = false">删除</button>
+              <button class="outline-btn btn btn-secondary" @click="openEditModal(detailWord)">编辑</button>
+              <button class="delete-btn btn btn-danger" @click="doDelete(detailWord.id, detailWord.word); showDetailModal = false">删除</button>
             </div>
           </div>
         </div>
@@ -661,6 +895,45 @@ async function toggleFavorite(vocab) {
 }
 
 .modal-header h3 { font-size: 17px; font-weight: 700; margin: 0; color: var(--color-text); }
+
+/* 添加弹窗 Tab */
+.modal-tabs {
+  display: flex; gap: 8px; padding: 12px 22px 0;
+}
+
+/* ===== 批量导入区域 ===== */
+.import-area { display: flex; flex-direction: column; gap: 12px; }
+.import-tip { font-size: 13px; color: var(--color-text-secondary); margin: 0; }
+.import-example {
+  font-size: 12px; color: var(--color-text-muted);
+  background: var(--color-bg-card); border: 1px dashed var(--color-border-hover);
+  border-radius: 8px; padding: 10px 12px; line-height: 1.7;
+  display: flex; flex-direction: column; gap: 2px;
+}
+.import-example-code {
+  font-family: var(--font-number, monospace); font-size: 11px;
+  color: var(--color-primary); word-break: break-all;
+}
+.import-example-sub { font-size: 11px; color: var(--color-text-muted); }
+.import-file-row { display: flex; align-items: center; gap: 10px; }
+.import-file-label { cursor: pointer; }
+.import-file-name { font-size: 13px; color: var(--color-text-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.import-preview {
+  background: var(--color-bg-card); border: 1px solid var(--color-border);
+  border-radius: 10px; padding: 10px 14px; max-height: 180px; overflow-y: auto;
+}
+.import-preview-title { font-size: 12px; font-weight: 600; color: var(--color-text-secondary); margin: 0 0 8px; }
+.import-preview-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 5px 0; border-bottom: 1px dashed var(--color-border);
+  font-size: 13px;
+}
+.import-preview-item:last-child { border-bottom: none; }
+.pv-word { font-weight: 600; color: var(--color-text); flex-shrink: 0; min-width: 90px; }
+.pv-def { color: var(--color-text-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.import-error { font-size: 13px; color: #a85a4c; margin: 0; }
+.import-result { font-size: 13px; color: #5c7248; margin: 0; line-height: 1.6; }
+.import-skipped { color: var(--color-text-muted); font-size: 12px; }
 
 .detail-header {
   display: flex; align-items: flex-start; justify-content: space-between;

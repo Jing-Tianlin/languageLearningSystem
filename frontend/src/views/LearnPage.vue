@@ -14,7 +14,6 @@ import { useAuthStore } from '@/stores/auth'
 import { userApi } from '@/api/user'
 import { toast } from '@/composables/useToast'
 import { getExamLevels, getExamName } from '@/data/examLevels'
-import CircleCard from '@/components/cards/CircleCard.vue'
 import LetterSwapTitle from '@/components/effects/LetterSwapTitle.vue'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
 import Skeleton from '@/components/common/Skeleton.vue'
@@ -143,7 +142,7 @@ const currentLevelLabel = computed(() => {
 
 const learnModules = computed(() => [
   { icon: 'vocab', title: '词汇学习', desc: `积累 ${langName.value} 核心词汇，含音标例句发音`, to: '/vocabulary', stat: `${langStats.value.vocabCount} 词` },
-  { icon: 'practice', title: '每日练习', desc: '选择题 + 拼写 + 听写，巩固记忆', to: '/practice', stat: `${langStats.value.studiedCount} 已学` },
+  { icon: 'practice', title: '背单词·练', desc: '卡片/听音/拼写学习 + 巩固练习闭环', to: '/flashcards', stat: `${langStats.value.studiedCount} 已学` },
   { icon: 'grammar', title: '语法专项', desc: '时态 · 介词 · 冠词 · 语序专题突破', to: '/grammar' },
   { icon: 'reading', title: '阅读理解', desc: '三遍阅读法：速读→精读→答题', to: '/reading' },
   { icon: 'writing', title: '写作训练', desc: '仿写→连词成句→自由写作，逐级提升', to: '/writing' },
@@ -163,37 +162,22 @@ const learnModules = computed(() => [
 
       <LoadingSpinner v-if="languageStore.loading" />
 
-      <div v-else class="lang-grid">
-        <CircleCard
-          v-for="lang in languageStore.languages"
-          :key="lang.id"
-          :title="lang.nameCn"
-          :subtitle="lang.nameNative"
-          to="#"
-          @click.prevent="selectLanguage(lang)"
-        >
-          <template #icon>
-            <span class="lang-flag">{{ flagIcons[lang.code] || '🌍' }}</span>
-          </template>
-        </CircleCard>
-      </div>
-
-      <div v-if="!languageStore.loading" class="lang-features">
+      <div v-else class="pick-grid">
         <div
           v-for="lang in languageStore.languages"
           :key="lang.id"
-          class="lang-feature-card"
+          class="pick-card"
           @click="selectLanguage(lang)"
         >
-          <span class="lang-feature-flag">{{ flagIcons[lang.code] || '🌍' }}</span>
-          <div class="lang-feature-body">
-            <h4>
+          <span class="pick-icon lang-pick-icon">{{ flagIcons[lang.code] || '🌍' }}</span>
+          <div class="pick-body">
+            <h4 class="pick-title">
               {{ lang.nameCn }}
-              <span class="lang-feature-native">{{ lang.nameNative }}</span>
+              <i class="pick-native">{{ lang.nameNative }}</i>
             </h4>
-            <p>{{ langDesc[lang.code] || '系统学习这门语言，从入门到精通' }}</p>
+            <p class="pick-desc">{{ langDesc[lang.code] || '系统学习这门语言，从入门到精通' }}</p>
           </div>
-          <span class="lang-feature-arrow">→</span>
+          <span class="pick-arrow">→</span>
         </div>
       </div>
     </template>
@@ -206,7 +190,7 @@ const learnModules = computed(() => [
             <span class="lang-badge-flag">{{ flagIcons[langCode] || '🌍' }}</span>
             <span>{{ langName }}</span>
           </div>
-          <button class="switch-lang-inline" @click="reselectLang">← 重新选择语言</button>
+          <button class="switch-lang-inline btn btn-ghost btn-sm" @click="reselectLang">← 重新选择语言</button>
         </div>
         <LetterSwapTitle text="选择你的目标等级" tag="h1" />
         <p class="page-sub">选择适合你当前水平的考试等级，系统将为每个模块推荐对应难度的内容</p>
@@ -217,28 +201,29 @@ const learnModules = computed(() => [
         <span class="exam-lang">{{ langName }} 等级体系</span>
       </div>
 
-      <!-- 全部等级 -->
-      <div class="all-level-row">
-        <button class="all-level-btn" @click="selectLevel(-1)">
-          <span class="all-badge">ALL</span>
-          <span class="all-text">全部等级</span>
-          <span class="all-desc">不限制难度，浏览所有内容</span>
-        </button>
-      </div>
+      <div class="pick-grid">
+        <!-- 全部等级 -->
+        <div class="pick-card all-level-card" @click="selectLevel(-1)">
+          <span class="pick-icon all-pick-icon">ALL</span>
+          <div class="pick-body">
+            <h4 class="pick-title">全部等级</h4>
+            <p class="pick-desc">不限制难度，浏览所有内容</p>
+          </div>
+          <span class="pick-arrow">→</span>
+        </div>
 
-      <div class="level-grid">
         <div
           v-for="lv in examLevels"
           :key="lv.value"
-          class="level-card"
+          class="pick-card"
           @click="selectLevel(lv.value)"
         >
-          <div class="level-badge">{{ lv.examLabel }}</div>
-          <div class="level-info">
-            <div class="level-name">{{ lv.examName }}</div>
-            <div class="level-desc">{{ lv.desc }}</div>
+          <span class="pick-icon">{{ lv.examLabel }}</span>
+          <div class="pick-body">
+            <h4 class="pick-title">{{ lv.examName }}</h4>
+            <p class="pick-desc">{{ lv.desc }}</p>
           </div>
-          <div class="level-arrow">→</div>
+          <span class="pick-arrow">→</span>
         </div>
       </div>
     </template>
@@ -259,8 +244,8 @@ const learnModules = computed(() => [
             </div>
           </div>
           <div class="header-actions">
-            <button class="switch-btn" @click="reselectLang">切换语言</button>
-            <button class="switch-btn" @click="reselectLevel">切换等级</button>
+            <button class="switch-btn btn btn-secondary btn-sm" @click="reselectLang">切换语言</button>
+            <button class="switch-btn btn btn-secondary btn-sm" @click="reselectLevel">切换等级</button>
           </div>
         </div>
         <LetterSwapTitle :text="langName + ' 学习中心'" tag="h1" />
@@ -286,7 +271,7 @@ const learnModules = computed(() => [
           <span class="stat-item-val">{{ langStats.masteredCount }}</span>
           <span class="stat-item-lbl">已掌握</span>
         </div>
-        <button class="refresh-btn" @click="loadLangStats" :disabled="loadingStats" title="刷新数据">
+        <button class="refresh-btn btn btn-ghost btn-sm" @click="loadLangStats" :disabled="loadingStats" title="刷新数据">
           <span :class="{ spinning: loadingStats }"></span>
         </button>
       </div>
@@ -323,27 +308,49 @@ const learnModules = computed(() => [
 .page-header :deep(.letter-swap-title) { font-size: 30px; font-weight: 800; color: var(--color-text); margin-bottom: 4px; }
 .page-sub { font-size: 14px; color: var(--color-text-muted); margin-top: 4px; }
 
-/* ===== 语言选择 ===== */
-.lang-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 32px; padding: 20px 0; }
-.lang-flag { font-size: 44px; line-height: 1; }
-
-.lang-features { display: flex; flex-direction: column; gap: 12px; padding: 8px 0 40px; max-width: 600px; margin: 0 auto; }
-.lang-feature-card {
-  display: flex; align-items: center; gap: 14px;
-  background: rgba(255,255,255,0.72); backdrop-filter: blur(12px);
-  border: 1px solid rgba(0,0,0,0.05); border-radius: var(--radius-lg);
-  padding: 16px 20px; cursor: pointer;
-  transition: all 0.3s var(--ease-smooth);
+/* ===== 语言 / 等级选择（统一卡片网格） ===== */
+.pick-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 14px;
+  max-width: 920px;
+  margin: 0 auto;
+  padding: 8px 0 40px;
 }
-.lang-feature-card:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(90,125,150,0.1); border-color: rgba(124,157,181,0.2); }
-.lang-feature-flag { font-size: 32px; flex-shrink: 0; }
-.lang-feature-body { flex: 1; min-width: 0; }
-.lang-feature-body h4 { font-size: 15px; font-weight: 700; color: var(--color-text); margin: 0 0 3px; }
-.lang-feature-native { font-weight: 400; font-size: 13px; color: var(--color-text-muted); margin-left: 6px; }
-.lang-feature-body p { font-size: 12px; color: var(--color-text-muted); margin: 0; }
-.lang-feature-arrow { font-size: 18px; color: #ccc; flex-shrink: 0; }
+.pick-card {
+  display: flex; align-items: center; gap: 14px;
+  padding: 18px 20px; border-radius: var(--radius-lg);
+  background: rgba(255,255,255,0.78); backdrop-filter: blur(14px);
+  border: 1.5px solid rgba(0,0,0,0.05); cursor: pointer;
+  transition: all 0.3s var(--ease-smooth);
+  text-align: left;
+}
+.pick-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 30px rgba(90,125,150,0.1);
+  border-color: rgba(124,157,181,0.25);
+}
+.pick-icon {
+  min-width: 50px; height: 50px; padding: 0 12px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #7c9db5, #5a7d96);
+  color: #fff; font-size: 15px; font-weight: 800;
+  display: inline-flex; align-items: center; justify-content: center;
+  flex-shrink: 0; white-space: nowrap; letter-spacing: 0.5px;
+}
+.lang-pick-icon { font-size: 22px; padding: 0 10px; }
+.all-pick-icon {
+  background: linear-gradient(135deg, #8e8b7e, #6e7a6b);
+  font-size: 14px; letter-spacing: 1px;
+}
+.pick-body { flex: 1; min-width: 0; }
+.pick-title { font-size: 15px; font-weight: 700; color: var(--color-text); margin: 0; }
+.pick-native { font-weight: 400; font-size: 12.5px; color: var(--color-text-muted); margin-left: 6px; font-style: normal; }
+.pick-desc { font-size: 12px; color: #888; margin: 3px 0 0; line-height: 1.5; }
+.pick-arrow { font-size: 18px; color: #ccc; flex-shrink: 0; transition: color 0.2s; }
+.pick-card:hover .pick-arrow { color: #5a7d96; }
 
-/* ===== 等级选择 ===== */
+/* ===== 等级选择页头 ===== */
 .header-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
 .switch-lang-inline {
   padding: 8px 18px; border-radius: 8px;
@@ -356,45 +363,6 @@ const learnModules = computed(() => [
 .exam-badge-center { display: flex; align-items: center; justify-content: center; gap: 10px; margin: 16px 0; }
 .exam-name { font-size: 13px; padding: 5px 14px; border-radius: var(--radius-full); background: rgba(90,125,150,0.12); color: #5a7d96; font-weight: 700; }
 .exam-lang { font-size: 14px; color: var(--color-text); font-weight: 600; }
-
-.all-level-row { display: flex; justify-content: center; margin-bottom: 16px; }
-.all-level-btn {
-  display: flex; align-items: center; gap: 12px;
-  padding: 14px 28px; border-radius: var(--radius-lg);
-  background: linear-gradient(135deg, rgba(124,157,181,0.1), rgba(90,125,150,0.05));
-  border: 1.5px solid rgba(124,157,181,0.2); cursor: pointer;
-  transition: all 0.25s; width: 100%; max-width: 600px;
-}
-.all-level-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(90,125,150,0.1); border-color: rgba(124,157,181,0.35); }
-.all-badge { width: 42px; height: 42px; border-radius: 50%; background: linear-gradient(135deg, #7c9db5, #5a7d96); color: #fff; font-size: 14px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-.all-text { font-size: 16px; font-weight: 700; color: var(--color-text); }
-.all-desc { font-size: 13px; color: #888; margin-left: auto; }
-
-.level-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; max-width: 900px; margin: 0 auto; }
-.level-card {
-  display: flex; align-items: center; gap: 14px;
-  padding: 18px 20px; border-radius: var(--radius-lg);
-  background: rgba(255,255,255,0.78); backdrop-filter: blur(14px);
-  border: 1.5px solid rgba(0,0,0,0.05); cursor: pointer;
-  transition: all 0.3s var(--ease-smooth);
-}
-.level-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 10px 30px rgba(90,125,150,0.1);
-  border-color: rgba(124,157,181,0.25);
-}
-.level-badge {
-  width: 50px; height: 50px; border-radius: 14px;
-  background: linear-gradient(135deg, #7c9db5, #5a7d96);
-  color: #fff; font-size: 18px; font-weight: 800;
-  display: flex; align-items: center; justify-content: center;
-  flex-shrink: 0;
-}
-.level-info { flex: 1; min-width: 0; }
-.level-name { font-size: 15px; font-weight: 700; color: var(--color-text); }
-.level-desc { font-size: 12px; color: #888; margin-top: 2px; }
-.level-arrow { font-size: 18px; color: #ccc; flex-shrink: 0; transition: color 0.2s; }
-.level-card:hover .level-arrow { color: #5a7d96; }
 
 /* ===== 学习中心 ===== */
 .header-badges { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }

@@ -15,6 +15,7 @@ import { useAuthStore } from '@/stores/auth'
 import AuthLayout from '@/components/layout/AuthLayout.vue'
 import MainLayout from '@/components/layout/MainLayout.vue'
 import ToastContainer from '@/components/common/ToastContainer.vue'
+import MeshGradientBackground from '@/components/effects/MeshGradientBackground.vue'
 
 const route = useRoute()
 const uiStore = useUiStore()
@@ -37,6 +38,7 @@ onUnmounted(() => window.removeEventListener('mousemove', onMouseMove))
 </script>
 
 <template>
+  <MeshGradientBackground />
   <ToastContainer />
   <transition name="layout" mode="out-in">
     <AuthLayout v-if="layout === 'auth'">

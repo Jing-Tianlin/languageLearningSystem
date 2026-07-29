@@ -1,0 +1,20 @@
+{
+  "name": "Amazing Teaching · 多语言学习平台",
+  "short_name": "多语学习",
+  "description": "多语言学习平台：背单词、语法、阅读、写作一站式训练",
+  "lang": "zh-CN",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f4f1ea",
+  "theme_color": "#6e7a6b",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "48x48 64x64 128x128 256x256",
+      "type": "image/x-icon",
+      "purpose": "any"
+    }
+  ]
+}

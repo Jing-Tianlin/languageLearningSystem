@@ -6,8 +6,7 @@
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import { getExamLevels, getLevelLabel } from '@/data/examLevels'
-import { API_BASE_URL } from '@/config'
+import { getExamLevels } from '@/data/examLevels'
 import LetterSwapTitle from '@/components/effects/LetterSwapTitle.vue'
 
 const router = useRouter()
@@ -88,22 +87,15 @@ async function handleRegister() {
   }
   loading.value = true
   try {
-    const newUser = await authStore.register({
+    await authStore.register({
       username: regUsername.value,
       password: regPassword.value,
       nickname: regNickname.value || regUsername.value,
       email: regEmail.value.trim() || undefined,
     })
-    // 注册成功后设置语言和等级
+    // 注册成功后设置语言和等级（setTargetLanguage/setTargetLevel 会自动同步到后端）
     authStore.setTargetLanguage(selectedLang.value)
     authStore.setTargetLevel(selectedLevel.value !== null ? selectedLevel.value : -1)
-    // 同步到用户表（失败也不影响注册）
-    try {
-      await fetch(`${API_BASE_URL}/user/users`, {
-        method: 'PUT', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: newUser.id, currentLangCode: selectedLang.value }),
-      })
-    } catch (e) { /* 非关键 */ }
     successMsg.value = '注册成功！正在跳转...'
     setTimeout(() => router.push('/'), 800)
   } catch (e) {
@@ -123,7 +115,7 @@ function toggleMode() {
   <div class="login-page">
     <div class="login-card">
       <div class="login-header">
-        <LetterSwapTitle :text="pageTitle" tag="h1" color="#5a7d96" />
+        <LetterSwapTitle :text="pageTitle" tag="h1" color="#3e5a6d" />
         <p class="login-subtitle">{{ isRegister ? '创建你的学习账号' : '多语言学习平台' }}</p>
       </div>
 
@@ -138,7 +130,7 @@ function toggleMode() {
           <input v-model="loginPassword" type="password" placeholder="请输入密码" autocomplete="current-password" />
         </div>
         <p v-if="errorMsg" class="login-error">{{ errorMsg }}</p>
-        <button type="submit" class="login-btn" :disabled="loading">
+        <button type="submit" class="login-btn btn btn-primary btn-block btn-lg" :disabled="loading">
           {{ loading ? '登录中...' : '登 录' }}
         </button>
         <p class="switch-hint">
@@ -175,16 +167,16 @@ function toggleMode() {
           <p class="reg-hint">选择你要学习的语言和等级</p>
           <div class="lang-grid">
             <button v-for="l in langList" :key="l.code"
-              class="lang-opt" :class="{ active: selectedLang === l.code }"
+              class="lang-opt btn" :class="selectedLang === l.code ? 'btn-secondary' : 'btn-ghost'"
               @click.prevent="selectedLang = l.code">
               <span class="lang-flag">{{ l.flag }}</span>
               <span class="lang-name">{{ l.name }}</span>
             </button>
           </div>
           <div class="level-grid">
-            <button class="level-opt" :class="{ active: selectedLevel === -1 }" @click.prevent="selectedLevel = -1">全部等级</button>
+            <button class="level-opt btn" :class="selectedLevel === -1 ? 'btn-secondary' : 'btn-ghost'" @click.prevent="selectedLevel = -1">全部等级</button>
             <button v-for="lv in examLevels" :key="lv.value"
-              class="level-opt" :class="{ active: selectedLevel === lv.value }"
+              class="level-opt btn" :class="selectedLevel === lv.value ? 'btn-secondary' : 'btn-ghost'"
               @click.prevent="selectedLevel = lv.value">
               {{ lv.examLabel }} · {{ lv.examName }}
             </button>
@@ -193,7 +185,7 @@ function toggleMode() {
 
         <p v-if="errorMsg" class="login-error">{{ errorMsg }}</p>
         <p v-if="successMsg" class="login-success">{{ successMsg }}</p>
-        <button type="submit" class="login-btn" :disabled="loading">
+        <button type="submit" class="login-btn btn btn-primary btn-block btn-lg" :disabled="loading">
           {{ loading ? '注册中...' : step === 1 ? '下一步 →' : '完成注册' }}
         </button>
         <p class="switch-hint">
@@ -212,152 +204,128 @@ function toggleMode() {
 }
 .login-card {
   width: 100%;
-  background: rgba(255, 255, 255, 0.88);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(0, 0, 0, 0.06);
-  border-radius: 24px;
-  padding: 40px 38px;
-  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.08);
+  background: var(--color-bg-card);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 48px 40px 38px;
+  box-shadow: var(--shadow-lg);
 }
 
 .login-header {
   text-align: center;
-  margin-bottom: 30px;
+  margin-bottom: 34px;
 }
 
 .login-header :deep(.letter-swap-title) {
-  font-size: 28px;
-  font-weight: 800;
-  margin-bottom: 8px;
+  font-size: 30px;
+  font-weight: 600;
+  font-family: var(--font-heading);
+  letter-spacing: 0.3px;
+  margin-bottom: 10px;
 }
 
 .login-subtitle {
-  font-size: 14px;
-  color: #888;
+  font-size: 13.5px;
+  color: var(--color-text-muted);
+  letter-spacing: 0.6px;
 }
 
 .login-form {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 18px;
 }
 
 .input-group {
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 7px;
 }
 
 .input-group label {
   font-size: 13px;
-  color: #555;
-  font-weight: 600;
+  color: var(--color-text-secondary);
+  font-weight: 500;
+  letter-spacing: 0.4px;
 }
 
 .input-group input {
-  padding: 12px 16px;
-  border-radius: 12px;
-  border: 1.5px solid #e5e5e5;
-  background: #fafafa;
-  color: #1a1028;
+  padding: 13px 15px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border-hover);
+  background: #fff;
+  color: var(--color-text);
   font-size: 15px;
   outline: none;
   transition: border-color 0.25s, box-shadow 0.25s;
 }
 
 .input-group input::placeholder {
-  color: #c0c0c0;
+  color: var(--color-text-muted);
 }
 
 .input-group input:focus {
-  border-color: #7c9db5;
-  box-shadow: 0 0 0 3px rgba(124, 157, 181, 0.12);
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(110, 122, 107, 0.1);
 }
 
 .login-error {
-  color: #e74c3c;
+  color: #a85a4c;
   font-size: 13px;
   text-align: center;
-  background: #fef0ef;
-  padding: 8px 14px;
-  border-radius: 8px;
+  background: #faf4f2;
+  padding: 9px 14px;
+  border-radius: var(--radius-sm);
 }
 
 .login-success {
-  color: #27ae60;
+  color: #5c7248;
   font-size: 13px;
   text-align: center;
-  background: #eefaf3;
-  padding: 8px 14px;
-  border-radius: 8px;
+  background: #f4f7f0;
+  padding: 9px 14px;
+  border-radius: var(--radius-sm);
 }
 
 .login-btn {
-  padding: 14px;
-  border-radius: 12px;
-  border: none;
-  background: linear-gradient(135deg, #7c9db5, #5a7d96);
-  color: #fff;
-  font-size: 16px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: opacity 0.3s, transform 0.25s ease, box-shadow 0.25s;
-  font-family: var(--font-heading);
-  letter-spacing: 0.5px;
-  box-shadow: 0 4px 16px rgba(90, 125, 150, 0.25);
-}
-
-.login-btn:hover:not(:disabled) {
-  opacity: 0.92;
-  transform: translateY(-2px);
-  box-shadow: 0 6px 24px rgba(90, 125, 150, 0.35);
-}
-
-.login-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  transform: none;
-  box-shadow: none;
+  letter-spacing: 1.5px;
 }
 
 .switch-hint {
   text-align: center;
-  margin-top: 6px;
+  margin-top: 4px;
   font-size: 13px;
-  color: #aaa;
+  color: var(--color-text-muted);
 }
 
 .switch-hint a {
-  color: #5a7d96;
+  color: var(--color-gold);
   text-decoration: none;
   font-weight: 600;
 }
 
 .switch-hint a:hover {
   text-decoration: underline;
-  color: #4a6d86;
+  color: var(--color-gold-deep);
 }
 
 /* 注册第二步：语言等级选择 */
-.reg-hint { text-align: center; font-size: 14px; color: #888; margin-bottom: 4px; }
+.reg-hint { text-align: center; font-size: 14px; color: var(--color-text-secondary); margin-bottom: 6px; }
 
-.lang-grid { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-bottom: 14px; }
+.lang-grid { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-bottom: 16px; }
 .lang-opt {
-  display: flex; flex-direction: column; align-items: center; gap: 4px;
-  padding: 10px 14px; border-radius: 12px; border: 1.5px solid #ddd;
-  background: rgba(255,255,255,0.6); cursor: pointer; transition: all 0.2s;
-  min-width: 60px;
+  display: flex; flex-direction: column; align-items: center; gap: 5px;
+  min-width: 66px;
 }
-.lang-opt.active { border-color: #5a7d96; background: rgba(90,125,150,0.06); }
 .lang-flag { font-size: 24px; }
-.lang-name { font-size: 12px; color: #666; font-weight: 500; }
+.lang-name { font-size: 12px; color: var(--color-text-secondary); font-weight: 500; }
 
-.level-grid { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
+.level-grid { display: flex; flex-direction: column; gap: 7px; margin-bottom: 10px; }
 .level-opt {
-  padding: 10px 14px; border-radius: 10px; border: 1.5px solid #ddd;
-  background: rgba(255,255,255,0.6); font-size: 13px; font-weight: 500;
-  color: #666; cursor: pointer; text-align: center; transition: all 0.2s;
+  font-size: 13px; font-weight: 500;
+  color: var(--color-text-secondary); cursor: pointer; text-align: center;
 }
-.level-opt.active { border-color: #5a7d96; color: #5a7d96; background: rgba(90,125,150,0.06); font-weight: 600; }
+.level-opt.btn-secondary { color: var(--color-gold); border-color: var(--color-gold); background: rgba(176, 124, 79, 0.06); font-weight: 600; }
 </style>

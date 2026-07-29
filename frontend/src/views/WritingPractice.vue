@@ -20,8 +20,8 @@ watch(() => authStore.targetLanguage, (newLang) => {
 })
 
 const writingLevels = [
-  { level: 1, label: '仿写', desc: '替换结构，保持语法', icon: '✎', color: '#7c9db5' },
-  { level: 3, label: '自由写作', desc: 'AI 出题自由发挥', icon: '✦', color: '#8e44ad' },
+  { level: 1, label: '仿写', desc: '替换结构，保持语法', icon: 'pencil', color: '#7c9db5' },
+  { level: 3, label: '自由写作', desc: 'AI 出题自由发挥', icon: 'sparkles', color: '#8e44ad' },
 ]
 
 function mapTargetLevelToWriting(targetLevel) {
@@ -226,12 +226,11 @@ async function saveScoreToHistory() {
     <div class="wp-mode-switch">
       <button
         v-for="lv in writingLevels" :key="lv.level"
-        class="wp-mode-btn"
-        :class="{ active: currentLevel === lv.level }"
-        :style="currentLevel === lv.level ? { borderColor: lv.color, background: lv.color + '14', color: lv.color } : {}"
+        class="btn"
+        :class="currentLevel === lv.level ? 'btn-primary' : 'btn-ghost'"
         @click="loadPrompt(lv.level)"
       >
-        <span class="wp-mode-icon">{{ lv.icon }}</span>
+        <span class="wp-mode-icon icon-svg" :class="lv.icon" />
         <div class="wp-mode-text">
           <span class="wp-mode-label">{{ lv.label }}</span>
           <span class="wp-mode-desc">{{ lv.desc }}</span>
@@ -247,7 +246,7 @@ async function saveScoreToHistory() {
           :placeholder="currentLevel === 1 ? '输入替换主题，留空随机...' : '输入写作主题，留空由 AI 生成...'"
           @keyup.enter="aiGeneratePrompt(currentLevel)" />
       </div>
-      <button class="wp-ai-btn" :disabled="aiGenerating" @click="aiGeneratePrompt(currentLevel)">
+      <button class="btn btn-primary" :disabled="aiGenerating" @click="aiGeneratePrompt(currentLevel)">
         <span v-if="!aiGenerating">生成题目</span>
         <span v-else class="wp-ai-loading">生成中</span>
       </button>
@@ -296,14 +295,14 @@ async function saveScoreToHistory() {
           </div>
         </div>
         <p v-if="pasteWarning" class="wp-paste-warn">请原创写作，勿粘贴外部文本</p>
-        <button class="wp-submit-btn" :disabled="!submittedText.trim() || submitLoading" @click="submit">
+        <button class="btn btn-primary btn-lg btn-block" :disabled="!submittedText.trim() || submitLoading" @click="submit">
           {{ submitLoading ? '提交中...' : '提交写作' }}
         </button>
       </div>
 
       <!-- 已提交 -->
       <div v-else class="wp-done-area">
-        <div class="wp-done-check" :class="{ history: isViewingHistory }">{{ isViewingHistory ? '📖' : '✓' }}</div>
+        <div class="wp-done-check" :class="{ history: isViewingHistory }"><span v-if="isViewingHistory" class="icon-svg book" /><span v-else class="icon-svg check" /></div>
         <h3>{{ isViewingHistory ? '历史写作' : '写作已提交' }}</h3>
 
         <!-- 原文展示 -->
@@ -311,7 +310,7 @@ async function saveScoreToHistory() {
 
         <div v-if="!aiScore && !isViewingHistory" class="wp-score-ask">
           <p>让 AI 为你的作文打分</p>
-          <button class="wp-score-btn" :disabled="scoreLoading" @click="requestAIScore">
+          <button class="btn btn-secondary" :disabled="scoreLoading" @click="requestAIScore">
             {{ scoreLoading ? '评分中...' : 'AI 智能评分' }}
           </button>
         </div>
@@ -349,22 +348,22 @@ async function saveScoreToHistory() {
             <h4>修改建议</h4>
             <div v-for="(s, i) in aiScore.suggestions" :key="i" class="wp-suggestion">{{ i + 1 }}. {{ s }}</div>
           </div>
-          <button class="wp-save-score-btn" @click="saveScoreToHistory">保存评分记录</button>
+          <button class="btn btn-secondary" @click="saveScoreToHistory">保存评分记录</button>
         </div>
 
-        <button class="wp-retry-btn" @click="loadPrompt(currentLevel)">再写一次</button>
+        <button class="btn btn-secondary" @click="loadPrompt(currentLevel)">再写一次</button>
       </div>
     </div>
 
     <!-- 空态 -->
     <div v-else-if="!loading && !error" class="wp-empty">
-      <div class="wp-empty-icon">✍</div>
+      <div class="wp-empty-icon"><span class="icon-svg pen" /></div>
       <p>选择一个模式，或使用 AI 生成专属题目</p>
     </div>
 
     <!-- 写作历史 -->
     <section class="wp-history">
-      <button class="wp-history-toggle" @click="showWritingHistory = !showWritingHistory; if (showWritingHistory) loadWritingHistory()">
+      <button class="btn btn-ghost btn-block" @click="showWritingHistory = !showWritingHistory; if (showWritingHistory) loadWritingHistory()">
         <span>学习记录</span>
         <span class="wp-toggle-arrow" :class="{ open: showWritingHistory }">▾</span>
       </button>
@@ -518,6 +517,7 @@ async function saveScoreToHistory() {
   display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: 700;
   box-shadow: 0 4px 16px rgba(34,197,94,0.25);
 }
+.wp-done-check .icon-svg::after { background: #fff; }
 .wp-done-area h3 { margin: 0 0 16px; font-size: 20px; font-weight: 700; color: #334155; }
 
 .wp-submitted-view {

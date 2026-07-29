@@ -3,7 +3,7 @@ package com.cupk.service;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.cupk.mapper.*;
 import com.cupk.pojo.*;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -18,14 +18,12 @@ import java.util.*;
  * - 答错即降级，重回复习队列
  */
 @Service
+@RequiredArgsConstructor
 public class InspectionService {
 
-    @Autowired
-    private UserProgressMapper userProgressMapper;
-    @Autowired
-    private VocabularyMapper vocabularyMapper;
-    @Autowired
-    private InspectionLogMapper inspectionLogMapper;
+    private final UserProgressMapper userProgressMapper;
+    private final VocabularyMapper vocabularyMapper;
+    private final InspectionLogMapper inspectionLogMapper;
 
     /**
      * 检查用户是否需要巡检

@@ -4,9 +4,10 @@ import com.cupk.common.Result;
 import com.cupk.service.GrammarLessonService;
 import com.cupk.service.GrammarPracticeService;
 import com.cupk.service.GrammarService;
+import com.cupk.util.AuthUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
@@ -17,18 +18,16 @@ import java.util.*;
  */
 @RestController
 @RequestMapping("/grammar")
+@RequiredArgsConstructor
 public class GrammarController {
 
     private static final Logger log = LoggerFactory.getLogger(GrammarController.class);
 
-    @Autowired
-    private GrammarService grammarService;
+    private final GrammarService grammarService;
 
-    @Autowired
-    private GrammarLessonService grammarLessonService;
+    private final GrammarLessonService grammarLessonService;
 
-    @Autowired
-    private GrammarPracticeService grammarPracticeService;
+    private final GrammarPracticeService grammarPracticeService;
 
     // ==================== 语法教程 ====================
 
@@ -64,10 +63,11 @@ public class GrammarController {
      */
     @PostMapping("/record")
     public Result<String> recordPractice(@RequestBody Map<String, Object> body) {
-        Long userId = parseLong(body.get("userId"));
+        Long userId = AuthUtil.getCurrentUserId();
+        if (userId == null) return Result.error(401, "未登录");
         Long practiceId = parseLong(body.get("practiceId"));
-        if (userId == null || practiceId == null) {
-            return Result.error(400, "缺少必要参数 userId 或 practiceId");
+        if (practiceId == null) {
+            return Result.error(400, "缺少必要参数 practiceId");
         }
 
         Boolean isCorrect = Boolean.TRUE.equals(body.get("isCorrect"));
@@ -80,26 +80,30 @@ public class GrammarController {
 
     /**
      * 获取用户某语言的练习统计
-     * GET /grammar/stats?userId=1&langCode=en
+     * GET /grammar/stats?langCode=en
      */
     @GetMapping("/stats")
     public Result<Map<String, Object>> getStats(
-            @RequestParam Long userId,
+            @RequestParam(required = false) Long userId,
             @RequestParam(defaultValue = "en") String langCode) {
-        Map<String, Object> stats = grammarPracticeService.getStats(userId, langCode);
+        Long currentUserId = AuthUtil.getCurrentUserId();
+        if (currentUserId == null) return Result.error(401, "未登录");
+        Map<String, Object> stats = grammarPracticeService.getStats(currentUserId, langCode);
         return Result.success(stats);
     }
 
     /**
      * 获取用户最近练习趋势
-     * GET /grammar/trend?userId=1&langCode=en&days=7
+     * GET /grammar/trend?langCode=en&days=7
      */
     @GetMapping("/trend")
     public Result<List<Map<String, Object>>> getTrend(
-            @RequestParam Long userId,
+            @RequestParam(required = false) Long userId,
             @RequestParam(defaultValue = "en") String langCode,
             @RequestParam(defaultValue = "7") int days) {
-        List<Map<String, Object>> trend = grammarPracticeService.getRecentRecords(userId, langCode, days);
+        Long currentUserId = AuthUtil.getCurrentUserId();
+        if (currentUserId == null) return Result.error(401, "未登录");
+        List<Map<String, Object>> trend = grammarPracticeService.getRecentRecords(currentUserId, langCode, days);
         return Result.success(trend);
     }
 
@@ -108,12 +112,11 @@ public class GrammarController {
     /**
      * 提交语法题答案校验
      * POST /grammar/check
-     * Body: { userId:1, errorType:"TENSE_ERROR", correct:false }
+     * Body: { errorType:"TENSE_ERROR", correct:false }
      * 返回: { correct:false, ruleCard:"动词时态错误..." }
      */
     @PostMapping("/check")
     public Result<Map<String, Object>> checkAnswer(@RequestBody Map<String, Object> body) {
-        Long userId = parseLong(body.get("userId"));
         String errorType = getString(body, "errorType", "TENSE_ERROR");
         Boolean correct = Boolean.TRUE.equals(body.get("correct"));
 
@@ -127,11 +130,13 @@ public class GrammarController {
 
     /**
      * 获取顽固薄弱点
-     * GET /grammar/stubborn?userId=1
+     * GET /grammar/stubborn
      */
     @GetMapping("/stubborn")
-    public Result<Map<String, Object>> getStubborn(@RequestParam Long userId) {
-        List<String> tags = grammarService.getStubbornTags(userId);
+    public Result<Map<String, Object>> getStubborn(@RequestParam(required = false) Long userId) {
+        Long currentUserId = AuthUtil.getCurrentUserId();
+        if (currentUserId == null) return Result.error(401, "未登录");
+        List<String> tags = grammarService.getStubbornTags(currentUserId);
         Map<String, Object> result = new HashMap<>();
         result.put("stubbornTags", tags);
         result.put("count", tags.size());

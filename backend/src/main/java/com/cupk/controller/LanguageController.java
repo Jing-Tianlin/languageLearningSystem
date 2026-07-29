@@ -8,14 +8,15 @@ import com.cupk.pojo.Language;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/language")
+@RequiredArgsConstructor
 public class LanguageController {
     private static final Logger log = LoggerFactory.getLogger(LanguageController.class);
-    @Autowired
-    private LanguageMapper languageMapper;
+    private final LanguageMapper languageMapper;
 
     @GetMapping("/languages")
     public Result<Page<Language>> selectPages(@RequestParam(defaultValue = "") String nameCn,

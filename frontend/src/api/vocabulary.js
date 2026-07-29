@@ -10,6 +10,9 @@ export const vocabularyApi = {
   createVocabulary(data) {
     return client.post('/vocabulary/vocabularies', data)
   },
+  batchImportVocabulary(list) {
+    return client.post('/vocabulary/vocabularies/batch', list)
+  },
   updateVocabulary(data) {
     return client.put('/vocabulary/vocabularies', data)
   },

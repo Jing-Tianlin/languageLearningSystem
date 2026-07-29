@@ -1,10 +1,8 @@
 <script setup>
-import SimplexNoiseBackground from '@/components/effects/SimplexNoiseBackground.vue'
 </script>
 
 <template>
   <div class="auth-layout">
-    <SimplexNoiseBackground />
     <div class="auth-content">
       <slot />
     </div>

@@ -7,9 +7,10 @@ import com.cupk.mapper.UserProgressMapper;
 import com.cupk.mapper.VocabularyMapper;
 import com.cupk.pojo.UserProgress;
 import com.cupk.pojo.Vocabulary;
+import com.cupk.util.AuthUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -18,16 +19,13 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/vocabulary")
+@RequiredArgsConstructor
 public class VocabularyController {
     private static final Logger log = LoggerFactory.getLogger(VocabularyController.class);
-    @Autowired
-    private VocabularyMapper vocabularyMapper;
-    @Autowired
-    private UserProgressMapper progressMapper;
-    @Autowired
-    private com.cupk.service.DeepSeekService deepSeekService;
-    @Autowired
-    private com.cupk.service.LearningDataService learningDataService;
+    private final VocabularyMapper vocabularyMapper;
+    private final UserProgressMapper progressMapper;
+    private final com.cupk.service.DeepSeekService deepSeekService;
+    private final com.cupk.service.LearningDataService learningDataService;
 
     @GetMapping("/vocabularies")
     public Result<Page<Vocabulary>> selectPages(@RequestParam(defaultValue = "") String word,
@@ -78,6 +76,53 @@ public class VocabularyController {
         return Result.error("新增失败");
     }
 
+    /**
+     * 批量导入词汇（CSV/逐行文本解析后的结构化数据）
+     * 去重规则：同语言下单词已存在（忽略大小写）则跳过，不重复导入
+     * POST /vocabulary/vocabularies/batch
+     */
+    @PostMapping("/vocabularies/batch")
+    public Result<Map<String, Object>> batchInsert(@RequestBody List<Vocabulary> list) {
+        if (list == null || list.isEmpty()) {
+            return Result.error(400, "导入数据为空");
+        }
+        int added = 0;
+        int skipped = 0;
+        List<String> skippedWords = new ArrayList<>();
+        for (Vocabulary v : list) {
+            String word = v.getWord() == null ? "" : v.getWord().trim();
+            if (word.isEmpty()) {
+                skipped++;
+                continue;
+            }
+            String langCode = v.getLangCode() == null || v.getLangCode().trim().isEmpty() ? "en" : v.getLangCode().trim();
+            // 大小写不敏感去重：同语言下已存在相同单词则跳过
+            Long exists = vocabularyMapper.selectCount(new QueryWrapper<Vocabulary>()
+                    .eq("lang_code", langCode)
+                    .apply("LOWER(word) = LOWER({0})", word));
+            if (exists != null && exists > 0) {
+                skipped++;
+                skippedWords.add(word);
+                continue;
+            }
+            v.setId(null);
+            v.setWord(word);
+            v.setLangCode(langCode);
+            try {
+                vocabularyMapper.insert(v);
+                added++;
+            } catch (Exception e) {
+                log.warn("批量导入单词失败: {} - {}", word, e.getMessage());
+                skipped++;
+            }
+        }
+        Map<String, Object> result = new HashMap<>();
+        result.put("added", added);
+        result.put("skipped", skipped);
+        result.put("skippedWords", skippedWords);
+        return Result.success(result);
+    }
+
     @PutMapping("/vocabularies")
     public Result<Void> update(@RequestBody Vocabulary vocabulary) {
         int rows = vocabularyMapper.updateById(vocabulary);
@@ -97,12 +142,12 @@ public class VocabularyController {
     }
 
     /**
-     * 智能选词接口（基于艾宾浩斯遗忘曲线）
+     * 智能选词接口（商业化 SRS：按到期时间优先出队）
      * GET /vocabulary/smart-select?userId=1&langCode=en&count=20&mode=mix
-     * 
+     *
      * mode 可选值:
-     * - mix: 混合模式（60%待复习 + 30%新词 + 10%已掌握巩固）
-     * - review: 只复习过期单词
+     * - mix: 混合模式（优先今日到期 → 新词 → 薄弱词 → 已掌握巩固）
+     * - review: 只复习过期/今日到期单词
      * - new: 只学习新词
      * - weak: 只学习薄弱词
      */
@@ -112,6 +157,9 @@ public class VocabularyController {
             @RequestParam(defaultValue = "en") String langCode,
             @RequestParam(defaultValue = "20") Integer count,
             @RequestParam(defaultValue = "mix") String mode) {
+
+        // 用户相关进度一律取 token 中的身份
+        Long currentUserId = AuthUtil.getCurrentUserId();
 
         QueryWrapper<Vocabulary> vocabQuery = new QueryWrapper<>();
         vocabQuery.eq("lang_code", langCode);
@@ -124,9 +172,9 @@ public class VocabularyController {
         }
 
         Map<Long, UserProgress> progressMap = new HashMap<>();
-        if (userId != null) {
+        if (currentUserId != null) {
             QueryWrapper<UserProgress> progressQuery = new QueryWrapper<>();
-            progressQuery.eq("user_id", userId);
+            progressQuery.eq("user_id", currentUserId);
             progressQuery.eq("lang_code", langCode);
             List<UserProgress> progresses = progressMapper.selectList(progressQuery);
             for (UserProgress p : progresses) {
@@ -136,83 +184,93 @@ public class VocabularyController {
 
         LocalDateTime now = LocalDateTime.now();
 
-        List<Vocabulary> expiredList = new ArrayList<>();
-        List<Vocabulary> newList = new ArrayList<>();
-        List<Vocabulary> weakList = new ArrayList<>();
-        List<Vocabulary> masteredList = new ArrayList<>();
+        List<VocabWithPriority> expiredList = new ArrayList<>();
+        List<VocabWithPriority> newList = new ArrayList<>();
+        List<VocabWithPriority> weakList = new ArrayList<>();
+        List<VocabWithPriority> masteredList = new ArrayList<>();
 
         for (Vocabulary v : allVocabs) {
             UserProgress p = progressMap.get(v.getId());
             if (p == null) {
-                newList.add(v);
+                newList.add(new VocabWithPriority(v, Integer.MAX_VALUE, 0));
             } else {
                 Integer mastery = p.getMasteryLevel() != null ? p.getMasteryLevel() : 0;
                 Integer fam = p.getFamiliarity() != null ? p.getFamiliarity() : 0;
                 LocalDateTime nextReview = p.getNextReviewTime();
 
                 if (nextReview != null && nextReview.isBefore(now)) {
-                    expiredList.add(v);
+                    // 越早到期优先级越高（秒数差越小越靠前）
+                    long overdueSeconds = java.time.Duration.between(nextReview, now).getSeconds();
+                    expiredList.add(new VocabWithPriority(v, (int) Math.min(overdueSeconds / 60, Integer.MAX_VALUE), mastery));
                 } else if (mastery <= 1 || fam < 30) {
-                    weakList.add(v);
+                    weakList.add(new VocabWithPriority(v, Integer.MAX_VALUE / 2, mastery));
                 } else if (mastery >= 3 && fam >= 80) {
-                    masteredList.add(v);
+                    masteredList.add(new VocabWithPriority(v, Integer.MAX_VALUE, mastery));
                 }
             }
         }
+
+        // SRS 优先级：到期时间升序（越过期越先）
+        expiredList.sort(Comparator.comparingInt(a -> a.priority));
+        Collections.shuffle(newList);
+        // 薄弱词按掌握度升序（越薄弱越先）
+        weakList.sort(Comparator.comparingInt(a -> a.mastery));
+        Collections.shuffle(masteredList);
 
         List<Vocabulary> result = new ArrayList<>();
 
         switch (mode) {
             case "review":
-                result.addAll(shuffleAndLimit(expiredList, count));
+                result.addAll(limitVocab(expiredList, count));
                 break;
             case "new":
-                result.addAll(shuffleAndLimit(newList, count));
+                result.addAll(limitVocab(newList, count));
                 break;
             case "weak":
-                result.addAll(shuffleAndLimit(weakList, count));
+                result.addAll(limitVocab(weakList, count));
                 if (result.size() < count) {
-                    result.addAll(shuffleAndLimit(expiredList, count - result.size()));
+                    result.addAll(limitVocab(expiredList, count - result.size()));
                 }
                 break;
             case "mix":
             default:
-                // 自适应比例：根据用户掌握率动态调整
-                double masteryRate = (userId != null) ? learningDataService.getUserMasteryRate(userId) : 0.0;
-                int reviewPct, newPct, masteredPct;
-                if (masteryRate >= 0.6) {
-                    // 高掌握率：集中复习巩固，少量新词
-                    reviewPct = 70; newPct = 15; masteredPct = 15;
-                } else if (masteryRate >= 0.3) {
-                    // 中掌握率：均衡分配
-                    reviewPct = 50; newPct = 35; masteredPct = 15;
-                } else {
-                    // 低掌握率/新手：大量新词，少量复习
-                    reviewPct = 30; newPct = 60; masteredPct = 10;
-                }
-                int reviewCount = Math.max(1, (count * reviewPct) / 100);
-                int newCount = Math.max(1, (count * newPct) / 100);
-                int masteredCountReal = count - reviewCount - newCount;
+                // 商业化 SRS 队列：今日到期优先，其次新词，再次薄弱词，最后已掌握巩固
+                int expiredCount = Math.min(expiredList.size(), (int) Math.round(count * 0.55));
+                int newCount = Math.min(newList.size(), (int) Math.round(count * 0.30));
+                int weakCount = Math.min(weakList.size(), count - expiredCount - newCount);
+                int masteredCount = count - expiredCount - newCount - weakCount;
 
-                result.addAll(shuffleAndLimit(expiredList, reviewCount));
-                if (result.size() < reviewCount) {
-                    result.addAll(shuffleAndLimit(weakList, reviewCount - result.size()));
-                }
-
-                result.addAll(shuffleAndLimit(newList, newCount));
-
-                if (masteredCountReal > 0 && !masteredList.isEmpty()) {
-                    result.addAll(shuffleAndLimit(masteredList, masteredCountReal));
+                result.addAll(limitVocab(expiredList, expiredCount));
+                result.addAll(limitVocab(newList, newCount));
+                result.addAll(limitVocab(weakList, weakCount));
+                if (masteredCount > 0) {
+                    result.addAll(limitVocab(masteredList, masteredCount));
                 }
                 break;
         }
 
-        Collections.shuffle(result);
         if (result.size() > count) {
             result = result.subList(0, count);
         }
 
         return Result.success(result);
+    }
+
+    /** 带 SRS 优先级的词汇包装 */
+    private static class VocabWithPriority {
+        final Vocabulary vocab;
+        final int priority;
+        final int mastery;
+        VocabWithPriority(Vocabulary vocab, int priority, int mastery) {
+            this.vocab = vocab;
+            this.priority = priority;
+            this.mastery = mastery;
+        }
+    }
+
+    private List<Vocabulary> limitVocab(List<VocabWithPriority> list, int limit) {
+        if (list == null || list.isEmpty() || limit <= 0) return new ArrayList<>();
+        return list.stream().limit(limit).map(vp -> vp.vocab).collect(Collectors.toList());
     }
 
     /**
@@ -250,7 +308,9 @@ public class VocabularyController {
                 langCode,
                 count
             );
-            distractors = (List<String>) aiResult.get("distractors");
+            @SuppressWarnings("unchecked")
+            List<String> aiDistractors = (List<String>) aiResult.get("distractors");
+            distractors = aiDistractors;
             aiGenerated = (Boolean) aiResult.get("aiGenerated");
         } else {
             distractors = Collections.emptyList();
@@ -294,8 +354,10 @@ public class VocabularyController {
         @SuppressWarnings("unchecked")
         List<Long> vocabIds = (List<Long>) body.get("vocabIds");
         String langCode = (String) body.getOrDefault("langCode", "en");
-        Integer count = (Integer) body.getOrDefault("count", 3);
-        Boolean useAI = (Boolean) body.getOrDefault("useAI", true);
+        Object countRaw = body.getOrDefault("count", 3);
+        Integer count = countRaw instanceof Number ? ((Number) countRaw).intValue() : 3;
+        Object useAIRaw = body.getOrDefault("useAI", true);
+        Boolean useAI = useAIRaw instanceof Boolean ? (Boolean) useAIRaw : true;
 
         if (vocabIds == null || vocabIds.isEmpty()) {
             return Result.error(400, "vocabIds 不能为空");
@@ -384,6 +446,9 @@ public class VocabularyController {
             @RequestParam(defaultValue = "en") String langCode,
             @RequestParam(required = false) Long userId) {
 
+        // 学习进度统计取 token 身份
+        Long currentUserId = AuthUtil.getCurrentUserId();
+
         QueryWrapper<Vocabulary> vocabQuery = new QueryWrapper<>();
         vocabQuery.eq("lang_code", langCode);
         long totalVocab = vocabularyMapper.selectCount(vocabQuery);
@@ -391,9 +456,9 @@ public class VocabularyController {
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("totalVocab", totalVocab);
 
-        if (userId != null) {
+        if (currentUserId != null) {
             QueryWrapper<UserProgress> progressQuery = new QueryWrapper<>();
-            progressQuery.eq("user_id", userId);
+            progressQuery.eq("user_id", currentUserId);
             progressQuery.eq("lang_code", langCode);
 
             long studiedCount = progressMapper.selectCount(progressQuery);
@@ -425,6 +490,7 @@ public class VocabularyController {
                 vocab.getWord(), vocab.getLangCode(), 1
             );
 
+            @SuppressWarnings("unchecked")
             List<Map<String, String>> sentences = (List<Map<String, String>>) aiResult.get("sentences");
             if (sentences != null && !sentences.isEmpty()) {
                 Map<String, String> first = sentences.get(0);
@@ -457,7 +523,8 @@ public class VocabularyController {
     public Result<Map<String, Object>> generateVocabularyBatch(@RequestBody Map<String, Object> body) {
         String langCode = (String) body.getOrDefault("langCode", "en");
         String level = (String) body.getOrDefault("level", "");
-        Integer count = (Integer) body.getOrDefault("count", 20);
+        Object countRaw = body.getOrDefault("count", 20);
+        Integer count = countRaw instanceof Number ? ((Number) countRaw).intValue() : 20;
         String category = (String) body.getOrDefault("category", "");
 
         if (level == null || level.isEmpty()) {

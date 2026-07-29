@@ -20,9 +20,10 @@ export const useGrammarStore = defineStore('grammar', () => {
   const practiceAnswers = ref({}) // { practiceId: { isCorrect, given } }
 
   // 长难句
-  const dailySentence = ref(null)
   const sentenceList = ref([])
-  const sentenceLevel = ref('')
+  const dailyIndex = ref(0)
+  // 每日一句 = 从全量列表顺序取，保证可切换
+  const displaySentence = computed(() => sentenceList.value[dailyIndex.value] || null)
 
   // 统计
   const stats = ref({ totalAttempts: 0, correctCount: 0, accuracy: 0 })
@@ -181,21 +182,27 @@ export const useGrammarStore = defineStore('grammar', () => {
   async function fetchSentences() {
     loading.value.sentences = true
     try {
-      const [dRes, lRes] = await Promise.all([
-        fetch(`${BASE}/sentences/daily?langCode=${lang.value}`),
-        fetch(`${BASE}/sentences/list?langCode=${lang.value}&level=${sentenceLevel.value}&limit=30`),
-      ])
-      const dJ = await dRes.json()
-      if (dJ.code === 200) dailySentence.value = dJ.data
-      const lJ = await lRes.json()
-      if (lJ.code === 200) sentenceList.value = lJ.data || []
+      const res = await fetch(`${BASE}/sentences/list?langCode=${lang.value}&limit=100`)
+      const json = await res.json()
+      if (json.code === 200) {
+        sentenceList.value = json.data || []
+        // 初始随机一句，之后可顺序切换
+        dailyIndex.value = sentenceList.value.length
+          ? Math.floor(Math.random() * sentenceList.value.length)
+          : 0
+      }
     } catch (e) {}
     finally { loading.value.sentences = false }
   }
 
-  function setSentenceLevel(level) {
-    sentenceLevel.value = sentenceLevel.value === level ? '' : level
-    fetchSentences()
+  // 切换每日一句（上一句 / 下一句，循环）
+  function prevDailySentence() {
+    if (!sentenceList.value.length) return
+    dailyIndex.value = (dailyIndex.value - 1 + sentenceList.value.length) % sentenceList.value.length
+  }
+  function nextDailySentence() {
+    if (!sentenceList.value.length) return
+    dailyIndex.value = (dailyIndex.value + 1) % sentenceList.value.length
   }
 
   // === 语言切换 ===
@@ -210,13 +217,14 @@ export const useGrammarStore = defineStore('grammar', () => {
   return {
     lang, tab, loading, lessons,
     practices, practiceLevel, practiceIndex, practiceAnswers,
-    dailySentence, sentenceList, sentenceLevel,
+    dailySentence: displaySentence, dailyIndex, sentenceList,
+    prevDailySentence, nextDailySentence,
     stats,
     aiPractices, aiLoading, hasAIPractices,
     currentPractices, totalQuestions, correctCount, answeredCount,
     fetchLessons, fetchPractices, recordAnswer, submitPracticeResult, checkAnswer,
     resetPractices, fetchStats,
-    fetchSentences, setSentenceLevel,
+    fetchSentences,
     setLang,
     generateAIQuestions, clearAIPractices,
   }

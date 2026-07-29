@@ -51,7 +51,8 @@ function reset() {
     <div class="chip-group">
       <button
         v-for="p in posCategories" :key="p.code"
-        class="chip" :class="{ active: pos === p.code }"
+        class="btn"
+        :class="pos === p.code ? 'btn-secondary btn-sm' : 'btn-ghost btn-sm'"
         @click="pos = p.code; apply()"
       >{{ p.name }}</button>
     </div>
@@ -59,8 +60,8 @@ function reset() {
     <!-- 搜索 -->
     <div class="search-row">
       <input v-model="word" placeholder="搜索单词..." @keyup.enter="apply" />
-      <button class="search-btn" @click="apply">搜索</button>
-      <button class="reset-btn" @click="reset">重置</button>
+      <button class="btn btn-primary btn-sm" @click="apply">搜索</button>
+      <button class="btn btn-secondary btn-sm" @click="reset">重置</button>
     </div>
   </div>
 </template>

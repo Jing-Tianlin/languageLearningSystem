@@ -2,9 +2,10 @@ package com.cupk.controller;
 
 import com.cupk.common.Result;
 import com.cupk.service.InspectionService;
+import com.cupk.util.AuthUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -12,12 +13,12 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/inspection")
+@RequiredArgsConstructor
 public class InspectionController {
 
     private static final Logger log = LoggerFactory.getLogger(InspectionController.class);
 
-    @Autowired
-    private InspectionService inspectionService;
+    private final InspectionService inspectionService;
 
     /**
      * 检查是否需要巡检
@@ -25,13 +26,15 @@ public class InspectionController {
      */
     @GetMapping("/check")
     public Result<Map<String, Object>> checkInspection(
-            @RequestParam Long userId,
+            @RequestParam(required = false) Long userId,
             @RequestParam(defaultValue = "") String langCode) {
-        boolean needed = inspectionService.needsInspection(userId);
+        Long currentUserId = AuthUtil.getCurrentUserId();
+        if (currentUserId == null) return Result.error(401, "未登录");
+        boolean needed = inspectionService.needsInspection(currentUserId);
         Map<String, Object> result = new java.util.HashMap<>();
         result.put("needsInspection", needed);
         if (needed) {
-            List<Map<String, Object>> questions = inspectionService.generateInspectionQuestions(userId, langCode);
+            List<Map<String, Object>> questions = inspectionService.generateInspectionQuestions(currentUserId, langCode);
             result.put("questions", questions);
         }
         return Result.success(result);
@@ -40,16 +43,19 @@ public class InspectionController {
     /**
      * 提交巡检结果
      * POST /inspection/submit
-     * Body: { userId: 1, results: [{ vocabId: 1, correct: true }, ...] }
+     * Body: { results: [{ vocabId: 1, correct: true }, ...] }
      */
     @PostMapping("/submit")
     public Result<Void> submitInspection(@RequestBody Map<String, Object> body) {
-        Long userId = Long.valueOf(body.get("userId").toString());
+        Long userId = AuthUtil.getCurrentUserId();
+        if (userId == null) return Result.error(401, "未登录");
         @SuppressWarnings("unchecked")
         List<Map<String, Object>> results = (List<Map<String, Object>>) body.get("results");
         if (results != null) {
             for (Map<String, Object> r : results) {
-                Long vocabId = Long.valueOf(r.get("vocabId").toString());
+                Object vocabIdRaw = r.get("vocabId");
+                if (vocabIdRaw == null) continue;
+                Long vocabId = Long.valueOf(vocabIdRaw.toString());
                 Boolean correct = (Boolean) r.get("correct");
                 inspectionService.submitInspectionResult(userId, vocabId, correct != null && correct);
             }

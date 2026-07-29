@@ -3,9 +3,10 @@ package com.cupk.controller;
 import com.cupk.common.Result;
 import com.cupk.mapper.FavoriteMapper;
 import com.cupk.pojo.Favorite;
+import com.cupk.util.AuthUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,14 +21,13 @@ import java.util.*;
  */
 @RestController
 @RequestMapping("/reading")
+@RequiredArgsConstructor
 public class ReadingController {
 
     private static final Logger log = LoggerFactory.getLogger(ReadingController.class);
 
-    @Autowired
-    private JdbcTemplate jdbcTemplate;
-    @Autowired
-    private FavoriteMapper favoriteMapper;
+    private final JdbcTemplate jdbcTemplate;
+    private final FavoriteMapper favoriteMapper;
 
     /**
      * 获取某语言某等级的文章列表
@@ -72,10 +72,13 @@ public class ReadingController {
      */
     @GetMapping("/article")
     public Result<Map<String, Object>> getArticle(
-            @RequestParam Long userId,
+            @RequestParam(required = false) Long userId,
             @RequestParam(defaultValue = "en") String langCode,
             @RequestParam(required = false) Integer levelNum,
             @RequestParam(required = false) Long articleId) {
+
+        // 用户身份取 token，用于自动推荐
+        Long currentUserId = AuthUtil.getCurrentUserId();
 
         // 如果指定了 articleId → 直接返回该文章
         if (articleId != null) {
@@ -109,7 +112,7 @@ public class ReadingController {
         }
 
         // 未指定等级 → 自动推荐（原逻辑）
-        return getRecommendedArticle(userId, langCode);
+        return getRecommendedArticle(currentUserId, langCode);
     }
 
     /** 自动推荐文章 */
@@ -227,8 +230,11 @@ public class ReadingController {
      */
     @PostMapping("/quiz")
     public Result<Map<String, Object>> submitQuiz(@RequestBody Map<String, Object> body) {
-        Long userId = Long.valueOf(body.get("userId").toString());
-        Long articleId = Long.valueOf(body.get("articleId").toString());
+        Long userId = AuthUtil.getCurrentUserId();
+        if (userId == null) return Result.error(401, "未登录");
+        Object articleIdRaw = body.get("articleId");
+        if (articleIdRaw == null) return Result.error(400, "articleId不能为空");
+        Long articleId = Long.valueOf(articleIdRaw.toString());
         int phase1Duration = body.containsKey("phase1Duration") ? ((Number) body.get("phase1Duration")).intValue() : 0;
         int phase2Duration = body.containsKey("phase2Duration") ? ((Number) body.get("phase2Duration")).intValue() : 0;
 
@@ -246,9 +252,8 @@ public class ReadingController {
 
         if (quizJson != null && !quizJson.isEmpty() && userAnswers != null) {
             try {
-                @SuppressWarnings("unchecked")
                 List<Map<String, Object>> questions =
-                    new com.fasterxml.jackson.databind.ObjectMapper().readValue(quizJson, List.class);
+                    new com.fasterxml.jackson.databind.ObjectMapper().readValue(quizJson, new com.fasterxml.jackson.core.type.TypeReference<List<Map<String, Object>>>() {});
                 total = questions.size();
 
                 for (int i = 0; i < total; i++) {
@@ -293,7 +298,7 @@ public class ReadingController {
             }
             jdbcTemplate.update(
                 "INSERT INTO reading_history (user_id, lang_code, article_title, article_level, quiz_score, quiz_total) VALUES (?,?,?,?,?,?)",
-                userId, body.getOrDefault("langCode", "").toString(), title, level, score, total);
+                userId, body.containsKey("langCode") && body.get("langCode") != null ? body.get("langCode").toString() : "", title, level, score, total);
         } catch (Exception e) {
             log.warn("保存阅读历史失败 userId={}, title={}", userId, title, e);
         }
@@ -312,9 +317,10 @@ public class ReadingController {
      */
     @PostMapping("/vocab-action")
     public Result<Map<String, Object>> vocabAction(@RequestBody Map<String, Object> body) {
-        Long userId = Long.valueOf(body.get("userId").toString());
-        String word = body.getOrDefault("word", "").toString();
-        String langCode = body.getOrDefault("langCode", "").toString();
+        Long userId = AuthUtil.getCurrentUserId();
+        if (userId == null) return Result.error(401, "未登录");
+        String word = String.valueOf(body.getOrDefault("word", ""));
+        String langCode = String.valueOf(body.getOrDefault("langCode", ""));
 
         if (word.isEmpty() || langCode.isEmpty()) {
             return Result.error(400, "单词和语种不能为空");

@@ -29,8 +29,12 @@ client.interceptors.response.use(
   },
   (error) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem('token')
-      window.location.href = '/login'
+      // 同步清理 authStore 状态（token/userId/偏好），避免登录态残留
+      import('@/stores/auth')
+        .then(({ useAuthStore }) => useAuthStore().logout())
+        .finally(() => {
+          window.location.href = '/login'
+        })
     }
     return Promise.reject(error)
   },

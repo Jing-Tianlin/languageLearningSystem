@@ -5,7 +5,7 @@ import com.cupk.mapper.VocabularyMapper;
 import com.cupk.pojo.Vocabulary;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -16,6 +16,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * 词汇修复服务 — 批量调用 AI 修复乱码词汇的释义/音标/例句/翻译
  */
 @Service
+@RequiredArgsConstructor
 public class VocabularyRepairService {
 
     private static final Logger log = LoggerFactory.getLogger(VocabularyRepairService.class);
@@ -23,10 +24,8 @@ public class VocabularyRepairService {
     private static final int BATCH_SIZE = 20;
     private static final long DELAY_BETWEEN_API_MS = 500;
 
-    @Autowired
-    private VocabularyMapper vocabularyMapper;
-    @Autowired
-    private DeepSeekService deepSeekService;
+    private final VocabularyMapper vocabularyMapper;
+    private final DeepSeekService deepSeekService;
 
     /**
      * 按语言批量修复乱码词汇

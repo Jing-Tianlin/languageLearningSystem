@@ -18,6 +18,8 @@ import { CanvasRenderer } from 'echarts/renderers'
 
 use([RadarChart, BarChart, PieChart, LineChart, TitleComponent, TooltipComponent, LegendComponent, GridComponent, CanvasRenderer])
 import LetterSwapTitle from '@/components/effects/LetterSwapTitle.vue'
+import GamificationPanel from '@/components/gamification/GamificationPanel.vue'
+import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
 import { API_BASE_URL } from '@/config'
 
 const authStore = useAuthStore()
@@ -172,9 +174,12 @@ function getLabel(k) { const m={spelling:'拼写',preposition:'介词',tense:'�
       <p class="page-sub">基于学习数据的智能分析</p>
     </div>
 
-    <div v-if="loading" class="loading">加载中...</div>
+    <LoadingSpinner v-if="loading" />
 
     <template v-else>
+      <!-- 游戏化激励 -->
+      <GamificationPanel />
+
       <!-- 概览 -->
       <div class="overview-grid">
         <div class="stat-card" v-for="s in [

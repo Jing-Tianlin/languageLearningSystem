@@ -359,14 +359,14 @@ async function aiGenerate() {
     <div v-if="pageState === 'list'" class="list-view">
       <!-- AI 生成入口 -->
       <div class="ai-entry">
-        <button class="ai-entry-btn" @click="showAIPanel = !showAIPanel">
+        <button class="btn btn-ghost" @click="showAIPanel = !showAIPanel">
           <span class="ai-entry-icon"></span>
           <span>AI 生成阅读文章</span>
           <span class="ai-entry-arrow" :class="{ open: showAIPanel }">▾</span>
         </button>
         <div v-if="showAIPanel" class="ai-panel">
           <input v-model="aiTopic" class="ai-input" placeholder="输入主题，如「旅行」「环保」... 留空则自动生成" @keyup.enter="aiGenerate" />
-          <button class="ai-submit" :disabled="aiGenerating" @click="aiGenerate">{{ aiGenerating ? '生成中...' : '开始生成' }}</button>
+          <button class="btn btn-primary" :disabled="aiGenerating" @click="aiGenerate">{{ aiGenerating ? '生成中...' : '开始生成' }}</button>
         </div>
       </div>
 
@@ -399,7 +399,7 @@ async function aiGenerate() {
 
       <!-- 阅读历史 -->
       <div class="history-block">
-        <button class="history-toggle" @click="showReadingHistory = !showReadingHistory; if (showReadingHistory) loadReadingHistory()">
+        <button class="btn btn-ghost btn-block" @click="showReadingHistory = !showReadingHistory; if (showReadingHistory) loadReadingHistory()">
           学习记录
           <span class="toggle-arrow" :class="{ open: showReadingHistory }">▾</span>
         </button>
@@ -419,7 +419,7 @@ async function aiGenerate() {
     <div v-if="pageState === 'reading'" class="reading-view">
       <!-- 顶栏 -->
       <div class="top-bar">
-        <button class="back-link" @click="resetToList">← 文章列表</button>
+        <button class="btn btn-secondary btn-sm" @click="resetToList">← 文章列表</button>
         <div class="top-info">
           <span class="top-level">{{ article?.level }}</span>
           <span class="top-divider">·</span>
@@ -459,7 +459,7 @@ async function aiGenerate() {
         <div v-if="phase === 1" class="reading-card">
           <h2 class="reading-title">{{ article.title }}</h2>
           <div class="reading-body" :class="{ en: currentLang === 'en' }">{{ article.content }}</div>
-          <button class="action-btn" @click="goToPhase2">
+          <button class="btn btn-primary" @click="goToPhase2">
             <span>进入精读</span>
             <span class="btn-arrow">→</span>
           </button>
@@ -484,7 +484,7 @@ async function aiGenerate() {
                   <span class="vl-def">{{ v.definition }}</span>
                 </div>
                 <button
-                  class="vl-add"
+                  class="btn btn-icon btn-ghost"
                   :class="{ added: favoritedWords.has(v.word.toLowerCase()) }"
                   @click="addToVocab(v.word)"
                   :title="favoritedWords.has(v.word.toLowerCase()) ? '已加入生词本' : '加入生词本'"
@@ -496,7 +496,7 @@ async function aiGenerate() {
             </div>
           </div>
 
-          <button class="action-btn" @click="goToPhase3">
+          <button class="btn btn-primary" @click="goToPhase3">
             <span>开始答题</span>
             <span class="btn-arrow">→</span>
           </button>
@@ -529,7 +529,7 @@ async function aiGenerate() {
             </div>
           </div>
 
-          <button v-if="quizFinished" class="action-btn" @click="submitQuizResult">查看结果</button>
+          <button v-if="quizFinished" class="btn btn-primary" @click="submitQuizResult">查看结果</button>
         </div>
 
         <!-- ===== 结果 ===== -->
@@ -553,13 +553,13 @@ async function aiGenerate() {
 
           <!-- 操作 -->
           <div class="result-actions">
-            <button class="action-btn" @click="resetToList">换一篇文章</button>
-            <button class="outline-btn" @click="phase = 1; startTimer(); quizFinished = false; quizAnswers = []">重读本文</button>
+            <button class="btn btn-primary" @click="resetToList">换一篇文章</button>
+            <button class="btn btn-secondary" @click="phase = 1; startTimer(); quizFinished = false; quizAnswers = []">重读本文</button>
           </div>
 
           <!-- AI 解析 -->
           <div class="analysis-block">
-            <button class="analysis-trigger" :disabled="analysisLoading" @click="analyzeArticle">
+            <button class="btn btn-secondary" :disabled="analysisLoading" @click="analyzeArticle">
               <span></span>
               <span>{{ analysisLoading ? 'AI 解析中...' : analysisResult ? '重新解析' : 'AI 阅读解析' }}</span>
             </button>
@@ -575,10 +575,10 @@ async function aiGenerate() {
         <div class="word-popup" :style="{ left: wordPos.x + 'px', top: wordPos.y + 'px' }" @click.stop>
           <div class="wp-head">
             <strong>{{ selectedWord.word }}</strong>
-            <button class="wp-close" @click="selectedWord = null">×</button>
+            <button class="btn btn-icon btn-ghost" @click="selectedWord = null">×</button>
           </div>
           <p class="wp-def">{{ selectedWord.definition }}</p>
-          <button class="wp-add" @click="addToVocab(selectedWord.word)">+ 加入生词本</button>
+          <button class="btn btn-primary btn-sm" @click="addToVocab(selectedWord.word)">+ 加入生词本</button>
         </div>
       </div>
     </Teleport>

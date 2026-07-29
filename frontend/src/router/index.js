@@ -56,12 +56,6 @@ const routes = [
     meta: { layout: 'main', requiresAuth: true },
   },
   {
-    path: '/practice',
-    name: 'DailyPractice',
-    component: () => import('@/views/DailyPractice.vue'),
-    meta: { layout: 'main', requiresAuth: true },
-  },
-  {
     path: '/stats',
     name: 'StatsDashboard',
     component: () => import('@/views/StatsDashboard.vue'),
@@ -89,7 +83,7 @@ const routes = [
     path: '/admin',
     name: 'Admin',
     component: () => import('@/views/AdminPage.vue'),
-    meta: { layout: 'main', requiresAuth: true },
+    meta: { layout: 'main', requiresAuth: true, requiresAdmin: true },
   },
   {
     path: '/linkage',
@@ -103,12 +97,6 @@ const routes = [
     component: () => import('@/views/AIAssistant.vue'),
     meta: { layout: 'main', requiresAuth: true },
   },
-  {
-    path: '/grammar-practice',
-    name: 'GrammarPractice',
-    component: () => import('@/views/GrammarPractice.vue'),
-    meta: { title: '语法练习', requiresAuth: true },
-  },
 ]
 
 const router = createRouter({
@@ -117,13 +105,29 @@ const router = createRouter({
 })
 
 // 全局导航守卫：未登录自动跳转到登录页
-router.beforeEach((to, from, next) => {
+router.beforeEach(async (to, from, next) => {
   const token = localStorage.getItem('token')
   if (to.meta.requiresAuth && !token) {
     next('/login')
   } else if (to.path === '/login' && token) {
     // 已登录用户访问登录页 → 直接进首页
     next('/')
+  } else if (to.meta.requiresAdmin) {
+    // 管理页仅 ROLE_ADMIN 可访问
+    const { useAuthStore } = await import('@/stores/auth')
+    const authStore = useAuthStore()
+    if (!authStore.user) {
+      try {
+        await authStore.fetchProfile()
+      } catch (e) {
+        /* fetchProfile 失败时内部已 logout */
+      }
+    }
+    if (!authStore.user?.roles?.includes('ROLE_ADMIN')) {
+      next('/')
+    } else {
+      next()
+    }
   } else {
     next()
   }

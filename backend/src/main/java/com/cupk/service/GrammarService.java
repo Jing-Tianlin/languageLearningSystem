@@ -5,7 +5,7 @@ import com.cupk.mapper.UserProgressMapper;
 import com.cupk.pojo.UserProgress;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -15,10 +15,10 @@ import java.util.*;
  * 核心功能: 错误聚类 / 顽固薄弱点检测 / 规则卡片生成
  */
 @Service
+@RequiredArgsConstructor
 public class GrammarService {
 
-    @Autowired
-    private UserProgressMapper userProgressMapper;
+    private final UserProgressMapper userProgressMapper;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 

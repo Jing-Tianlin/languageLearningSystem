@@ -26,8 +26,8 @@ public class AIController {
     public Result<Map<String, Object>> generateSentences(@RequestBody Map<String, Object> body) {
         List<String> knownWords = (List<String>) body.getOrDefault("knownWords", List.of());
         List<String> newWords = (List<String>) body.getOrDefault("newWords", List.of());
-        String lang = body.getOrDefault("langCode", "en").toString();
-        int count = body.containsKey("count") ? (Integer) body.get("count") : 3;
+        String lang = String.valueOf(body.getOrDefault("langCode", "en"));
+        int count = body.containsKey("count") ? ((Number) body.get("count")).intValue() : 3;
 
         Map<String, Object> result = aiService.generateIPlusOneSentences(knownWords, newWords, lang, count);
         return Result.success(result);
@@ -120,11 +120,10 @@ public class AIController {
 
     /** AI生成语法练习题 */
     @PostMapping("/generate-practices")
-    @SuppressWarnings("unchecked")
     public Result<List<Map<String, Object>>> generatePractices(@RequestBody Map<String, Object> body) {
-        String lang = body.getOrDefault("langCode", "en").toString();
-        int level = body.containsKey("level") ? (Integer) body.get("level") : 0;
-        int count = body.containsKey("count") ? (Integer) body.get("count") : 5;
+        String lang = String.valueOf(body.getOrDefault("langCode", "en"));
+        int level = body.containsKey("level") ? ((Number) body.get("level")).intValue() : 0;
+        int count = body.containsKey("count") ? ((Number) body.get("count")).intValue() : 5;
         List<Map<String, Object>> result = aiService.generateGrammarPractices(lang, level, count);
         return Result.success(result);
     }
@@ -132,9 +131,9 @@ public class AIController {
     /** AI生成写作题目 */
     @PostMapping("/generate-writing-prompt")
     public Result<Map<String, Object>> generateWritingPrompt(@RequestBody Map<String, Object> body) {
-        String langCode = body.getOrDefault("langCode", "en").toString();
-        int level = body.containsKey("level") ? Integer.parseInt(body.get("level").toString()) : 1;
-        String topic = body.getOrDefault("topic", "").toString();
+        String langCode = String.valueOf(body.getOrDefault("langCode", "en"));
+        int level = body.containsKey("level") && body.get("level") != null ? ((Number) body.get("level")).intValue() : 1;
+        String topic = String.valueOf(body.getOrDefault("topic", ""));
         Map<String, Object> result = aiService.generateWritingPrompt(langCode, level, topic);
         return Result.success(result);
     }
@@ -142,9 +141,9 @@ public class AIController {
     /** AI生成阅读文章 */
     @PostMapping("/generate-reading")
     public Result<Map<String, Object>> generateReading(@RequestBody Map<String, Object> body) {
-        String lang = body.getOrDefault("langCode", "en").toString();
-        int level = body.containsKey("level") ? (Integer) body.get("level") : 2;
-        String topic = body.getOrDefault("topic", "").toString();
+        String lang = String.valueOf(body.getOrDefault("langCode", "en"));
+        int level = body.containsKey("level") ? ((Number) body.get("level")).intValue() : 2;
+        String topic = String.valueOf(body.getOrDefault("topic", ""));
         Map<String, Object> result = aiService.generateReadingArticle(lang, level, topic);
         return Result.success(result);
     }

@@ -8,14 +8,15 @@ import com.cupk.pojo.Course;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/course")
+@RequiredArgsConstructor
 public class CourseController {
     private static final Logger log = LoggerFactory.getLogger(CourseController.class);
-    @Autowired
-    private CourseMapper courseMapper;
+    private final CourseMapper courseMapper;
 
     @GetMapping("/courses")
     public Result<Page<Course>> selectPages(@RequestParam(defaultValue = "") String title,

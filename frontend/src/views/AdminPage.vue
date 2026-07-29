@@ -303,9 +303,9 @@ function switchTab(newTab) {
     </div>
 
     <div class="tab-bar">
-      <button :class="{ active: tab === 'dashboard' }" @click="switchTab('dashboard')">仪表盘</button>
-      <button :class="{ active: tab === 'users' }" @click="switchTab('users')">用户管理</button>
-      <button :class="{ active: tab === 'logs' }" @click="switchTab('logs')">操作日志</button>
+      <button class="btn" :class="tab === 'dashboard' ? 'btn-secondary btn-sm' : 'btn-ghost btn-sm'" @click="switchTab('dashboard')">仪表盘</button>
+      <button class="btn" :class="tab === 'users' ? 'btn-secondary btn-sm' : 'btn-ghost btn-sm'" @click="switchTab('users')">用户管理</button>
+      <button class="btn" :class="tab === 'logs' ? 'btn-secondary btn-sm' : 'btn-ghost btn-sm'" @click="switchTab('logs')">操作日志</button>
     </div>
 
     <div v-if="!isAdmin" class="no-permission">
@@ -323,21 +323,21 @@ function switchTab(newTab) {
           </div>
         </div>
         <div class="stat-card">
-          <div class="stat-icon new">✨</div>
+          <div class="stat-icon new"><span class="icon-svg sparkles" /></div>
           <div class="stat-info">
             <span class="stat-val">{{ dashboard?.todayNewUsers || 0 }}</span>
             <span class="stat-lbl">今日新增</span>
           </div>
         </div>
         <div class="stat-card">
-          <div class="stat-icon active">📈</div>
+          <div class="stat-icon active"><span class="icon-svg chart" /></div>
           <div class="stat-info">
             <span class="stat-val">{{ dashboard?.activeUsers7d || 0 }}</span>
             <span class="stat-lbl">7日活跃</span>
           </div>
         </div>
         <div class="stat-card">
-          <div class="stat-icon vocab">📚</div>
+          <div class="stat-icon vocab"><span class="icon-svg book" /></div>
           <div class="stat-info">
             <span class="stat-val">{{ dashboard?.totalVocabulary || 0 }}</span>
             <span class="stat-lbl">词汇总量</span>
@@ -392,8 +392,8 @@ function switchTab(newTab) {
     <div v-else-if="tab === 'users'">
       <div class="toolbar">
         <input v-model="userSearch" class="search-input" placeholder="搜索用户名/昵称/邮箱..." @keyup.enter="loadUsers" />
-        <button class="search-btn" @click="loadUsers">搜索</button>
-        <button class="add-btn" @click="openCreateUser">+ 新建用户</button>
+        <button class="btn btn-primary btn-sm" @click="loadUsers">搜索</button>
+        <button class="btn btn-primary btn-sm" @click="openCreateUser">+ 新建用户</button>
         <span class="user-count">共 {{ totalUsers }} 个用户</span>
       </div>
 
@@ -445,17 +445,17 @@ function switchTab(newTab) {
                 @click="toggleRole(u.id, r.id)">{{ r.name }}</span>
             </div>
             <div class="uc-actions">
-              <button class="action-btn" @click="openEditUser(u)" title="编辑">
+              <button class="btn btn-icon btn-ghost" @click="openEditUser(u)" title="编辑">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
               </button>
-              <button class="action-btn" @click="openResetPassword(u.id)" title="重置密码">
+              <button class="btn btn-icon btn-ghost" @click="openResetPassword(u.id)" title="重置密码">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
               </button>
-              <button class="action-btn" :class="u.status === 0 ? 'enable' : 'disable'" @click="toggleUserStatus(u)" :title="u.status === 0 ? '启用' : '禁用'">
+              <button class="btn btn-icon btn-ghost" :class="u.status === 0 ? 'enable' : 'disable'" @click="toggleUserStatus(u)" :title="u.status === 0 ? '启用' : '禁用'">
                 <svg v-if="u.status === 0" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
                 <svg v-else width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
               </button>
-              <button class="action-btn delete" @click="deleteUser(u.id)" title="删除">
+              <button class="btn btn-icon btn-danger" @click="deleteUser(u.id)" title="删除">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
               </button>
             </div>
@@ -466,9 +466,9 @@ function switchTab(newTab) {
       <div v-else class="empty-text">暂无用户数据</div>
 
       <div v-if="totalUsers > userPageSize" class="pager-wrap">
-        <button :disabled="userPage <= 1" @click="userPage--; loadUsers()">← 上一页</button>
+        <button class="btn btn-ghost btn-sm" :disabled="userPage <= 1" @click="userPage--; loadUsers()">← 上一页</button>
         <span class="page-info">第 {{ userPage }} 页 / 共 {{ Math.ceil(totalUsers / userPageSize) }} 页</span>
-        <button :disabled="userPage >= Math.ceil(totalUsers / userPageSize)" @click="userPage++; loadUsers()">下一页 →</button>
+        <button class="btn btn-ghost btn-sm" :disabled="userPage >= Math.ceil(totalUsers / userPageSize)" @click="userPage++; loadUsers()">下一页 →</button>
       </div>
     </div>
 
@@ -476,7 +476,7 @@ function switchTab(newTab) {
     <div v-else-if="tab === 'logs'">
       <div class="toolbar">
         <input v-model="logSearch" class="search-input" placeholder="搜索日志..." @keyup.enter="loadLogs" />
-        <button class="search-btn" @click="loadLogs">搜索</button>
+        <button class="btn btn-primary btn-sm" @click="loadLogs">搜索</button>
         <span class="user-count">共 {{ totalLogs }} 条记录</span>
       </div>
 
@@ -511,9 +511,9 @@ function switchTab(newTab) {
       <p v-else class="empty-text">暂无日志数据</p>
 
       <div v-if="totalLogs > logPageSize" class="pager-wrap">
-        <button :disabled="logPage <= 1" @click="logPage--; loadLogs()">← 上一页</button>
+        <button class="btn btn-ghost btn-sm" :disabled="logPage <= 1" @click="logPage--; loadLogs()">← 上一页</button>
         <span class="page-info">第 {{ logPage }} 页 / 共 {{ Math.ceil(totalLogs / logPageSize) }} 页</span>
-        <button :disabled="logPage >= Math.ceil(totalLogs / logPageSize)" @click="logPage++; loadLogs()">下一页 →</button>
+        <button class="btn btn-ghost btn-sm" :disabled="logPage >= Math.ceil(totalLogs / logPageSize)" @click="logPage++; loadLogs()">下一页 →</button>
       </div>
     </div>
 
@@ -538,8 +538,8 @@ function switchTab(newTab) {
           <input v-model="editingUser.email" placeholder="请输入邮箱" />
         </div>
         <div class="modal-actions">
-          <button class="cancel-btn" @click="showUserModal = false">取消</button>
-          <button class="confirm-btn" @click="saveUser">{{ editingUser?.id ? '保存' : '创建' }}</button>
+          <button class="btn btn-secondary" @click="showUserModal = false">取消</button>
+          <button class="btn btn-primary" @click="saveUser">{{ editingUser?.id ? '保存' : '创建' }}</button>
         </div>
       </div>
     </div>
@@ -553,8 +553,8 @@ function switchTab(newTab) {
           <input v-model="newPassword" type="text" placeholder="请输入新密码（至少6位）" />
         </div>
         <div class="modal-actions">
-          <button class="cancel-btn" @click="showResetPwdModal = false">取消</button>
-          <button class="confirm-btn" @click="confirmResetPassword">确认重置</button>
+          <button class="btn btn-secondary" @click="showResetPwdModal = false">取消</button>
+          <button class="btn btn-primary" @click="confirmResetPassword">确认重置</button>
         </div>
       </div>
     </div>
