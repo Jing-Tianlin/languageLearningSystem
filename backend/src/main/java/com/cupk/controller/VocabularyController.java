@@ -9,7 +9,7 @@ import com.cupk.pojo.UserProgress;
 import com.cupk.pojo.Vocabulary;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -18,16 +18,13 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/vocabulary")
+@RequiredArgsConstructor
 public class VocabularyController {
     private static final Logger log = LoggerFactory.getLogger(VocabularyController.class);
-    @Autowired
-    private VocabularyMapper vocabularyMapper;
-    @Autowired
-    private UserProgressMapper progressMapper;
-    @Autowired
-    private com.cupk.service.DeepSeekService deepSeekService;
-    @Autowired
-    private com.cupk.service.LearningDataService learningDataService;
+    private final VocabularyMapper vocabularyMapper;
+    private final UserProgressMapper progressMapper;
+    private final com.cupk.service.DeepSeekService deepSeekService;
+    private final com.cupk.service.LearningDataService learningDataService;
 
     @GetMapping("/vocabularies")
     public Result<Page<Vocabulary>> selectPages(@RequestParam(defaultValue = "") String word,
@@ -250,7 +247,9 @@ public class VocabularyController {
                 langCode,
                 count
             );
-            distractors = (List<String>) aiResult.get("distractors");
+            @SuppressWarnings("unchecked")
+            List<String> aiDistractors = (List<String>) aiResult.get("distractors");
+            distractors = aiDistractors;
             aiGenerated = (Boolean) aiResult.get("aiGenerated");
         } else {
             distractors = Collections.emptyList();
@@ -294,8 +293,10 @@ public class VocabularyController {
         @SuppressWarnings("unchecked")
         List<Long> vocabIds = (List<Long>) body.get("vocabIds");
         String langCode = (String) body.getOrDefault("langCode", "en");
-        Integer count = (Integer) body.getOrDefault("count", 3);
-        Boolean useAI = (Boolean) body.getOrDefault("useAI", true);
+        Object countRaw = body.getOrDefault("count", 3);
+        Integer count = countRaw instanceof Number ? ((Number) countRaw).intValue() : 3;
+        Object useAIRaw = body.getOrDefault("useAI", true);
+        Boolean useAI = useAIRaw instanceof Boolean ? (Boolean) useAIRaw : true;
 
         if (vocabIds == null || vocabIds.isEmpty()) {
             return Result.error(400, "vocabIds 不能为空");
@@ -425,6 +426,7 @@ public class VocabularyController {
                 vocab.getWord(), vocab.getLangCode(), 1
             );
 
+            @SuppressWarnings("unchecked")
             List<Map<String, String>> sentences = (List<Map<String, String>>) aiResult.get("sentences");
             if (sentences != null && !sentences.isEmpty()) {
                 Map<String, String> first = sentences.get(0);
@@ -457,7 +459,8 @@ public class VocabularyController {
     public Result<Map<String, Object>> generateVocabularyBatch(@RequestBody Map<String, Object> body) {
         String langCode = (String) body.getOrDefault("langCode", "en");
         String level = (String) body.getOrDefault("level", "");
-        Integer count = (Integer) body.getOrDefault("count", 20);
+        Object countRaw = body.getOrDefault("count", 20);
+        Integer count = countRaw instanceof Number ? ((Number) countRaw).intValue() : 20;
         String category = (String) body.getOrDefault("category", "");
 
         if (level == null || level.isEmpty()) {

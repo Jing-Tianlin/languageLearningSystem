@@ -5,7 +5,7 @@ import com.cupk.mapper.UserProgressMapper;
 import com.cupk.mapper.VocabularyMapper;
 import com.cupk.pojo.UserProgress;
 import com.cupk.pojo.Vocabulary;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -22,12 +22,11 @@ import java.util.stream.Collectors;
  *   4. isVerbShortage(userId) → 检测某词性是否短缺
  */
 @Service
+@RequiredArgsConstructor
 public class HotWordsPoolService {
 
-    @Autowired
-    private UserProgressMapper progressMapper;
-    @Autowired
-    private VocabularyMapper vocabularyMapper;
+    private final UserProgressMapper progressMapper;
+    private final VocabularyMapper vocabularyMapper;
 
     /**
      * 获取用户热点词库

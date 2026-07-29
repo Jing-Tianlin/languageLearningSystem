@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.bind.annotation.*;
 
+import lombok.RequiredArgsConstructor;
 import java.util.*;
 
 /**
@@ -14,12 +15,12 @@ import java.util.*;
  */
 @RestController
 @RequestMapping("/history")
+@RequiredArgsConstructor
 public class HistoryController {
 
     private static final Logger log = LoggerFactory.getLogger(HistoryController.class);
 
-    @Autowired
-    private JdbcTemplate jdbcTemplate;
+    private final JdbcTemplate jdbcTemplate;
 
     // ==================== AI 聊天 ====================
 

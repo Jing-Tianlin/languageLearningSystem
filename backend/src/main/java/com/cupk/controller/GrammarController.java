@@ -6,7 +6,7 @@ import com.cupk.service.GrammarPracticeService;
 import com.cupk.service.GrammarService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
@@ -17,18 +17,16 @@ import java.util.*;
  */
 @RestController
 @RequestMapping("/grammar")
+@RequiredArgsConstructor
 public class GrammarController {
 
     private static final Logger log = LoggerFactory.getLogger(GrammarController.class);
 
-    @Autowired
-    private GrammarService grammarService;
+    private final GrammarService grammarService;
 
-    @Autowired
-    private GrammarLessonService grammarLessonService;
+    private final GrammarLessonService grammarLessonService;
 
-    @Autowired
-    private GrammarPracticeService grammarPracticeService;
+    private final GrammarPracticeService grammarPracticeService;
 
     // ==================== 语法教程 ====================
 

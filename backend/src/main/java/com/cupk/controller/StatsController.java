@@ -4,7 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.cupk.common.Result;
 import com.cupk.mapper.*;
 import com.cupk.pojo.*;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.bind.annotation.*;
 
@@ -15,18 +15,15 @@ import org.slf4j.LoggerFactory;
 
 @RestController
 @RequestMapping("/stats")
+@RequiredArgsConstructor
 public class StatsController {
 
     private static final Logger log = LoggerFactory.getLogger(StatsController.class);
 
-    @Autowired
-    private UserProgressMapper userProgressMapper;
-    @Autowired
-    private VocabularyMapper vocabularyMapper;
-    @Autowired
-    private InspectionLogMapper inspectionLogMapper;
-    @Autowired
-    private JdbcTemplate jdbcTemplate;
+    private final UserProgressMapper userProgressMapper;
+    private final VocabularyMapper vocabularyMapper;
+    private final InspectionLogMapper inspectionLogMapper;
+    private final JdbcTemplate jdbcTemplate;
 
     // ===== 核心: 综合掌握度 (基于真实练习数据) =====
     @GetMapping("/weak-points")

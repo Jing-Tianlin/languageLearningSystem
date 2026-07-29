@@ -11,16 +11,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.web.bind.annotation.*;
 
+import lombok.RequiredArgsConstructor;
 import java.util.List;
 
 @RestController
 @RequestMapping("/favorite")
+@RequiredArgsConstructor
 public class FavoriteController {
 
     private static final Logger log = LoggerFactory.getLogger(FavoriteController.class);
 
-    @Autowired
-    private FavoriteMapper favoriteMapper;
+    private final FavoriteMapper favoriteMapper;
 
     @GetMapping("/favorites")
     public Result<Page<Favorite>> selectPages(@RequestParam(required = false) Long userId,

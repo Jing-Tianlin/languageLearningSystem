@@ -8,7 +8,7 @@ import com.cupk.pojo.UserProgress;
 import com.cupk.service.LearningDataService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -22,16 +22,14 @@ import java.util.Map;
  */
 @RestController
 @RequestMapping("/practice")
+@RequiredArgsConstructor
 public class PracticeController {
 
     private static final Logger log = LoggerFactory.getLogger(PracticeController.class);
 
-    @Autowired
-    private LearningDataService dataService;
-    @Autowired
-    private UserMapper userMapper;
-    @Autowired
-    private UserProgressMapper userProgressMapper;
+    private final LearningDataService dataService;
+    private final UserMapper userMapper;
+    private final UserProgressMapper userProgressMapper;
 
     /**
      * 记录练习答案 (每日练习 / 语法练习通用)
@@ -40,14 +38,16 @@ public class PracticeController {
      */
     @PostMapping("/record")
     public Result<Map<String, Object>> recordAnswer(@RequestBody Map<String, Object> body) {
-        Long userId = Long.valueOf(body.get("userId").toString());
-        Long vocabId = body.containsKey("vocabId") ? Long.valueOf(body.get("vocabId").toString()) : 0L;
-        String langCode = body.containsKey("langCode") ? body.get("langCode").toString() : "en";
+        Object userIdRaw = body.get("userId");
+        if (userIdRaw == null) return Result.error(400, "userId不能为空");
+        Long userId = Long.valueOf(userIdRaw.toString());
+        Long vocabId = body.containsKey("vocabId") && body.get("vocabId") != null ? Long.valueOf(body.get("vocabId").toString()) : 0L;
+        String langCode = body.containsKey("langCode") && body.get("langCode") != null ? body.get("langCode").toString() : "en";
         Boolean correct = (Boolean) body.get("correct");
-        Integer hesitationMs = body.containsKey("hesitationMs") ? (Integer) body.get("hesitationMs") : 0;
+        Integer hesitationMs = body.containsKey("hesitationMs") ? ((Number) body.get("hesitationMs")).intValue() : 0;
         String errorType = body.get("errorType") != null ? body.get("errorType").toString() : null;
 
-        var progress = dataService.recordPracticeAnswer(
+        UserProgress progress = dataService.recordPracticeAnswer(
                 userId, vocabId, langCode,
                 correct != null && correct,
                 hesitationMs != null ? hesitationMs : 0,
@@ -65,7 +65,9 @@ public class PracticeController {
     /** 登录时调用, 更新打卡天数 */
     @PostMapping("/checkin")
     public Result<String> checkin(@RequestBody Map<String, Object> body) {
-        Long userId = Long.valueOf(body.get("userId").toString());
+        Object userIdRaw = body.get("userId");
+        if (userIdRaw == null) return Result.error(400, "userId不能为空");
+        Long userId = Long.valueOf(userIdRaw.toString());
         dataService.updateStudyStreak(userId);
         return Result.success("打卡成功");
     }

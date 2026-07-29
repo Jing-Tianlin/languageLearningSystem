@@ -5,7 +5,7 @@ import com.cupk.mapper.UserMapper;
 import com.cupk.mapper.UserProgressMapper;
 import com.cupk.mapper.InspectionLogMapper;
 import com.cupk.pojo.*;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,6 +21,7 @@ import java.time.temporal.ChronoUnit;
  *   - 用户统计更新（积分、学习天数）
  */
 @Service
+@RequiredArgsConstructor
 public class LearningDataService {
 
     /** SM-2 算法常量 */
@@ -34,12 +35,9 @@ public class LearningDataService {
     /** 初始间隔（小时） */
     private static final int INIT_INTERVAL_HOURS = 8;
 
-    @Autowired
-    private UserProgressMapper progressMapper;
-    @Autowired
-    private UserMapper userMapper;
-    @Autowired
-    private InspectionLogMapper inspectionLogMapper;
+    private final UserProgressMapper progressMapper;
+    private final UserMapper userMapper;
+    private final InspectionLogMapper inspectionLogMapper;
 
     /**
      * SM-2 自适应间隔重复算法核心
@@ -202,7 +200,7 @@ public class LearningDataService {
         // 总稳定性加成
         QueryWrapper<UserProgress> stableQ = new QueryWrapper<>();
         stableQ.eq("user_id", userId).select("COALESCE(SUM(stability),0) as totalStability");
-        var stableResult = progressMapper.selectMaps(stableQ);
+        List<Map<String, Object>> stableResult = progressMapper.selectMaps(stableQ);
         long totalStability = stableResult.isEmpty() ? 0 :
             Long.parseLong(stableResult.get(0).getOrDefault("totalStability", "0").toString());
 

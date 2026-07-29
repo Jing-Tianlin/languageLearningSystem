@@ -16,7 +16,7 @@ import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.*;
 import java.util.function.Consumer;
-import java.util.ArrayList;
+import com.fasterxml.jackson.core.type.TypeReference;
 
 /**
  * DeepSeekService — AI 辅助学习服务
@@ -60,7 +60,7 @@ public class DeepSeekService {
             String json = extractJSON(reply);
             JsonNode parsed = mapper.readTree(json);
             Map<String, Object> result = new LinkedHashMap<>();
-            result.put("sentences", mapper.convertValue(parsed, List.class));
+            result.put("sentences", mapper.convertValue(parsed, new TypeReference<List<Map<String, Object>>>() {}));
             result.put("raw", reply);
             return result;
         } catch (Exception e) {
@@ -86,7 +86,7 @@ public class DeepSeekService {
             Map<String, Object> result = new LinkedHashMap<>();
             result.put("hasErrors", parsed.get("hasErrors").asBoolean());
             result.put("correctedText", parsed.get("correctedText").asText());
-            result.put("errors", mapper.convertValue(parsed.get("errors"), List.class));
+            result.put("errors", mapper.convertValue(parsed.get("errors"), new TypeReference<List<Map<String, String>>>() {}));
             return result;
         } catch (Exception e) {
             // 本地纠错回退
@@ -148,7 +148,7 @@ public class DeepSeekService {
             result.put("vocabulary", parsed.get("vocabulary").asInt());
             result.put("coherence", parsed.get("coherence").asInt());
             result.put("overall", parsed.get("overall").asInt());
-            result.put("suggestions", mapper.convertValue(parsed.get("suggestions"), List.class));
+            result.put("suggestions", mapper.convertValue(parsed.get("suggestions"), new TypeReference<List<String>>() {}));
             return result;
         } catch (Exception e) {
             // 本地评分回退
@@ -277,7 +277,14 @@ public class DeepSeekService {
             throw new RuntimeException("DeepSeek API error: " + resp.statusCode() + " " + resp.body());
         }
         JsonNode root = mapper.readTree(resp.body());
-        return root.get("choices").get(0).get("message").get("content").asText();
+        JsonNode choices = root.get("choices");
+        if (choices != null && choices.size() > 0) {
+            JsonNode message = choices.get(0).get("message");
+            if (message != null && message.get("content") != null) {
+                return message.get("content").asText();
+            }
+        }
+        throw new RuntimeException("DeepSeek API 返回格式异常: " + resp.body());
     }
 
     /**
@@ -785,8 +792,8 @@ public class DeepSeekService {
             result.put("content", parsed.get("content").asText(""));
             result.put("wordCount", parsed.has("wordCount") ? parsed.get("wordCount").asInt() : 0);
             result.put("level", parsed.get("level").asText(""));
-            result.put("coreVocabulary", mapper.convertValue(parsed.get("coreVocabulary"), List.class));
-            result.put("quizQuestions", mapper.convertValue(parsed.get("quizQuestions"), List.class));
+            result.put("coreVocabulary", mapper.convertValue(parsed.get("coreVocabulary"), new TypeReference<List<Map<String, Object>>>() {}));
+            result.put("quizQuestions", mapper.convertValue(parsed.get("quizQuestions"), new TypeReference<List<Map<String, Object>>>() {}));
             result.put("aiGenerated", true);
             return result;
         } catch (Exception e) {
@@ -854,8 +861,8 @@ public class DeepSeekService {
             result.put("instruction", parsed.has("instruction") ? parsed.get("instruction").asText() : "");
             if (parsed.has("template")) result.put("template", parsed.get("template").asText());
             if (parsed.has("topic")) result.put("topic", parsed.get("topic").asText());
-            if (parsed.has("sentences")) result.put("sentences", mapper.convertValue(parsed.get("sentences"), List.class));
-            if (parsed.has("requiredWords")) result.put("requiredWords", mapper.convertValue(parsed.get("requiredWords"), List.class));
+            if (parsed.has("sentences")) result.put("sentences", mapper.convertValue(parsed.get("sentences"), new TypeReference<List<Object>>() {}));
+            if (parsed.has("requiredWords")) result.put("requiredWords", mapper.convertValue(parsed.get("requiredWords"), new TypeReference<List<String>>() {}));
             if (parsed.has("wordLimit")) result.put("wordLimit", parsed.get("wordLimit").asInt());
             result.put("aiGenerated", true);
             return result;

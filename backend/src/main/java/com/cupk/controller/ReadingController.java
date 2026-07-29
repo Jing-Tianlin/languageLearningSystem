@@ -5,7 +5,7 @@ import com.cupk.mapper.FavoriteMapper;
 import com.cupk.pojo.Favorite;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,14 +20,13 @@ import java.util.*;
  */
 @RestController
 @RequestMapping("/reading")
+@RequiredArgsConstructor
 public class ReadingController {
 
     private static final Logger log = LoggerFactory.getLogger(ReadingController.class);
 
-    @Autowired
-    private JdbcTemplate jdbcTemplate;
-    @Autowired
-    private FavoriteMapper favoriteMapper;
+    private final JdbcTemplate jdbcTemplate;
+    private final FavoriteMapper favoriteMapper;
 
     /**
      * 获取某语言某等级的文章列表
@@ -227,8 +226,12 @@ public class ReadingController {
      */
     @PostMapping("/quiz")
     public Result<Map<String, Object>> submitQuiz(@RequestBody Map<String, Object> body) {
-        Long userId = Long.valueOf(body.get("userId").toString());
-        Long articleId = Long.valueOf(body.get("articleId").toString());
+        Object userIdRaw = body.get("userId");
+        if (userIdRaw == null) return Result.error(400, "userId不能为空");
+        Long userId = Long.valueOf(userIdRaw.toString());
+        Object articleIdRaw = body.get("articleId");
+        if (articleIdRaw == null) return Result.error(400, "articleId不能为空");
+        Long articleId = Long.valueOf(articleIdRaw.toString());
         int phase1Duration = body.containsKey("phase1Duration") ? ((Number) body.get("phase1Duration")).intValue() : 0;
         int phase2Duration = body.containsKey("phase2Duration") ? ((Number) body.get("phase2Duration")).intValue() : 0;
 
@@ -246,9 +249,8 @@ public class ReadingController {
 
         if (quizJson != null && !quizJson.isEmpty() && userAnswers != null) {
             try {
-                @SuppressWarnings("unchecked")
                 List<Map<String, Object>> questions =
-                    new com.fasterxml.jackson.databind.ObjectMapper().readValue(quizJson, List.class);
+                    new com.fasterxml.jackson.databind.ObjectMapper().readValue(quizJson, new com.fasterxml.jackson.core.type.TypeReference<List<Map<String, Object>>>() {});
                 total = questions.size();
 
                 for (int i = 0; i < total; i++) {
@@ -293,7 +295,7 @@ public class ReadingController {
             }
             jdbcTemplate.update(
                 "INSERT INTO reading_history (user_id, lang_code, article_title, article_level, quiz_score, quiz_total) VALUES (?,?,?,?,?,?)",
-                userId, body.getOrDefault("langCode", "").toString(), title, level, score, total);
+                userId, body.containsKey("langCode") && body.get("langCode") != null ? body.get("langCode").toString() : "", title, level, score, total);
         } catch (Exception e) {
             log.warn("保存阅读历史失败 userId={}, title={}", userId, title, e);
         }
@@ -312,9 +314,11 @@ public class ReadingController {
      */
     @PostMapping("/vocab-action")
     public Result<Map<String, Object>> vocabAction(@RequestBody Map<String, Object> body) {
-        Long userId = Long.valueOf(body.get("userId").toString());
-        String word = body.getOrDefault("word", "").toString();
-        String langCode = body.getOrDefault("langCode", "").toString();
+        Object userIdRaw = body.get("userId");
+        if (userIdRaw == null) return Result.error(400, "userId不能为空");
+        Long userId = Long.valueOf(userIdRaw.toString());
+        String word = String.valueOf(body.getOrDefault("word", ""));
+        String langCode = String.valueOf(body.getOrDefault("langCode", ""));
 
         if (word.isEmpty() || langCode.isEmpty()) {
             return Result.error(400, "单词和语种不能为空");

@@ -7,17 +7,18 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.bind.annotation.*;
 
+import lombok.RequiredArgsConstructor;
 import java.util.List;
 import java.util.Map;
 
 @RestController
 @RequestMapping("/sentences")
+@RequiredArgsConstructor
 public class LongSentenceController {
 
     private static final Logger log = LoggerFactory.getLogger(LongSentenceController.class);
 
-    @Autowired
-    private JdbcTemplate jdbcTemplate;
+    private final JdbcTemplate jdbcTemplate;
 
     /**
      * 获取某语言的长难句列表

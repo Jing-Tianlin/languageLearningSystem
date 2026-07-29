@@ -10,7 +10,7 @@ import com.cupk.pojo.Vocabulary;
 import com.cupk.service.LearningDataService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -19,14 +19,12 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/progress")
+@RequiredArgsConstructor
 public class UserProgressController {
     private static final Logger log = LoggerFactory.getLogger(UserProgressController.class);
-    @Autowired
-    private UserProgressMapper userProgressMapper;
-    @Autowired
-    private VocabularyMapper vocabularyMapper;
-    @Autowired
-    private LearningDataService learningDataService;
+    private final UserProgressMapper userProgressMapper;
+    private final VocabularyMapper vocabularyMapper;
+    private final LearningDataService learningDataService;
 
     @GetMapping("/progresses")
     public Result<Page<UserProgress>> selectPages(@RequestParam(required = false) Long userId,
@@ -90,12 +88,16 @@ public class UserProgressController {
      */
     @PostMapping("/report-hesitation")
     public Result<Void> reportHesitation(@RequestBody Map<String, Object> body) {
-        Long userId = Long.valueOf(body.get("userId").toString());
-        Long vocabId = Long.valueOf(body.get("vocabId").toString());
-        Integer hesitationMs = body.containsKey("hesitationMs") ? (Integer) body.get("hesitationMs") : 0;
+        Object userIdRaw = body.get("userId");
+        if (userIdRaw == null) return Result.error(400, "userId不能为空");
+        Long userId = Long.valueOf(userIdRaw.toString());
+        Object vocabIdRaw = body.get("vocabId");
+        if (vocabIdRaw == null) return Result.error(400, "vocabId不能为空");
+        Long vocabId = Long.valueOf(vocabIdRaw.toString());
+        Integer hesitationMs = body.containsKey("hesitationMs") && body.get("hesitationMs") != null ? ((Number) body.get("hesitationMs")).intValue() : 0;
         Boolean correct = body.get("correct") != null ? (Boolean) body.get("correct") : false;
-        String langCode = body.containsKey("langCode") ? body.get("langCode").toString() : "en";
-        String errorType = body.containsKey("errorType") ? body.get("errorType").toString() : null;
+        String langCode = body.containsKey("langCode") && body.get("langCode") != null ? body.get("langCode").toString() : "en";
+        String errorType = body.containsKey("errorType") && body.get("errorType") != null ? body.get("errorType").toString() : null;
 
         // 统一走 SM-2 算法
         learningDataService.recordPracticeAnswer(userId, vocabId, langCode,

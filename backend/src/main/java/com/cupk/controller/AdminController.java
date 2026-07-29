@@ -9,7 +9,7 @@ import com.cupk.utils.PasswordUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,34 +18,23 @@ import java.util.*;
 
 @RestController
 @RequestMapping("/admin")
+@RequiredArgsConstructor
 public class AdminController {
 
     private static final Logger log = LoggerFactory.getLogger(AdminController.class);
 
-    @Autowired
-    private UserMapper userMapper;
-    @Autowired
-    private RoleMapper roleMapper;
-    @Autowired
-    private OperationLogMapper operationLogMapper;
-    @Autowired
-    private VocabularyMapper vocabularyMapper;
-    @Autowired
-    private PermissionMapper permissionMapper;
-    @Autowired
-    private CourseMapper courseMapper;
-    @Autowired
-    private LanguageMapper languageMapper;
-    @Autowired
-    private UserProfileMapper userProfileMapper;
-    @Autowired
-    private LoginLogMapper loginLogMapper;
-    @Autowired
-    private JdbcTemplate jdbcTemplate;
-    @Autowired
-    private HttpServletRequest request;
-    @Autowired
-    private com.cupk.service.VocabularyRepairService vocabularyRepairService;
+    private final UserMapper userMapper;
+    private final RoleMapper roleMapper;
+    private final OperationLogMapper operationLogMapper;
+    private final VocabularyMapper vocabularyMapper;
+    private final PermissionMapper permissionMapper;
+    private final CourseMapper courseMapper;
+    private final LanguageMapper languageMapper;
+    private final UserProfileMapper userProfileMapper;
+    private final LoginLogMapper loginLogMapper;
+    private final JdbcTemplate jdbcTemplate;
+    private final HttpServletRequest request;
+    private final com.cupk.service.VocabularyRepairService vocabularyRepairService;
 
     // ==================== 系统统计仪表盘 ====================
 
@@ -265,7 +254,8 @@ public class AdminController {
         }
         QueryWrapper<Role> q = new QueryWrapper<>();
         q.eq("code", role.getCode());
-        if (roleMapper.selectCount(q) != null && roleMapper.selectCount(q) > 0) {
+        Long existsCount = roleMapper.selectCount(q);
+        if (existsCount != null && existsCount > 0) {
             return Result.error(400, "角色编码已存在");
         }
         role.setId(null);
@@ -314,8 +304,12 @@ public class AdminController {
 
     @PostMapping("/user-roles")
     public Result<Void> assignRole(@RequestBody Map<String, Object> body) {
-        Long userId = Long.valueOf(body.get("userId").toString());
-        Long roleId = Long.valueOf(body.get("roleId").toString());
+        Object userIdRaw = body.get("userId");
+        if (userIdRaw == null) return Result.error(400, "userId不能为空");
+        Long userId = Long.valueOf(userIdRaw.toString());
+        Object roleIdRaw = body.get("roleId");
+        if (roleIdRaw == null) return Result.error(400, "roleId不能为空");
+        Long roleId = Long.valueOf(roleIdRaw.toString());
 
         boolean hasRole = jdbcTemplate.queryForObject(
             "SELECT COUNT(*) FROM user_role WHERE user_id = ? AND role_id = ?",
@@ -369,8 +363,12 @@ public class AdminController {
 
     @PostMapping("/role-permissions")
     public Result<Void> assignPermission(@RequestBody Map<String, Object> body) {
-        Long roleId = Long.valueOf(body.get("roleId").toString());
-        Long permissionId = Long.valueOf(body.get("permissionId").toString());
+        Object roleIdRaw = body.get("roleId");
+        if (roleIdRaw == null) return Result.error(400, "roleId不能为空");
+        Long roleId = Long.valueOf(roleIdRaw.toString());
+        Object permissionIdRaw = body.get("permissionId");
+        if (permissionIdRaw == null) return Result.error(400, "permissionId不能为空");
+        Long permissionId = Long.valueOf(permissionIdRaw.toString());
 
         boolean has = jdbcTemplate.queryForObject(
             "SELECT COUNT(*) FROM role_permission WHERE role_id = ? AND permission_id = ?",
