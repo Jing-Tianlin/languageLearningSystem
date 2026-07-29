@@ -1,0 +1,23 @@
+spring:
+  application:
+    name: backend
+  datasource:
+    url: jdbc:mysql://localhost:3306/languagelearningsystem?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=utf8
+    username: root
+    password: REDACTED_PASSWORD
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jackson:
+    date-format: yyyy-MM-dd
+    time-zone: GMT+8
+
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+  type-aliases-package: com.cupk.pojo
+
+deepseek:
+  api:
+    key: REDACTED_API_KEY
+
+jwt:
+  secret: REDACTED
