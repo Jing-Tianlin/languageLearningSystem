@@ -230,11 +230,10 @@ public class ReadingController {
      */
     @PostMapping("/quiz")
     public Result<Map<String, Object>> submitQuiz(@RequestBody Map<String, Object> body) {
+        // userId 强制取 token，忽略前端传入，防止伪造他人阅读成绩
         Long userId = AuthUtil.getCurrentUserId();
         if (userId == null) return Result.error(401, "未登录");
-        Object articleIdRaw = body.get("articleId");
-        if (articleIdRaw == null) return Result.error(400, "articleId不能为空");
-        Long articleId = Long.valueOf(articleIdRaw.toString());
+        Long articleId = Long.valueOf(body.get("articleId").toString());
         int phase1Duration = body.containsKey("phase1Duration") ? ((Number) body.get("phase1Duration")).intValue() : 0;
         int phase2Duration = body.containsKey("phase2Duration") ? ((Number) body.get("phase2Duration")).intValue() : 0;
 
@@ -317,10 +316,11 @@ public class ReadingController {
      */
     @PostMapping("/vocab-action")
     public Result<Map<String, Object>> vocabAction(@RequestBody Map<String, Object> body) {
+        // userId 强制取 token，忽略前端传入，防止向他人收藏写入
         Long userId = AuthUtil.getCurrentUserId();
         if (userId == null) return Result.error(401, "未登录");
-        String word = String.valueOf(body.getOrDefault("word", ""));
-        String langCode = String.valueOf(body.getOrDefault("langCode", ""));
+        String word = body.getOrDefault("word", "").toString();
+        String langCode = body.getOrDefault("langCode", "").toString();
 
         if (word.isEmpty() || langCode.isEmpty()) {
             return Result.error(400, "单词和语种不能为空");

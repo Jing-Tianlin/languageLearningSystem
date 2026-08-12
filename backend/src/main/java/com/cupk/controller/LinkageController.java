@@ -48,6 +48,7 @@ public class LinkageController {
     /** 生成语法题 (挂接热点词) */
     @PostMapping("/grammar-with-hot-words")
     public Result<Map<String, Object>> generateGrammar(@RequestBody Map<String, Object> body) {
+        // userId 强制取 token，忽略前端传入
         Long userId = AuthUtil.getCurrentUserId();
         if (userId == null) return Result.error(401, "未登录");
         String template = (String) body.getOrDefault("template", "[SUBJECT] ___ [VERB] to [PLACE] yesterday.");

@@ -316,7 +316,7 @@ function switchTab(newTab) {
     <div v-else-if="tab === 'dashboard'" class="dashboard">
       <div class="stats-grid">
         <div class="stat-card">
-          <div class="stat-icon users">👥</div>
+          <div class="stat-icon users"><span class="icon-svg users" /></div>
           <div class="stat-info">
             <span class="stat-val">{{ dashboard?.totalUsers || 0 }}</span>
             <span class="stat-lbl">总用户数</span>

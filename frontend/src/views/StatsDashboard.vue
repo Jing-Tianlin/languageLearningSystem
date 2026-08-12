@@ -190,7 +190,7 @@ function getLabel(k) { const m={spelling:'拼写',preposition:'介词',tense:'�
           {icon:'clock',val:overview.avgHesitationMs+'ms',lbl:'平均犹豫'},
           {icon:'link',val:overview.totalReviews,lbl:'总复习次数'},
           {icon:'search',val:overview.inspections,lbl:'巡检次数'},
-          {icon:'edit',val:overview.writingCount,lbl:'写作篇数'},
+          {icon:'pen',val:overview.writingCount,lbl:'写作篇数'},
           {icon:'book',val:overview.readingCount,lbl:'阅读篇数'},
           {icon:'chart',val:overview.readingAvgAccuracy+'%',lbl:'阅读正确率'},
         ]" :key="s.lbl">

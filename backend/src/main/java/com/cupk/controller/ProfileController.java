@@ -37,10 +37,9 @@ public class ProfileController {
 
     @PostMapping
     public Result<Void> saveOrUpdate(@RequestBody Map<String, Object> body) {
+        // userId 强制取 token，忽略前端传入，防止越权修改他人资料
         Long currentUserId = AuthUtil.getCurrentUserId();
-        if (currentUserId == null) {
-            return Result.error(401, "未登录");
-        }
+        if (currentUserId == null) return Result.error(401, "未登录");
         UserProfile p = userProfileMapper.selectById(currentUserId);
         if (p == null) {
             p = new UserProfile();

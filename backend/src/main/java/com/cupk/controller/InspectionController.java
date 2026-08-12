@@ -47,6 +47,7 @@ public class InspectionController {
      */
     @PostMapping("/submit")
     public Result<Void> submitInspection(@RequestBody Map<String, Object> body) {
+        // userId 强制取 token，忽略前端传入
         Long userId = AuthUtil.getCurrentUserId();
         if (userId == null) return Result.error(401, "未登录");
         @SuppressWarnings("unchecked")
