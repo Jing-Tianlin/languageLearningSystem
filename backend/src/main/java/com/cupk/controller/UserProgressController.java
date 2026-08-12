@@ -119,12 +119,9 @@ public class UserProgressController {
      */
     @PostMapping("/report-hesitation")
     public Result<Void> reportHesitation(@RequestBody Map<String, Object> body) {
-        Long userId = AuthUtil.getCurrentUserId();
-        if (userId == null) return Result.error(401, "未登录");
-        Object vocabIdRaw = body.get("vocabId");
-        if (vocabIdRaw == null) return Result.error(400, "vocabId不能为空");
-        Long vocabId = Long.valueOf(vocabIdRaw.toString());
-        Integer hesitationMs = body.containsKey("hesitationMs") && body.get("hesitationMs") != null ? ((Number) body.get("hesitationMs")).intValue() : 0;
+        Long userId = Long.valueOf(body.get("userId").toString());
+        Long vocabId = Long.valueOf(body.get("vocabId").toString());
+        Integer hesitationMs = body.containsKey("hesitationMs") ? (Integer) body.get("hesitationMs") : 0;
         Boolean correct = body.get("correct") != null ? (Boolean) body.get("correct") : false;
         Integer quality = body.containsKey("quality") && body.get("quality") != null ? ((Number) body.get("quality")).intValue() : null;
         String langCode = body.containsKey("langCode") && body.get("langCode") != null ? body.get("langCode").toString() : "en";

@@ -43,31 +43,20 @@ public class PracticeController {
      */
     @PostMapping("/record")
     public Result<Map<String, Object>> recordAnswer(@RequestBody Map<String, Object> body) {
-        Long userId = AuthUtil.getCurrentUserId();
-        if (userId == null) return Result.error(401, "未登录");
-        Long vocabId = body.containsKey("vocabId") && body.get("vocabId") != null ? Long.valueOf(body.get("vocabId").toString()) : 0L;
-        String langCode = body.containsKey("langCode") && body.get("langCode") != null ? body.get("langCode").toString() : "en";
+        Long userId = Long.valueOf(body.get("userId").toString());
+        Long vocabId = body.containsKey("vocabId") ? Long.valueOf(body.get("vocabId").toString()) : 0L;
+        String langCode = body.containsKey("langCode") ? body.get("langCode").toString() : "en";
         Boolean correct = (Boolean) body.get("correct");
         Integer quality = body.containsKey("quality") && body.get("quality") != null ? ((Number) body.get("quality")).intValue() : null;
         Integer hesitationMs = body.containsKey("hesitationMs") ? ((Number) body.get("hesitationMs")).intValue() : 0;
         String errorType = body.get("errorType") != null ? body.get("errorType").toString() : null;
 
-        UserProgress progress;
-        if (quality != null) {
-            progress = dataService.recordPracticeAnswer(
-                    userId, vocabId, langCode,
-                    quality,
-                    hesitationMs != null ? hesitationMs : 0,
-                    errorType
-            );
-        } else {
-            progress = dataService.recordPracticeAnswer(
-                    userId, vocabId, langCode,
-                    correct != null && correct,
-                    hesitationMs != null ? hesitationMs : 0,
-                    errorType
-            );
-        }
+        var progress = dataService.recordPracticeAnswer(
+                userId, vocabId, langCode,
+                correct != null && correct,
+                hesitationMs != null ? hesitationMs : 0,
+                errorType
+        );
 
         Map<String, Object> result = new java.util.LinkedHashMap<>();
         result.put("masteryLevel", progress.getMasteryLevel());
@@ -83,8 +72,7 @@ public class PracticeController {
     /** 登录时调用, 更新打卡天数 */
     @PostMapping("/checkin")
     public Result<String> checkin(@RequestBody Map<String, Object> body) {
-        Long userId = AuthUtil.getCurrentUserId();
-        if (userId == null) return Result.error(401, "未登录");
+        Long userId = Long.valueOf(body.get("userId").toString());
         dataService.updateStudyStreak(userId);
         return Result.success("打卡成功");
     }

@@ -48,8 +48,7 @@ public class LinkageController {
     /** 生成语法题 (挂接热点词) */
     @PostMapping("/grammar-with-hot-words")
     public Result<Map<String, Object>> generateGrammar(@RequestBody Map<String, Object> body) {
-        Long userId = AuthUtil.getCurrentUserId();
-        if (userId == null) return Result.error(401, "未登录");
+        Long userId = Long.valueOf(body.get("userId").toString());
         String template = (String) body.getOrDefault("template", "[SUBJECT] ___ [VERB] to [PLACE] yesterday.");
         String answerSlot = (String) body.getOrDefault("answerSlot", "went");
         Map<String, Object> result = hotWordsService.generateGrammarWithHotWords(userId, template, answerSlot);

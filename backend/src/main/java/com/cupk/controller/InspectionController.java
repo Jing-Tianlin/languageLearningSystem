@@ -47,8 +47,7 @@ public class InspectionController {
      */
     @PostMapping("/submit")
     public Result<Void> submitInspection(@RequestBody Map<String, Object> body) {
-        Long userId = AuthUtil.getCurrentUserId();
-        if (userId == null) return Result.error(401, "未登录");
+        Long userId = Long.valueOf(body.get("userId").toString());
         @SuppressWarnings("unchecked")
         List<Map<String, Object>> results = (List<Map<String, Object>>) body.get("results");
         if (results != null) {

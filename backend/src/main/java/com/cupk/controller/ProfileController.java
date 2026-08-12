@@ -37,11 +37,8 @@ public class ProfileController {
 
     @PostMapping
     public Result<Void> saveOrUpdate(@RequestBody Map<String, Object> body) {
-        Long currentUserId = AuthUtil.getCurrentUserId();
-        if (currentUserId == null) {
-            return Result.error(401, "未登录");
-        }
-        UserProfile p = userProfileMapper.selectById(currentUserId);
+        Long userId = Long.valueOf(body.get("userId").toString());
+        UserProfile p = userProfileMapper.selectById(userId);
         if (p == null) {
             p = new UserProfile();
             p.setUserId(currentUserId);
