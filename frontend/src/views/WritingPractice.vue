@@ -92,6 +92,11 @@ async function loadWritingHistory() {
   finally { whLoading.value = false }
 }
 
+function toggleHistory() {
+  showWritingHistory.value = !showWritingHistory.value
+  if (showWritingHistory.value) loadWritingHistory()
+}
+
 // AI 生成
 const aiTopicInput = ref('')
 const aiGenerating = ref(false)
@@ -363,7 +368,7 @@ async function saveScoreToHistory() {
 
     <!-- 写作历史 -->
     <section class="wp-history">
-      <button class="btn btn-ghost btn-block" @click="showWritingHistory = !showWritingHistory; if (showWritingHistory) loadWritingHistory()">
+      <button class="btn btn-ghost btn-block" @click="toggleHistory">
         <span>学习记录</span>
         <span class="wp-toggle-arrow" :class="{ open: showWritingHistory }">▾</span>
       </button>
@@ -398,13 +403,6 @@ async function saveScoreToHistory() {
 
 /* ---- 模式切换 ---- */
 .wp-mode-switch { display: flex; gap: 14px; justify-content: center; margin: 24px 0; }
-.wp-mode-btn {
-  display: flex; align-items: center; gap: 12px; padding: 14px 22px;
-  border-radius: 16px; border: 2px solid #e8ecf1; background: #fff;
-  cursor: pointer; transition: all 0.25s; min-width: 160px; box-shadow: 0 1px 3px rgba(0,0,0,0.02);
-}
-.wp-mode-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.06); }
-.wp-mode-btn.active { box-shadow: 0 4px 16px rgba(0,0,0,0.06); transform: translateY(-1px); }
 .wp-mode-icon { font-size: 22px; }
 .wp-mode-text { display: flex; flex-direction: column; align-items: flex-start; }
 .wp-mode-label { font-size: 15px; font-weight: 700; color: #334155; }
@@ -418,20 +416,12 @@ async function saveScoreToHistory() {
   background: #fff; transition: border-color 0.25s, box-shadow 0.25s;
 }
 .wp-ai-input-wrapper:focus-within { border-color: #b07c4f; box-shadow: 0 0 0 4px rgba(176,124,79,0.06); }
-.wp-ai-sparkle { font-size: 16px; color: #b07c4f; opacity: 0.6; }
+.wp-ai-sparkle { font-size: 16px; opacity: 0.6; }
 .wp-ai-input {
   flex: 1; padding: 12px 0; border: none; background: transparent;
   font-size: 14px; color: #334155; outline: none;
 }
 .wp-ai-input::placeholder { color: #c0c8d4; }
-.wp-ai-btn {
-  padding: 0 24px; border-radius: 14px; border: none;
-  background: linear-gradient(135deg, #b07c4f, #a06a3f); color: #fff;
-  font-size: 14px; font-weight: 600; cursor: pointer; white-space: nowrap;
-  transition: all 0.25s; box-shadow: 0 2px 8px rgba(176,124,79,0.2);
-}
-.wp-ai-btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(176,124,79,0.3); }
-.wp-ai-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 .wp-ai-loading { animation: pulse 1.2s infinite; }
 
 /* ---- 提示区 ---- */
@@ -500,15 +490,6 @@ async function saveScoreToHistory() {
 .wp-stat { font-size: 12px; color: #94a3b8; }
 .wp-stat b { color: #64748b; font-weight: 600; }
 .wp-paste-warn { padding: 10px 16px; background: #fef2f2; color: #dc2626; border-radius: 10px; font-size: 13px; margin-top: 14px; }
-.wp-submit-btn {
-  width: 100%; margin-top: 16px; padding: 14px 0; border-radius: 14px; border: none;
-  background: linear-gradient(135deg, #5a7d96, #486b7e); color: #fff;
-  font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.25s;
-  box-shadow: 0 2px 8px rgba(90,125,150,0.2);
-}
-.wp-submit-btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(90,125,150,0.3); }
-.wp-submit-btn:disabled { opacity: 0.35; cursor: not-allowed; }
-
 /* ---- 已提交 ---- */
 .wp-done-area { padding: 32px 28px; text-align: center; }
 .wp-done-check {
@@ -528,22 +509,15 @@ async function saveScoreToHistory() {
 
 /* AI 评分入口 */
 .wp-score-ask p { font-size: 14px; color: #94a3b8; margin: 0 0 12px; }
-.wp-score-btn {
-  padding: 12px 32px; border-radius: 14px; border: 1.5px solid #b07c4f;
-  background: #fff; color: #b07c4f; font-size: 14px; font-weight: 600; cursor: pointer;
-  transition: all 0.25s;
-}
-.wp-score-btn:hover:not(:disabled) { background: #b07c4f; color: #fff; }
-.wp-score-btn:disabled { opacity: 0.4; }
-
 /* 评分报告 */
 .wp-score-card { margin-top: 24px; padding: 24px; background: #f8fafc; border-radius: 18px; text-align: left; }
 .wp-score-header { font-size: 15px; font-weight: 700; color: #334155; text-align: center; margin-bottom: 20px; }
 .wp-score-grid { display: flex; gap: 12px; justify-content: center; margin-bottom: 18px; }
 .wp-score-item { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 8px; }
 .wp-score-ring {
+  --p: 0deg;
   width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
-  background: conic-gradient(#5a7d96 var(--p, 0deg), #e8ecf1 0deg);
+  background: conic-gradient(#5a7d96 var(--p), #e8ecf1 0deg);
   position: relative;
 }
 .wp-score-ring::before {
@@ -553,25 +527,12 @@ async function saveScoreToHistory() {
 .wp-score-ring.big::before { width: 54px; height: 54px; }
 .wp-score-num { position: relative; font-size: 16px; font-weight: 800; color: #334155; z-index: 1; }
 .wp-score-ring.big .wp-score-num { font-size: 20px; }
-.wp-score-item.highlight .wp-score-ring { background: conic-gradient(#b07c4f var(--p, 0deg), #e8ecf1 0deg); }
+.wp-score-item.highlight .wp-score-ring { background: conic-gradient(#b07c4f var(--p), #e8ecf1 0deg); }
 .wp-score-name { font-size: 12px; color: #94a3b8; font-weight: 500; }
 
 .wp-suggestions { margin-top: 4px; }
 .wp-suggestions h4 { font-size: 13px; font-weight: 700; color: #334155; margin: 0 0 10px; }
 .wp-suggestion { padding: 8px 12px; font-size: 13px; color: #64748b; border-left: 2px solid #e8ecf1; margin-bottom: 6px; line-height: 1.6; }
-
-.wp-save-score-btn {
-  display: block; margin: 16px auto 0; padding: 10px 24px; border-radius: 12px;
-  border: 1.5px solid #e8ecf1; background: #fff; color: #64748b;
-  font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s;
-}
-.wp-save-score-btn:hover { border-color: #5a7d96; color: #5a7d96; background: #f8fafc; }
-
-.wp-retry-btn {
-  margin-top: 20px; padding: 12px 32px; border-radius: 14px; border: 1.5px solid #e8ecf1;
-  background: #fff; color: #64748b; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s;
-}
-.wp-retry-btn:hover { border-color: #5a7d96; color: #5a7d96; }
 
 /* ---- 空态 ---- */
 .wp-empty { text-align: center; padding: 60px 20px; }
@@ -580,13 +541,6 @@ async function saveScoreToHistory() {
 
 /* ---- 历史 ---- */
 .wp-history { margin-top: 32px; }
-.wp-history-toggle {
-  display: flex; align-items: center; justify-content: space-between; width: 100%;
-  padding: 12px 18px; border-radius: 14px; border: 1.5px solid #f0f2f5;
-  background: #fff; font-size: 14px; font-weight: 600; color: #64748b; cursor: pointer;
-  transition: all 0.2s;
-}
-.wp-history-toggle:hover { background: #f8fafc; }
 .wp-toggle-arrow { transition: transform 0.25s; font-size: 12px; }
 .wp-toggle-arrow.open { transform: rotate(180deg); }
 
