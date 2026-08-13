@@ -21,7 +21,7 @@ watch(() => authStore.targetLanguage, (newLang) => {
 
 const writingLevels = [
   { level: 1, label: '仿写', desc: '替换结构，保持语法', icon: 'pencil', color: '#7c9db5' },
-  { level: 3, label: '自由写作', desc: 'AI 出题自由发挥', icon: 'sparkles', color: '#8e44ad' },
+  { level: 3, label: '自由写作', desc: 'AI 出题自由发挥', icon: 'sparkles', color: '#b07c4f' },
 ]
 
 function mapTargetLevelToWriting(targetLevel) {
@@ -128,7 +128,7 @@ const pasteWarning = ref(false)
 const submitLoading = ref(false)
 const isViewingHistory = ref(false)
 const currentHistoryId = ref(null)
-let focusTime = 0
+const focusTime = ref(0)
 let focusTimerId = null
 onUnmounted(() => { if (focusTimerId) clearInterval(focusTimerId) })
 
@@ -167,7 +167,7 @@ function onPaste(e) {
   if (text.length > 100) { e.preventDefault(); pasteWarning.value = true; setTimeout(() => (pasteWarning.value = false), 3000) }
 }
 
-function onFocus() { focusTimerId = setInterval(() => { focusTime++ }, 1000) }
+function onFocus() { focusTimerId = setInterval(() => { focusTime.value++ }, 1000) }
 function onBlur() { if (focusTimerId) clearInterval(focusTimerId) }
 
 async function submit() {
@@ -241,7 +241,7 @@ async function saveScoreToHistory() {
     <!-- AI 出题栏 -->
     <div class="wp-ai-bar">
       <div class="wp-ai-input-wrapper">
-        <span class="wp-ai-sparkle">✦</span>
+        <span class="wp-ai-sparkle icon-svg sparkles" />
         <input v-model="aiTopicInput" class="wp-ai-input"
           :placeholder="currentLevel === 1 ? '输入替换主题，留空随机...' : '输入写作主题，留空由 AI 生成...'"
           @keyup.enter="aiGeneratePrompt(currentLevel)" />
@@ -274,7 +274,7 @@ async function saveScoreToHistory() {
           <span v-for="w in prompt.requiredWords" :key="w" class="wp-req-chip">{{ w }}</span>
         </div>
         <div v-if="prompt.wordLimit" class="wp-word-limit">
-          <span class="wp-limit-icon">⏱</span> 字数 {{ prompt.wordLimit }}
+          <span class="wp-limit-icon icon-svg clock" /> 字数 {{ prompt.wordLimit }}
         </div>
       </div>
 
@@ -320,25 +320,25 @@ async function saveScoreToHistory() {
           <div class="wp-score-header">评分报告</div>
           <div class="wp-score-grid">
             <div class="wp-score-item">
-              <div class="wp-score-ring" style="--p: calc({{ aiScore.grammar || 0 }} * 3.6deg)">
+              <div class="wp-score-ring" :style="{ '--p': (aiScore.grammar || 0) * 3.6 + 'deg' }">
                 <span class="wp-score-num">{{ aiScore.grammar || 0 }}</span>
               </div>
               <span class="wp-score-name">语法</span>
             </div>
             <div class="wp-score-item">
-              <div class="wp-score-ring" style="--p: calc({{ aiScore.vocabulary || 0 }} * 3.6deg)">
+              <div class="wp-score-ring" :style="{ '--p': (aiScore.vocabulary || 0) * 3.6 + 'deg' }">
                 <span class="wp-score-num">{{ aiScore.vocabulary || 0 }}</span>
               </div>
               <span class="wp-score-name">词汇</span>
             </div>
             <div class="wp-score-item">
-              <div class="wp-score-ring" style="--p: calc({{ aiScore.coherence || 0 }} * 3.6deg)">
+              <div class="wp-score-ring" :style="{ '--p': (aiScore.coherence || 0) * 3.6 + 'deg' }">
                 <span class="wp-score-num">{{ aiScore.coherence || 0 }}</span>
               </div>
               <span class="wp-score-name">连贯</span>
             </div>
             <div class="wp-score-item highlight">
-              <div class="wp-score-ring big" style="--p: calc({{ aiScore.overall || 0 }} * 3.6deg)">
+              <div class="wp-score-ring big" :style="{ '--p': (aiScore.overall || 0) * 3.6 + 'deg' }">
                 <span class="wp-score-num">{{ aiScore.overall || 0 }}</span>
               </div>
               <span class="wp-score-name">总分</span>
@@ -417,8 +417,8 @@ async function saveScoreToHistory() {
   padding: 0 16px; border-radius: 14px; border: 1.5px solid #e8ecf1;
   background: #fff; transition: border-color 0.25s, box-shadow 0.25s;
 }
-.wp-ai-input-wrapper:focus-within { border-color: #8e44ad; box-shadow: 0 0 0 4px rgba(142,68,173,0.06); }
-.wp-ai-sparkle { font-size: 16px; color: #8e44ad; opacity: 0.6; }
+.wp-ai-input-wrapper:focus-within { border-color: #b07c4f; box-shadow: 0 0 0 4px rgba(176,124,79,0.06); }
+.wp-ai-sparkle { font-size: 16px; color: #b07c4f; opacity: 0.6; }
 .wp-ai-input {
   flex: 1; padding: 12px 0; border: none; background: transparent;
   font-size: 14px; color: #334155; outline: none;
@@ -426,11 +426,11 @@ async function saveScoreToHistory() {
 .wp-ai-input::placeholder { color: #c0c8d4; }
 .wp-ai-btn {
   padding: 0 24px; border-radius: 14px; border: none;
-  background: linear-gradient(135deg, #8e44ad, #7d3c98); color: #fff;
+  background: linear-gradient(135deg, #b07c4f, #a06a3f); color: #fff;
   font-size: 14px; font-weight: 600; cursor: pointer; white-space: nowrap;
-  transition: all 0.25s; box-shadow: 0 2px 8px rgba(142,68,173,0.2);
+  transition: all 0.25s; box-shadow: 0 2px 8px rgba(176,124,79,0.2);
 }
-.wp-ai-btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(142,68,173,0.3); }
+.wp-ai-btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(176,124,79,0.3); }
 .wp-ai-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 .wp-ai-loading { animation: pulse 1.2s infinite; }
 
@@ -456,13 +456,13 @@ async function saveScoreToHistory() {
 .wp-prompt-area { padding: 24px 28px; border-bottom: 1px solid #f5f6f8; }
 .wp-prompt-top { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
 .wp-prompt-tag {
-  padding: 4px 14px; border-radius: 20px; background: #eff6ff; color: #3b82f6;
+  padding: 4px 14px; border-radius: 20px; background: #eff6ff; color: #6e7a6b;
   font-size: 12px; font-weight: 600;
 }
-.wp-prompt-tag.ai { background: #f5f3ff; color: #7c3aed; }
+.wp-prompt-tag.ai { background: #f5f3ff; color: #b07c4f; }
 .wp-ai-badge {
-  padding: 2px 10px; border-radius: 20px; background: linear-gradient(135deg, #8e44ad15, #7c3aed15);
-  color: #7c3aed; font-size: 10px; font-weight: 700; letter-spacing: 0.5px;
+  padding: 2px 10px; border-radius: 20px; background: linear-gradient(135deg, #b07c4f15, #b07c4f15);
+  color: #b07c4f; font-size: 10px; font-weight: 700; letter-spacing: 0.5px;
 }
 .wp-template {
   margin: 0 0 12px; padding: 16px 20px; border-radius: 12px;
@@ -473,7 +473,7 @@ async function saveScoreToHistory() {
 .wp-req-words { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
 .wp-req-label { font-size: 12px; color: #94a3b8; }
 .wp-req-chip {
-  padding: 3px 12px; border-radius: 20px; background: #eff6ff; color: #3b82f6;
+  padding: 3px 12px; border-radius: 20px; background: #eff6ff; color: #6e7a6b;
   font-size: 12px; font-weight: 600;
 }
 .wp-word-limit { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #94a3b8; }
@@ -529,11 +529,11 @@ async function saveScoreToHistory() {
 /* AI 评分入口 */
 .wp-score-ask p { font-size: 14px; color: #94a3b8; margin: 0 0 12px; }
 .wp-score-btn {
-  padding: 12px 32px; border-radius: 14px; border: 1.5px solid #8e44ad;
-  background: #fff; color: #8e44ad; font-size: 14px; font-weight: 600; cursor: pointer;
+  padding: 12px 32px; border-radius: 14px; border: 1.5px solid #b07c4f;
+  background: #fff; color: #b07c4f; font-size: 14px; font-weight: 600; cursor: pointer;
   transition: all 0.25s;
 }
-.wp-score-btn:hover:not(:disabled) { background: #8e44ad; color: #fff; }
+.wp-score-btn:hover:not(:disabled) { background: #b07c4f; color: #fff; }
 .wp-score-btn:disabled { opacity: 0.4; }
 
 /* 评分报告 */
@@ -553,7 +553,7 @@ async function saveScoreToHistory() {
 .wp-score-ring.big::before { width: 54px; height: 54px; }
 .wp-score-num { position: relative; font-size: 16px; font-weight: 800; color: #334155; z-index: 1; }
 .wp-score-ring.big .wp-score-num { font-size: 20px; }
-.wp-score-item.highlight .wp-score-ring { background: conic-gradient(#8e44ad var(--p, 0deg), #e8ecf1 0deg); }
+.wp-score-item.highlight .wp-score-ring { background: conic-gradient(#b07c4f var(--p, 0deg), #e8ecf1 0deg); }
 .wp-score-name { font-size: 12px; color: #94a3b8; font-weight: 500; }
 
 .wp-suggestions { margin-top: 4px; }
@@ -599,7 +599,7 @@ async function saveScoreToHistory() {
 .wp-history-item:hover { background: #f8fafc; box-shadow: 0 2px 8px rgba(0,0,0,0.03); }
 .wh-title { flex: 1; font-size: 13px; font-weight: 600; color: #334155; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .wh-badges { display: flex; gap: 6px; }
-.wh-type { padding: 2px 10px; border-radius: 20px; background: #eff6ff; color: #3b82f6; font-size: 11px; font-weight: 600; }
+.wh-type { padding: 2px 10px; border-radius: 20px; background: #eff6ff; color: #6e7a6b; font-size: 11px; font-weight: 600; }
 .wh-score { padding: 2px 10px; border-radius: 20px; background: #f0fdf4; color: #16a34a; font-size: 11px; font-weight: 700; }
 .wh-date { font-size: 11px; color: #cbd5e1; white-space: nowrap; }
 .wp-history-empty { text-align: center; padding: 20px; color: #94a3b8; font-size: 13px; }
