@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { API_BASE_URL } from '@/config'
+import fetchJson from '@/api/fetchJson'
 
 const BASE = API_BASE_URL
 
@@ -42,12 +43,10 @@ export const useGrammarStore = defineStore('grammar', () => {
   async function generateAIQuestions(targetLevel) {
     aiLoading.value = true
     try {
-      const res = await fetch(`${BASE}/ai/generate-practices`, {
+      const json = await fetchJson(`${BASE}/ai/generate-practices`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ lang: lang.value, level: targetLevel, count: 5 }),
+        body: { langCode: lang.value, level: targetLevel, count: 5 },
       })
-      const json = await res.json()
       if (json.code === 200 && json.data?.length) {
         // 给AI题目分配临时ID（负数避免冲突）
         aiPractices.value = json.data.map((p, i) => ({
@@ -97,8 +96,7 @@ export const useGrammarStore = defineStore('grammar', () => {
   async function fetchLessons() {
     loading.value.lessons = true
     try {
-      const res = await fetch(`${BASE}/grammar/lessons?langCode=${lang.value}`)
-      const json = await res.json()
+      const json = await fetchJson(`${BASE}/grammar/lessons?langCode=${lang.value}`)
       if (json.code === 200 && json.data?.length) {
         lessons.value = json.data.map(l => ({ ...l, expanded: l.sort_order === 1 }))
       }
@@ -129,9 +127,9 @@ export const useGrammarStore = defineStore('grammar', () => {
       if (backendLevel === -1) {
         // 全部等级：并行加载三个等级
         const [r0, r1, r2] = await Promise.all([
-          fetch(`${BASE}/grammar/practices?langCode=${lang.value}&level=0`).then(r => r.json()),
-          fetch(`${BASE}/grammar/practices?langCode=${lang.value}&level=1`).then(r => r.json()),
-          fetch(`${BASE}/grammar/practices?langCode=${lang.value}&level=2`).then(r => r.json()),
+          fetchJson(`${BASE}/grammar/practices?langCode=${lang.value}&level=0`),
+          fetchJson(`${BASE}/grammar/practices?langCode=${lang.value}&level=1`),
+          fetchJson(`${BASE}/grammar/practices?langCode=${lang.value}&level=2`),
         ])
         const all = [
           ...(r0.data || []),
@@ -140,8 +138,7 @@ export const useGrammarStore = defineStore('grammar', () => {
         ]
         practices.value = all.map(p => ({ ...p, done: false }))
       } else {
-        const res = await fetch(`${BASE}/grammar/practices?langCode=${lang.value}&level=${backendLevel}`)
-        const json = await res.json()
+        const json = await fetchJson(`${BASE}/grammar/practices?langCode=${lang.value}&level=${backendLevel}`)
         practices.value = (json.data || []).map(p => ({ ...p, done: false }))
       }
     } catch (e) { practices.value = [] }
@@ -156,9 +153,9 @@ export const useGrammarStore = defineStore('grammar', () => {
     const userId = localStorage.getItem('userId')
     if (!userId) return
     try {
-      await fetch(`${BASE}/grammar/record`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: Number(userId), practiceId, isCorrect, answerGiven: given, langCode: lang.value }),
+      await fetchJson(`${BASE}/grammar/record`, {
+        method: 'POST',
+        body: { userId: Number(userId), practiceId, isCorrect, answerGiven: given, langCode: lang.value },
       })
     } catch (e) { /* 静默失败 */ }
   }
@@ -167,8 +164,7 @@ export const useGrammarStore = defineStore('grammar', () => {
     const userId = localStorage.getItem('userId')
     if (!userId) return
     try {
-      const res = await fetch(`${BASE}/grammar/stats?userId=${userId}&langCode=${lang.value}`)
-      const json = await res.json()
+      const json = await fetchJson(`${BASE}/grammar/stats?userId=${userId}&langCode=${lang.value}`)
       if (json.code === 200 && json.data) stats.value = json.data
     } catch (e) {}
   }
@@ -182,8 +178,7 @@ export const useGrammarStore = defineStore('grammar', () => {
   async function fetchSentences() {
     loading.value.sentences = true
     try {
-      const res = await fetch(`${BASE}/sentences/list?langCode=${lang.value}&limit=100`)
-      const json = await res.json()
+      const json = await fetchJson(`${BASE}/sentences/list?langCode=${lang.value}&limit=100`)
       if (json.code === 200) {
         sentenceList.value = json.data || []
         // 初始随机一句，之后可顺序切换

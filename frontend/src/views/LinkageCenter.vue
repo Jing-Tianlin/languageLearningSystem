@@ -12,6 +12,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useRouter } from 'vue-router'
 import { getExamLevels } from '@/data/examLevels'
 import { API_BASE_URL } from '@/config'
+import fetchJson from '@/api/fetchJson'
 import { toast } from '@/composables/useToast'
 import LetterSwapTitle from '@/components/effects/LetterSwapTitle.vue'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
@@ -60,8 +61,8 @@ async function loadAll() {
   loading.value = true
   try {
     const [hwRes, wpRes] = await Promise.all([
-      fetch(`${BASE}/link/hot-words?userId=${userId.value}&limit=20`).then(r => r.json()),
-      fetch(`${BASE}/stats/weak-points?userId=${userId.value}`).then(r => r.json()),
+      fetchJson(`${BASE}/link/hot-words?userId=${userId.value}&limit=20`),
+      fetchJson(`${BASE}/stats/weak-points?userId=${userId.value}`),
     ])
     reviewWords.value = (hwRes.data || []).slice(0, 12)
 
@@ -79,13 +80,13 @@ async function loadAll() {
     }
 
     // 词性分布
-    fetch(`${BASE}/link/pos-shortage?userId=${userId.value}`).then(r => r.json()).then(j => {
+    fetchJson(`${BASE}/link/pos-shortage?userId=${userId.value}`).then(j => {
       // pos-shortage 返回短缺列表，我们反过来用 total vocabulary 查询
     }).catch(() => {})
 
     // 直接从 vocabulary 统计词性
     try {
-      const vRes = await fetch(`${BASE}/vocabulary/vocabularies?langCode=${currentLang.value}&pageSize=1`)
+      await fetchJson(`${BASE}/vocabulary/vocabularies?langCode=${currentLang.value}&pageSize=1`)
       posDistribution.value = {} // 有数据表明有词汇
     } catch (e) {}
 
@@ -114,8 +115,7 @@ async function loadRecommendations() {
 
   try {
     // 1. 获取薄弱维度
-    const wpRes = await fetch(BASE + '/stats/weak-points?userId=' + uid)
-    const wpJson = await wpRes.json()
+    const wpJson = await fetchJson(BASE + '/stats/weak-points?userId=' + uid)
     const weakKeys = []
     if (wpJson.code === 200 && wpJson.data) {
       Object.entries(wpJson.data).filter(([k, v]) => v < 0.5 && v > 0).forEach(([k]) => weakKeys.push(k))
@@ -138,11 +138,10 @@ async function loadRecommendations() {
       }
       const hotTopics = hotTopicsByLang[lang] || hotTopicsByLang.en
       const randomTopic = hotTopics[Math.floor(Math.random() * hotTopics.length)]
-      const aiRes = await fetch(BASE + '/ai/generate-reading', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ lang, level: userLevel ?? 2, topic: '一篇适合' + levelLabel + '学习者阅读的' + randomTopic + '类短文' }),
+      const aiJson = await fetchJson(BASE + '/ai/generate-reading', {
+        method: 'POST',
+        body: { langCode: lang, level: userLevel ?? 2, topic: '一篇适合' + levelLabel + '学习者阅读的' + randomTopic + '类短文' },
       })
-      const aiJson = await aiRes.json()
       if (aiJson.code === 200 && aiJson.data) {
         items.push({ type: '今日热点', title: aiJson.data.title || randomTopic + '相关阅读', subtitle: randomTopic + ' · AI 生成', level: aiJson.data.level || levelLabel, reason: '基于今日热点「' + randomTopic + '」AI 生成', action: 'ai-reading', actionId: null, content: aiJson.data.content, coreVocab: JSON.stringify(aiJson.data.coreVocabulary || []), quizQuestions: JSON.stringify(aiJson.data.quizQuestions || []) })
       }
@@ -153,11 +152,10 @@ async function loadRecommendations() {
     if (weakKeys.length > 0) {
       try {
         const weakLabels = weakKeys.map(k => dimLabels[k] || k).join('、')
-        const aiWeakRes = await fetch(BASE + '/ai/generate-reading', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ lang, level: userLevel ?? 2, topic: '一篇帮助学生加强' + weakLabels + '的阅读训练文章，文章中多出现相关语法点' }),
+        const aiWeakJson = await fetchJson(BASE + '/ai/generate-reading', {
+          method: 'POST',
+          body: { langCode: lang, level: userLevel ?? 2, topic: '一篇帮助学生加强' + weakLabels + '的阅读训练文章，文章中多出现相关语法点' },
         })
-        const aiWeakJson = await aiWeakRes.json()
         if (aiWeakJson.code === 200 && aiWeakJson.data) {
           items.push({ type: '薄弱加强', title: aiWeakJson.data.title || weakLabels + '强化训练', subtitle: '针对 ' + weakLabels + ' 定制', level: aiWeakJson.data.level || levelLabel, reason: '薄弱维度「' + weakLabels + '」加强训练', action: 'ai-reading', actionId: null, content: aiWeakJson.data.content, coreVocab: JSON.stringify(aiWeakJson.data.coreVocabulary || []), quizQuestions: JSON.stringify(aiWeakJson.data.quizQuestions || []) })
         }
@@ -166,8 +164,7 @@ async function loadRecommendations() {
 
     // 4. 兜底：从数据库拉取文章确保至少有一个推荐
     try {
-      const artRes = await fetch(BASE + '/reading/articles?langCode=' + lang)
-      const artJson = await artRes.json()
+      const artJson = await fetchJson(BASE + '/reading/articles?langCode=' + lang)
       const articles = (artJson.data || []).filter(a => {
         if (userLevel !== null && userLevel !== -1) {
           return Math.abs((a.level_num || 0) - (userLevel + 1)) <= 1

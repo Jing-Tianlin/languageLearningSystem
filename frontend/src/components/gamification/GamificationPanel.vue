@@ -7,6 +7,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { API_BASE_URL } from '@/config'
+import fetchJson from '@/api/fetchJson'
 
 const authStore = useAuthStore()
 const BASE = API_BASE_URL
@@ -59,8 +60,7 @@ async function loadStats() {
   if (!authStore.isLoggedIn) return
   loading.value = true
   try {
-    const res = await fetch(`${BASE}/stats/overview`)
-    const json = await res.json()
+    const json = await fetchJson(`${BASE}/stats/overview`)
     if (json.code === 200 && json.data) {
       stats.value = { ...stats.value, ...json.data }
     }

@@ -1,43 +1,29 @@
-import axios from 'axios'
-import { API_BASE_URL } from '@/config'
+import { rawClient } from './http'
 
-const client = axios.create({
-  baseURL: API_BASE_URL,
-  timeout: 10000,
-})
-
-client.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token')
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`
-  }
-  // 自动注入当前学习语言
-  const langCode = localStorage.getItem('lastLangCode')
-  if (langCode) {
-    config.headers['X-Target-Language'] = langCode
-  }
-  return config
-})
-
-client.interceptors.response.use(
-  (response) => {
-    const res = response.data
-    if (res.code === 200) {
-      return res.data || true
+/**
+ * 统一 axios 风格客户端：code === 200 时直接返回 data，否则 reject。
+ * 供 src/api/* 模块使用；页面级请求请使用 fetchJson。
+ */
+function unwrap(promise) {
+  return promise.then((env) => {
+    if (env && env.code === 200) {
+      return env.data || true
     }
-    return Promise.reject(new Error(res.message || '请求失败'))
-  },
-  (error) => {
-    if (error.response?.status === 401) {
-      // 同步清理 authStore 状态（token/userId/偏好），避免登录态残留
-      import('@/stores/auth')
-        .then(({ useAuthStore }) => useAuthStore().logout())
-        .finally(() => {
-          window.location.href = '/login'
-        })
-    }
-    return Promise.reject(error)
-  },
-)
+    throw new Error((env && env.message) || '请求失败')
+  })
+}
 
-export default client
+export default {
+  get(url, config) {
+    return unwrap(rawClient.get(url, config))
+  },
+  post(url, data, config) {
+    return unwrap(rawClient.post(url, data, config))
+  },
+  put(url, data, config) {
+    return unwrap(rawClient.put(url, data, config))
+  },
+  delete(url, config) {
+    return unwrap(rawClient.delete(url, config))
+  },
+}

@@ -6,6 +6,7 @@
 import { ref, watch, onUnmounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { API_BASE_URL } from '@/config'
+import fetchJson from '@/api/fetchJson'
 import LetterSwapTitle from '@/components/effects/LetterSwapTitle.vue'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
 import { LANG_NAMES } from '@/config/languages'
@@ -42,11 +43,10 @@ async function requestAIScore() {
   if (!submittedText.value.trim()) return
   scoreLoading.value = true
   try {
-    const res = await fetch(`${BASE}/ai/score-writing`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text: submittedText.value, langCode: currentLang.value, topic: prompt.value?.topic || '' }),
+    const json = await fetchJson(`${BASE}/ai/score-writing`, {
+      method: 'POST',
+      body: { text: submittedText.value, langCode: currentLang.value, topic: prompt.value?.topic || '' },
     })
-    const json = await res.json()
     if (json.code === 200 && json.data) { aiScore.value = json.data }
     else { error.value = json.msg || '评分失败' }
   } catch (e) { error.value = 'AI 服务暂不可用' }
@@ -85,8 +85,7 @@ async function loadWritingHistory() {
   if (!userId) return
   whLoading.value = true
   try {
-    const res = await fetch(`${BASE}/history/writing?userId=${userId}&limit=20`)
-    const json = await res.json()
+    const json = await fetchJson(`${BASE}/history/writing?userId=${userId}&limit=20`)
     writingHistory.value = json.data || []
   } catch (e) { writingHistory.value = [] }
   finally { whLoading.value = false }
@@ -114,11 +113,10 @@ async function aiGeneratePrompt(level) {
 
   try {
     const backendLevel = level === 1 ? 1 : 3
-    const res = await fetch(`${BASE}/ai/generate-writing-prompt`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ langCode: currentLang.value, level: backendLevel, topic: aiTopicInput.value.trim() }),
+    const json = await fetchJson(`${BASE}/ai/generate-writing-prompt`, {
+      method: 'POST',
+      body: { langCode: currentLang.value, level: backendLevel, topic: aiTopicInput.value.trim() },
     })
-    const json = await res.json()
     if (json.code === 200 && json.data) { prompt.value = json.data }
     else { prompt.value = null; error.value = json.msg || 'AI 出题失败，请重试' }
   } catch (e) { error.value = '网络错误'; prompt.value = null }
@@ -151,8 +149,7 @@ async function loadPrompt(level) {
 
   const backendLevel = level === 1 ? 1 : 3
   try {
-    const res = await fetch(`${BASE}/writing/prompt?level=${backendLevel}&langCode=${currentLang.value}`)
-    const json = await res.json()
+    const json = await fetchJson(`${BASE}/writing/prompt?level=${backendLevel}&langCode=${currentLang.value}`)
     if (json.code === 200 && json.data) { prompt.value = json.data }
     else { error.value = '加载题目失败'; prompt.value = null }
   } catch (e) { error.value = '网络错误，请稍后重试'; prompt.value = null }
@@ -182,16 +179,15 @@ async function submit() {
 
   submitLoading.value = true
   try {
-    const res = await fetch(`${BASE}/writing/submit`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
+    const json = await fetchJson(`${BASE}/writing/submit`, {
+      method: 'POST',
+      body: {
         userId: Number(userId), langCode: currentLang.value, level: currentLevel.value,
         text: submittedText.value, revisionCount: revisionCount.value,
         topic: prompt.value?.topic || '', type: prompt.value?.type || '',
         promptJson: JSON.stringify(prompt.value || {}),
-      }),
+      },
     })
-    const json = await res.json()
     if (json.code === 200) {
       submitted.value = true
       aiScore.value = null
@@ -206,14 +202,14 @@ async function saveScoreToHistory() {
   const userId = authStore.user?.id
   if (!userId || !aiScore.value) return
   try {
-    await fetch(`${BASE}/writing/save-score`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
+    await fetchJson(`${BASE}/writing/save-score`, {
+      method: 'POST',
+      body: {
         userId: Number(userId),
         historyId: currentHistoryId.value,
         score: aiScore.value.overall || 0,
         scoreDetail: JSON.stringify(aiScore.value),
-      }),
+      },
     })
   } catch (e) { /* 静默 */ }
 }

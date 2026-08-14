@@ -3,6 +3,7 @@ import { ref, onMounted, computed } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { getExamLevels } from '@/data/examLevels'
 import { API_BASE_URL } from '@/config'
+import fetchJson from '@/api/fetchJson'
 import { LANG_NAMES } from '@/config/languages'
 import { toast } from '@/composables/useToast'
 import LetterSwapTitle from '@/components/effects/LetterSwapTitle.vue'
@@ -54,10 +55,7 @@ onMounted(async () => {
 
 async function loadDashboard() {
   try {
-    const res = await fetch(`${BASE}/admin/stats/dashboard`, {
-      headers: authHeaders()
-    })
-    const json = await res.json()
+    const json = await fetchJson(`${BASE}/admin/stats/dashboard`)
     if (json.code === 200) {
       dashboard.value = json.data
     }
@@ -75,10 +73,7 @@ async function loadUsers() {
     })
     if (userSearch.value.trim()) params.set('keyword', userSearch.value.trim())
     
-    const res = await fetch(`${BASE}/admin/users?${params}`, {
-      headers: authHeaders()
-    })
-    const json = await res.json()
+    const json = await fetchJson(`${BASE}/admin/users?${params}`)
     if (json.code === 200) {
       users.value = json.data?.records || []
       totalUsers.value = json.data?.total || 0
@@ -92,10 +87,7 @@ async function loadUsers() {
 
 async function loadRoles() {
   try {
-    const res = await fetch(`${BASE}/admin/roles`, {
-      headers: authHeaders()
-    })
-    const json = await res.json()
+    const json = await fetchJson(`${BASE}/admin/roles`)
     if (json.code === 200) {
       roles.value = json.data || []
     }
@@ -111,10 +103,7 @@ async function loadLogs() {
     })
     if (logSearch.value.trim()) params.set('keyword', logSearch.value.trim())
     
-    const res = await fetch(`${BASE}/admin/logs?${params}`, {
-      headers: authHeaders()
-    })
-    const json = await res.json()
+    const json = await fetchJson(`${BASE}/admin/logs?${params}`)
     if (json.code === 200) {
       logs.value = json.data?.records || []
       totalLogs.value = json.data?.total || 0
@@ -131,10 +120,9 @@ async function loadLogs() {
 async function toggleRole(userId, roleId) {
   if (!isAdmin.value) { toast.warning('无权限'); return }
   try {
-    await fetch(`${BASE}/admin/user-roles`, {
+    await fetchJson(`${BASE}/admin/user-roles`, {
       method: 'POST',
-      headers: authHeaders(),
-      body: JSON.stringify({ userId, roleId }),
+      body: { userId, roleId },
     })
     await loadUsers()
     toast.success('角色已更新')
@@ -172,12 +160,10 @@ async function saveUser() {
     const url = editingUser.value.id ? `${BASE}/admin/users` : `${BASE}/admin/users`
     const method = editingUser.value.id ? 'PUT' : 'POST'
     
-    const res = await fetch(url, {
+    const json = await fetchJson(url, {
       method,
-      headers: authHeaders(),
-      body: JSON.stringify(editingUser.value),
+      body: editingUser.value,
     })
-    const json = await res.json()
     if (json.code === 200) {
       toast.success(editingUser.value.id ? '更新成功' : '创建成功')
       showUserModal.value = false
@@ -203,12 +189,10 @@ async function confirmResetPassword() {
     return
   }
   try {
-    const res = await fetch(`${BASE}/admin/users/${resetPwdUserId.value}/reset-password`, {
+    const json = await fetchJson(`${BASE}/admin/users/${resetPwdUserId.value}/reset-password`, {
       method: 'POST',
-      headers: authHeaders(),
-      body: JSON.stringify({ password: newPassword.value }),
+      body: { password: newPassword.value },
     })
-    const json = await res.json()
     if (json.code === 200) {
       toast.success('密码重置成功')
       showResetPwdModal.value = false
@@ -223,11 +207,9 @@ async function confirmResetPassword() {
 async function toggleUserStatus(user) {
   if (!confirm(`确定要${user.status === 1 ? '禁用' : '启用'}该用户吗？`)) return
   try {
-    const res = await fetch(`${BASE}/admin/users/${user.id}/toggle-status`, {
+    const json = await fetchJson(`${BASE}/admin/users/${user.id}/toggle-status`, {
       method: 'POST',
-      headers: authHeaders(),
     })
-    const json = await res.json()
     if (json.code === 200) {
       toast.success('操作成功')
       await loadUsers()
@@ -242,11 +224,9 @@ async function toggleUserStatus(user) {
 async function deleteUser(userId) {
   if (!confirm('确定要删除该用户吗？此操作不可恢复。')) return
   try {
-    const res = await fetch(`${BASE}/admin/users/${userId}`, {
+    const json = await fetchJson(`${BASE}/admin/users/${userId}`, {
       method: 'DELETE',
-      headers: authHeaders(),
     })
-    const json = await res.json()
     if (json.code === 200) {
       toast.success('用户已删除')
       await loadUsers()

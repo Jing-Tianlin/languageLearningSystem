@@ -16,6 +16,8 @@ public class WebConfig implements WebMvcConfigurer {
 
     private final AuthInterceptor authInterceptor;
 
+    private final AiQuotaInterceptor aiQuotaInterceptor;
+
     @Override
     public void configureMessageConverters(List<HttpMessageConverter<?>> converters) {
         for (HttpMessageConverter<?> converter : converters) {
@@ -31,5 +33,8 @@ public class WebConfig implements WebMvcConfigurer {
         registry.addInterceptor(authInterceptor)
                 .addPathPatterns("/**")
                 .excludePathPatterns("/error");
+        // AI 配额限流（注册顺序在鉴权之后，能拿到 AuthUtil.ATTR_USER_ID）
+        registry.addInterceptor(aiQuotaInterceptor)
+                .addPathPatterns("/ai/**");
     }
 }

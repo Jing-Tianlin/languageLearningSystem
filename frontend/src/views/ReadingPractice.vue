@@ -10,6 +10,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useVocabularyStore } from '@/stores/vocabulary'
 import { getExamLevels, getLevelLabel } from '@/data/examLevels'
 import { API_BASE_URL } from '@/config'
+import fetchJson from '@/api/fetchJson'
 import { toast } from '@/composables/useToast'
 import { useFavoriteStore } from '@/stores/favorite'
 import LetterSwapTitle from '@/components/effects/LetterSwapTitle.vue'
@@ -92,14 +93,13 @@ async function analyzeArticle() {
   }).join('\n') || '全部正确'
 
   try {
-    const res = await fetch(`${BASE}/ai/ask`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
+    const data = await fetchJson(`${BASE}/ai/ask`, {
+      method: 'POST',
+      body: {
         question: `你是${LANG_NAMES[currentLang.value] || '语言'}阅读老师。请用中文对以下测验做非常详细的解析（500字以上），包括正确和错误的题目：\n\n=== 正文（已标注段落）===\n${numberedText}\n\n=== 答题 ===\n得分: ${quizResult.value.score}/${quizResult.value.total}\n${wrongDetails}\n\n要求：\n1. 逐道题分析（包括答对的题也要分析）\n2. 每题明确指出原文依据位置（如"第2段第3句"）\n3. 引用原文关键句\n4. 指出语法点或阅读技巧\n5. 结尾给1-2个精读建议\n6. 只用中文，不要用其他语言，禁止 markdown 标记`,
-        lang: currentLang.value,
-      })
+        langCode: currentLang.value,
+      },
     })
-    const data = await res.json()
     analysisResult.value = data.data?.answer || 'AI 暂不可用'
   } catch (e) { analysisResult.value = '解析失败' }
   finally { analysisLoading.value = false }
@@ -143,8 +143,7 @@ async function loadArticles() {
   const params = new URLSearchParams({ langCode: currentLang.value })
   if (authStore.targetLevel !== null && authStore.targetLevel !== -1) params.set('levelNum', authStore.targetLevel)
   try {
-    const res = await fetch(`${BASE}/reading/articles?${params}`)
-    const json = await res.json()
+    const json = await fetchJson(`${BASE}/reading/articles?${params}`)
     articles.value = json.code === 200 ? (json.data || []) : []
   } catch (e) { articles.value = [] }
   finally { loading.value = false }
@@ -157,8 +156,7 @@ async function selectArticle(id) {
   userAnswers.value = []; quizResult.value = null; analysisResult.value = ''
   const userId = authStore.user?.id; if (!userId) { toast.error('请先登录'); return; }
   try {
-    const res = await fetch(`${BASE}/reading/article?userId=${userId}&langCode=${currentLang.value}&articleId=${id}`)
-    const json = await res.json()
+    const json = await fetchJson(`${BASE}/reading/article?userId=${userId}&langCode=${currentLang.value}&articleId=${id}`)
     if (json.code === 200 && json.data) {
       article.value = json.data
       coreVocab.value = safeParse(json.data.coreVocabulary)
@@ -180,8 +178,7 @@ async function loadReadingHistory() {
   if (!userId) return
   rhLoading.value = true
   try {
-    const res = await fetch(`${BASE}/history/reading?userId=${userId}&limit=20`)
-    const json = await res.json()
+    const json = await fetchJson(`${BASE}/history/reading?userId=${userId}&limit=20`)
     readingHistory.value = json.data || []
   } catch (e) { readingHistory.value = [] }
   finally { rhLoading.value = false }
@@ -245,12 +242,10 @@ async function addToVocab(word) {
   const userId = authStore.user?.id
   if (!userId) { toast('请先登录', 'error'); return }
   try {
-    const res = await fetch(`${BASE}/reading/vocab-action`, {
+    const json = await fetchJson(`${BASE}/reading/vocab-action`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId: Number(userId), word, action: 'add', langCode: currentLang.value }),
+      body: { userId: Number(userId), word, action: 'add', langCode: currentLang.value },
     })
-    const json = await res.json()
     if (json.code !== 200) {
       toast.error(json.message || '加入失败')
       return
@@ -300,15 +295,15 @@ function submitQuizResult() {
   if (!userId) return
   // 数据库文章提交测验结果
   if (article.value?.id && !article.value.aiGenerated) {
-    fetch(`${BASE}/reading/quiz`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
+    fetchJson(`${BASE}/reading/quiz`, {
+      method: 'POST',
+      body: {
         userId: Number(userId),
         articleId: article.value.id,
         answers: quizAnswers.value.map(a => a.selectedIndex),
         phase1Duration: phase1Time.value, phase2Duration: 0,
         langCode: currentLang.value,
-      }),
+      },
     }).catch(() => {})
   }
   // 保存阅读历史（含完整内容）
@@ -322,16 +317,15 @@ function submitQuizResult() {
     quizQuestions: JSON.stringify(quizQuestions.value),
     quizScore: score, quizTotal: total,
   }
-  fetch(`${BASE}/history/reading`, {
-    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload),
+  fetchJson(`${BASE}/history/reading`, {
+    method: 'POST', body: payload,
   }).catch(() => {})
 }
 
 async function aiGenerate() {
   aiGenerating.value = true; loading.value = true
   try {
-    const res = await fetch(`${BASE}/ai/generate-reading`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ lang: currentLang.value, level: authStore.targetLevel ?? 2, topic: aiTopic.value.trim() }) })
-    const json = await res.json()
+    const json = await fetchJson(`${BASE}/ai/generate-reading`, { method: 'POST', body: { langCode: currentLang.value, level: authStore.targetLevel ?? 2, topic: aiTopic.value.trim() } })
     if (json.code === 200 && json.data) {
       article.value = json.data; coreVocab.value = safeParse(json.data.coreVocabulary); quizQuestions.value = safeParse(json.data.quizQuestions)
       quizAnswers.value = []; quizFinished.value = false

@@ -13,6 +13,7 @@ import { useLanguageStore } from '@/stores/language'
 import { getExamLevels } from '@/data/examLevels'
 import { toast } from '@/composables/useToast'
 import { API_BASE_URL } from '@/config'
+import fetchJson from '@/api/fetchJson'
 import LetterSwapTitle from '@/components/effects/LetterSwapTitle.vue'
 import { langName } from '@/config/languages'
 
@@ -53,7 +54,7 @@ async function askQuestion() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         question: q,
-        lang: currentLang.value,
+        langCode: currentLang.value,
         history: recentHistory,
       }),
     })
@@ -112,15 +113,14 @@ async function generateExamples(append = false) {
   if (!append) examples.value = []
   exampleLoading.value = true
   try {
-    const res = await fetch(`${API_BASE_URL}/ai/examples`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        word, lang: currentLang.value,
+    const data = await fetchJson(`${API_BASE_URL}/ai/examples`, {
+      method: 'POST',
+      body: {
+        word, langCode: currentLang.value,
         count: 3,
         level: currentLevelLabel.value,
-      }),
+      },
     })
-    const data = await res.json()
     const newOnes = data.data?.sentences || []
     if (newOnes.length === 0) { toast.info('未生成例句，请稍后再试'); return }
     examples.value = [...examples.value, ...newOnes]
@@ -139,11 +139,10 @@ async function checkGrammar() {
   if (!checkText.value.trim()) { toast.warning('请输入要检查的句子'); return }
   checkLoading.value = true
   try {
-    const res = await fetch(`${API_BASE_URL}/ai/grammar-check`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text: checkText.value, lang: currentLang.value }),
+    const data = await fetchJson(`${API_BASE_URL}/ai/grammar-check`, {
+      method: 'POST',
+      body: { text: checkText.value, langCode: currentLang.value },
     })
-    const data = await res.json()
     checkResult.value = data.data
     if (data.data && !data.data.hasErrors) toast.success('没有发现语法错误！')
   } catch (e) {

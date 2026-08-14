@@ -9,26 +9,33 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.time.Duration;
 import java.util.*;
 import java.util.function.Consumer;
 import com.fasterxml.jackson.core.type.TypeReference;
+import lombok.RequiredArgsConstructor;
 
 /**
  * DeepSeekService — AI 辅助学习服务
  * 通过 DeepSeek API 提供: i+1句子生成 / 语法纠错 / 写作评分
  */
 @Service
+@RequiredArgsConstructor
 public class DeepSeekService {
 
     private static final Logger log = LoggerFactory.getLogger(DeepSeekService.class);
 
     @Value("${deepseek.api.key:sk-your-default-key}")
     private String apiKey;
+
+    private final AiResultCache aiResultCache;
 
     private static final String API_URL = "https://api.deepseek.com/v1/chat/completions";
     private final HttpClient client = HttpClient.newBuilder()
@@ -253,7 +260,66 @@ public class DeepSeekService {
         return chatCompletion(prompt, 1000);
     }
 
+    /**
+     * 带重试 + 结果缓存的 chat/completions 调用：
+     * 相同的 prompt 短期内直接命中缓存（省 API 成本）；未命中时，
+     * 网络异常、超时、429、5xx 自动重试一次（指数退避），4xx 客户端错误不重试。
+     */
     private String chatCompletion(String prompt, int maxTokens) throws Exception {
+        String cacheKey = cacheKey(prompt, maxTokens);
+        String cached = aiResultCache.get(cacheKey);
+        if (cached != null) {
+            return cached;
+        }
+
+        final int maxAttempts = 2;
+        Exception last = null;
+        for (int attempt = 1; attempt <= maxAttempts; attempt++) {
+            try {
+                String reply = doChatCompletion(prompt, maxTokens);
+                aiResultCache.put(cacheKey, reply);
+                return reply;
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw e;
+            } catch (IOException e) {
+                // HttpTimeoutException 是 IOException 子类，一并在此捕获
+                last = e;
+            } catch (DeepSeekApiException e) {
+                last = e;
+                // 4xx（429 除外）属于请求本身问题，重试无意义
+                if (e.status != 429 && e.status < 500) {
+                    throw e;
+                }
+            }
+            if (attempt < maxAttempts) {
+                long backoffMs = 800L * attempt;
+                log.warn("DeepSeek API 调用失败，{}ms 后重试（第 {}/{} 次）: {}",
+                    backoffMs, attempt, maxAttempts, last != null ? last.getMessage() : "unknown");
+                Thread.sleep(backoffMs);
+            }
+        }
+        throw last != null ? last : new RuntimeException("DeepSeek API 调用失败");
+    }
+
+    /** 生成缓存键（prompt + maxTokens 的 SHA-256 摘要） */
+    private String cacheKey(String prompt, int maxTokens) {
+        try {
+            MessageDigest md = MessageDigest.getInstance("SHA-256");
+            byte[] digest = md.digest((prompt + "|" + maxTokens).getBytes(StandardCharsets.UTF_8));
+            StringBuilder sb = new StringBuilder();
+            for (byte b : digest) {
+                sb.append(String.format("%02x", b));
+            }
+            return sb.toString();
+        } catch (Exception e) {
+            // 理论上不会发生；降级为 prompt 本身
+            return prompt + "|" + maxTokens;
+        }
+    }
+
+    /** 单次 chat/completions 请求（不重试） */
+    private String doChatCompletion(String prompt, int maxTokens) throws IOException, InterruptedException {
         ObjectNode body = mapper.createObjectNode();
         body.put("model", "deepseek-chat");
         body.put("max_tokens", maxTokens);
@@ -274,7 +340,7 @@ public class DeepSeekService {
 
         HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString());
         if (resp.statusCode() != 200) {
-            throw new RuntimeException("DeepSeek API error: " + resp.statusCode() + " " + resp.body());
+            throw new DeepSeekApiException(resp.statusCode(), resp.body());
         }
         JsonNode root = mapper.readTree(resp.body());
         JsonNode choices = root.get("choices");
@@ -284,7 +350,16 @@ public class DeepSeekService {
                 return message.get("content").asText();
             }
         }
-        throw new RuntimeException("DeepSeek API 返回格式异常: " + resp.body());
+        throw new DeepSeekApiException(200, "返回格式异常: " + resp.body());
+    }
+
+    /** DeepSeek API 非 200 / 返回格式异常 */
+    private static class DeepSeekApiException extends RuntimeException {
+        final int status;
+        DeepSeekApiException(int status, String body) {
+            super("DeepSeek API error: " + status + " " + body);
+            this.status = status;
+        }
     }
 
     /**

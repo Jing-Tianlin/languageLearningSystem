@@ -2,7 +2,9 @@ package com.cupk.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.cupk.common.AdminCreateUserRequest;
 import com.cupk.common.Result;
+import com.cupk.config.AuthCacheService;
 import com.cupk.mapper.*;
 import com.cupk.pojo.*;
 import com.cupk.utils.PasswordUtil;
@@ -35,6 +37,7 @@ public class AdminController {
     private final JdbcTemplate jdbcTemplate;
     private final HttpServletRequest request;
     private final com.cupk.service.VocabularyRepairService vocabularyRepairService;
+    private final AuthCacheService authCacheService;
 
     // ==================== 系统统计仪表盘 ====================
 
@@ -89,13 +92,10 @@ public class AdminController {
         queryWrapper.orderByDesc("create_time");
         userMapper.selectPage(page, queryWrapper);
 
+        // 批量查询角色，避免 N+1
+        Map<Long, List<String>> rolesMap = loadRolesBatch(page.getRecords().stream().map(User::getId).toList());
         for (User u : page.getRecords()) {
-            List<String> roleCodes = jdbcTemplate.query(
-                "SELECT r.code FROM role r JOIN user_role ur ON r.id = ur.role_id WHERE ur.user_id = ?",
-                (rs, rowNum) -> rs.getString("code"),
-                u.getId()
-            );
-            u.setRoles(roleCodes);
+            u.setRoles(rolesMap.getOrDefault(u.getId(), List.of()));
             u.setPassword(null);
         }
         return Result.success(page);
@@ -118,26 +118,36 @@ public class AdminController {
     }
 
     @PostMapping("/users")
-    public Result<User> createUser(@RequestBody User user) {
-        if (user.getUsername() == null || user.getUsername().isEmpty()) {
+    public Result<User> createUser(@RequestBody AdminCreateUserRequest req) {
+        if (req.username() == null || req.username().isEmpty()) {
             return Result.error(400, "用户名不能为空");
         }
-        if (user.getPassword() == null || user.getPassword().isEmpty()) {
+        if (req.password() == null || req.password().isEmpty()) {
             return Result.error(400, "密码不能为空");
+        }
+        if (req.password().length() < 6 || req.password().length() > 64) {
+            return Result.error(400, "密码长度需为 6-64 个字符");
         }
 
         QueryWrapper<User> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("username", user.getUsername());
+        queryWrapper.eq("username", req.username());
         User exist = userMapper.selectOne(queryWrapper);
         if (exist != null) {
             return Result.error(400, "用户名已存在");
         }
 
-        user.setId(null);
-        user.setPassword(PasswordUtil.encode(user.getPassword()));
-        if (user.getNickname() == null || user.getNickname().isEmpty()) {
-            user.setNickname(user.getUsername());
-        }
+        User user = new User();
+        user.setUsername(req.username());
+        user.setPassword(PasswordUtil.encode(req.password()));
+        user.setNickname((req.nickname() == null || req.nickname().isEmpty()) ? req.username() : req.nickname());
+        user.setEmail(emptyToNull(req.email()));
+        user.setPhone(emptyToNull(req.phone()));
+        user.setGender(req.gender());
+        user.setAvatar(req.avatar());
+        user.setCurrentLangCode(req.currentLangCode());
+        user.setCurrentLevel(req.currentLevel());
+        user.setStatus(req.status() != null ? req.status() : 1);
+        user.setLastPasswordChangeAt(LocalDateTime.now());
         userMapper.insert(user);
 
         jdbcTemplate.update("INSERT INTO user_role (user_id, role_id) VALUES (?, 1)", user.getId());
@@ -178,7 +188,10 @@ public class AdminController {
             return Result.error(404, "用户不存在");
         }
         user.setPassword(PasswordUtil.encode(newPassword));
+        user.setLastPasswordChangeAt(LocalDateTime.now());
         userMapper.updateById(user);
+        // 密码变更后让该用户下次请求重新加载鉴权信息（旧 token 也会失效）
+        authCacheService.evict(id);
         log.info("管理员重置密码: userId={}", id);
         recordLog("user_reset_password", "重置用户密码: " + user.getUsername());
         return Result.success("密码重置成功");
@@ -194,6 +207,8 @@ public class AdminController {
         int newStatus = (currentStatus != null && currentStatus == 1) ? 0 : 1;
         user.setStatus(newStatus);
         userMapper.updateById(user);
+        // 禁用立即生效：失效该用户鉴权缓存，下次请求重新校验状态
+        authCacheService.evict(id);
         String action = newStatus == 1 ? "启用" : "禁用";
         log.info("管理员{}用户: userId={}", action, id);
         recordLog("user_status_change", action + "用户: " + user.getUsername());
@@ -235,6 +250,7 @@ public class AdminController {
         jdbcTemplate.update("DELETE FROM operation_log WHERE user_id = ?", id);
         jdbcTemplate.update("DELETE FROM inspection_log WHERE user_id = ?", id);
         userMapper.deleteById(id);
+        authCacheService.evict(id);
 
         log.info("管理员删除用户: userId={}, username={}", id, user.getUsername());
         recordLog("user_delete", "删除用户: " + user.getUsername());
@@ -297,6 +313,8 @@ public class AdminController {
             return Result.error(400, "该角色下还有用户，无法删除");
         }
         roleMapper.deleteById(id);
+        // 角色表变更影响所有用户的鉴权缓存
+        authCacheService.clear();
         recordLog("role_delete", "删除角色: " + role.getName());
         return Result.success("删除成功");
     }
@@ -329,6 +347,8 @@ public class AdminController {
             jdbcTemplate.update("INSERT IGNORE INTO user_role (user_id, role_id) VALUES (?, ?)", userId, roleId);
             recordLog("role_assign", "分配用户角色: userId=" + userId + ", roleId=" + roleId);
         }
+        // 角色变更立即生效
+        authCacheService.evict(userId);
         return Result.success("操作成功");
     }
 
@@ -499,6 +519,28 @@ public class AdminController {
         Map<String, Integer> stats = vocabularyRepairService.repairByLanguage(langCode, limit);
         recordLog("vocab_repair", "修复词汇乱码: " + langCode + ", 修复" + stats.get("fixed") + "条");
         return Result.success(stats);
+    }
+
+    /** 批量加载多个用户的角色，避免 N+1 查询 */
+    private Map<Long, List<String>> loadRolesBatch(List<Long> userIds) {
+        if (userIds == null || userIds.isEmpty()) {
+            return Map.of();
+        }
+        String inClause = String.join(",", java.util.Collections.nCopies(userIds.size(), "?"));
+        Map<Long, List<String>> map = new HashMap<>();
+        jdbcTemplate.query(
+            "SELECT ur.user_id, r.code FROM user_role ur JOIN role r ON ur.role_id = r.id WHERE ur.user_id IN (" + inClause + ")",
+            rs -> {
+                Long uid = rs.getLong("user_id");
+                map.computeIfAbsent(uid, k -> new ArrayList<>()).add(rs.getString("code"));
+            },
+            userIds.toArray()
+        );
+        return map;
+    }
+
+    private String emptyToNull(String s) {
+        return (s == null || s.isEmpty()) ? null : s;
     }
 
     private void recordLog(String action, String detail) {

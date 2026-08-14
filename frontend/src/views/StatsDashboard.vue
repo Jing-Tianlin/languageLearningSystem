@@ -21,6 +21,7 @@ import LetterSwapTitle from '@/components/effects/LetterSwapTitle.vue'
 import GamificationPanel from '@/components/gamification/GamificationPanel.vue'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
 import { API_BASE_URL } from '@/config'
+import fetchJson from '@/api/fetchJson'
 
 const authStore = useAuthStore()
 const loading = ref(true)
@@ -38,9 +39,15 @@ onMounted(async () => {
   if (!userId) { loading.value = false; return }
 
   try {
+    // 并行拉取四组统计数据（互不依赖）
+    const [j1, j2, j3, j4] = await Promise.all([
+      fetchJson(`${BASE}/stats/weak-points?userId=${userId}`),
+      fetchJson(`${BASE}/stats/overview?userId=${userId}`),
+      fetchJson(`${BASE}/stats/by-language?userId=${userId}`),
+      fetchJson(`${BASE}/stats/trend?userId=${userId}`),
+    ])
+
     // 1. 综合掌握度 (雷达图)
-    const r1 = await fetch(`${BASE}/stats/weak-points?userId=${userId}`)
-    const j1 = await r1.json()
     if (j1.code === 200 && j1.data) {
       const data = j1.data
       const indicators = Object.keys(data).map((k) => ({ name: getLabel(k), max: 100 }))
@@ -56,13 +63,9 @@ onMounted(async () => {
     }
 
     // 2. 总体指标
-    const r2 = await fetch(`${BASE}/stats/overview?userId=${userId}`)
-    const j2 = await r2.json()
     if (j2.code === 200 && j2.data) overview.value = j2.data
 
     // 3. 按语言分布 (饼图)
-    const r3 = await fetch(`${BASE}/stats/by-language?userId=${userId}`)
-    const j3 = await r3.json()
     if (j3.code === 200 && j3.data?.languages) {
       const langs = j3.data.languages
       pieOption.value = {
@@ -76,8 +79,6 @@ onMounted(async () => {
     }
 
     // 4. 趋势（堆叠柱状图 + 均值参考线）
-    const r4 = await fetch(`${BASE}/stats/trend?userId=${userId}`)
-    const j4 = await r4.json()
     if (j4.code === 200 && j4.data?.trend) {
       const t = j4.data.trend
       const days = t.days || []

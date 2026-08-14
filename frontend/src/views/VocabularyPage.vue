@@ -9,6 +9,7 @@ import { vocabularyApi } from '@/api/vocabulary'
 import { toast } from '@/composables/useToast'
 import { getExamLevels } from '@/data/examLevels'
 import { API_BASE_URL } from '@/config'
+import fetchJson from '@/api/fetchJson'
 import VocabCard from '@/components/cards/VocabCard.vue'
 import VocabFilter from '@/components/common/VocabFilter.vue'
 import LetterSwapTitle from '@/components/effects/LetterSwapTitle.vue'
@@ -340,10 +341,9 @@ async function generateExample(vocab) {
   if (generatingExampleIds.value.has(vocab.id)) return
   generatingExampleIds.value.add(vocab.id)
   try {
-    const res = await fetch(`${API_BASE_URL}/vocabulary/generate-example?vocabId=${vocab.id}`, {
+    const json = await fetchJson(`${API_BASE_URL}/vocabulary/generate-example?vocabId=${vocab.id}`, {
       method: 'POST'
     })
-    const json = await res.json()
     if (json.code === 200 && json.data) {
       vocab.exampleSentence = json.data.exampleSentence
       vocab.exampleTranslation = json.data.exampleTranslation

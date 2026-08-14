@@ -5,6 +5,7 @@ import { useLanguageStore } from '@/stores/language'
 import { useAuthStore } from '@/stores/auth'
 import { getLevelLabel } from '@/data/examLevels'
 import { API_BASE_URL } from '@/config'
+import fetchJson from '@/api/fetchJson'
 import LearningRoadmap from '@/components/cards/LearningRoadmap.vue'
 import LetterSwapTitle from '@/components/effects/LetterSwapTitle.vue'
 import GamificationPanel from '@/components/gamification/GamificationPanel.vue'
@@ -42,11 +43,10 @@ async function loadHomeRecs() {
   const levelLabel = level !== null && level !== -1 && levelNames[level] ? levelNames[level] : ''
 
   try {
-    const res = await fetch(`${BASE}/ai/generate-reading`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ lang, level: level ?? 2, topic: '一篇适合' + levelLabel + '学习者的阅读文章' }),
+    const json = await fetchJson(`${BASE}/ai/generate-reading`, {
+      method: 'POST',
+      body: { langCode: lang, level: level ?? 2, topic: '一篇适合' + levelLabel + '学习者的阅读文章' },
     })
-    const json = await res.json()
     if (json.code === 200 && json.data) {
       homeRecs.value = [{
         title: json.data.title,
@@ -74,8 +74,7 @@ async function loadStats() {
   if (!authStore.isLoggedIn || !authStore.user) return
   statsLoading.value = true
   try {
-    const res = await fetch(`${BASE}/stats/overview?userId=${authStore.user.id}`)
-    const json = await res.json()
+    const json = await fetchJson(`${BASE}/stats/overview?userId=${authStore.user.id}`)
     if (json.code === 200 && json.data) {
       stats.value = json.data
     }

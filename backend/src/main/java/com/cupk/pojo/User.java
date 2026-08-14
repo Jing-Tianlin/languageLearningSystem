@@ -26,11 +26,12 @@ public class User {
     private Integer totalWordsLearned;
     private Integer points;
     private Integer status;
-    private String role;
     @TableField(fill = FieldFill.INSERT)
     private LocalDateTime createTime;
         @TableField(fill = FieldFill.INSERT_UPDATE)
     private LocalDateTime updateTime;
+    /** 最近一次修改密码时间（用于密码重置后旧 token 失效判定） */
+    private LocalDateTime lastPasswordChangeAt;
     @TableField(exist = false)
     private List<String> roles;
     @TableLogic

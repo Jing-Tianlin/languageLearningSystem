@@ -22,6 +22,7 @@ import { useProgressStore } from '@/stores/progress'
 import { getExamLevels } from '@/data/examLevels'
 import { toast } from '@/composables/useToast'
 import { API_BASE_URL } from '@/config'
+import fetchJson from '@/api/fetchJson'
 import { vocabularyApi } from '@/api/vocabulary'
 import LetterSwapTitle from '@/components/effects/LetterSwapTitle.vue'
 import PracticeSession from '@/components/practice/PracticeSession.vue'
@@ -124,8 +125,7 @@ watch(() => authStore.targetLanguage, v => { currentLang.value = v || 'en' })
 async function loadTodayReviewCount() {
   if (!authStore.isLoggedIn || !authStore.user) return
   try {
-    const res = await fetch(`${BASE}/progress/today-count?userId=${authStore.user.id}&langCode=${currentLang.value}`)
-    const json = await res.json()
+    const json = await fetchJson(`${BASE}/progress/today-count?userId=${authStore.user.id}&langCode=${currentLang.value}`)
     if (json.code === 200 && json.data) {
       todayReviewCount.value = json.data.todayReviewCount || 0
     }
@@ -137,8 +137,7 @@ onMounted(async () => {
   loadTodayReviewCount()
   if (authStore.isLoggedIn && authStore.user) {
     try {
-      const res = await fetch(`${BASE}/stats/overview?userId=${authStore.user.id}`)
-      const json = await res.json()
+      const json = await fetchJson(`${BASE}/stats/overview?userId=${authStore.user.id}`)
       if (json.code === 200 && json.data) recentStats.value = json.data
     } catch (e) { /* 静默 */ }
   }
@@ -195,8 +194,7 @@ async function start() {
     if (wrongOnly.value) {
       const wrongParams = new URLSearchParams({ langCode: currentLang.value })
       if (userId) wrongParams.append('userId', userId)
-      const wrongRes = await fetch(`${BASE}/stats/wrong-words?${wrongParams}`)
-      const wrongJson = await wrongRes.json()
+      const wrongJson = await fetchJson(`${BASE}/stats/wrong-words?${wrongParams}`)
       if (wrongJson.code === 200 && wrongJson.data && wrongJson.data.length > 0) {
         const wrongList = wrongJson.data.sort(() => Math.random() - 0.5)
         words.value = wrongList.slice(0, Math.min(poolSize.value, wrongList.length))
@@ -215,8 +213,7 @@ async function start() {
       })
       if (userId) params.append('userId', userId)
 
-      const res = await fetch(`${BASE}/vocabulary/smart-select?${params}`)
-      const json = await res.json()
+      const json = await fetchJson(`${BASE}/vocabulary/smart-select?${params}`)
 
       if (json.code === 200 && json.data && json.data.length > 0) {
         words.value = json.data
@@ -361,16 +358,16 @@ async function reportToBackend(vocabId, quality, hesMs = 0) {
   const userId = authStore.user?.id || localStorage.getItem('userId')
   if (!userId) return
   try {
-    await fetch(`${BASE}/practice/record`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
+    await fetchJson(`${BASE}/practice/record`, {
+      method: 'POST',
+      body: {
         userId: Number(userId),
         vocabId,
         langCode: currentLang.value,
         quality,
         hesitationMs: hesMs,
         errorType: quality < 3 ? 'vocabulary' : null
-      }),
+      },
     })
   } catch (e) { /* 非关键 */ }
 }

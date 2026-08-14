@@ -1,15 +1,11 @@
 package com.cupk.config;
 
-import com.cupk.mapper.UserMapper;
 import com.cupk.pojo.User;
 import com.cupk.util.AuthUtil;
 import com.cupk.util.JwtUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import lombok.RequiredArgsConstructor;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 
@@ -19,13 +15,9 @@ import java.util.List;
 @RequiredArgsConstructor
 public class AuthInterceptor implements HandlerInterceptor {
 
-    private static final Logger log = LoggerFactory.getLogger(AuthInterceptor.class);
-
-    private final UserMapper userMapper;
-
-    private final JdbcTemplate jdbcTemplate;
-
     private final JwtUtil jwtUtil;
+
+    private final AuthCacheService authCacheService;
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
@@ -37,30 +29,37 @@ public class AuthInterceptor implements HandlerInterceptor {
             return true;
         }
 
-        // 公开路径（登录/注册/内容浏览）无需鉴权
+        // 公开路径（登录/注册/内容浏览/API 文档/健康检查）无需鉴权
         if (isPublicPath(path, method)) {
             return true;
         }
 
-        // 其余路径统一要求登录
-        String userIdStr = getUserIdFromToken(request);
-        if (userIdStr == null) {
+        // 其余路径统一要求登录（token 仅接受 Authorization 头，不接受 query 参数，避免泄漏）
+        JwtUtil.TokenPayload payload = getTokenPayload(request);
+        if (payload == null) {
             return writeJson(response, HttpServletResponse.SC_UNAUTHORIZED, "未登录");
         }
+        Long userId = payload.userId();
 
-        Long userId;
-        try {
-            userId = Long.parseLong(userIdStr);
-        } catch (NumberFormatException e) {
-            return writeJson(response, HttpServletResponse.SC_UNAUTHORIZED, "无效的token");
-        }
-
-        User user = userMapper.selectById(userId);
-        if (user == null) {
+        // 用户信息 + 角色走本地缓存（60s TTL），避免每个请求查两次库
+        AuthCacheService.AuthEntry entry = authCacheService.get(userId);
+        if (entry == null || entry.user() == null) {
             return writeJson(response, HttpServletResponse.SC_UNAUTHORIZED, "用户不存在");
         }
+        User user = entry.user();
+        List<String> roles = entry.roles();
 
-        List<String> roles = queryRoles(userId);
+        // 账号被禁用时立即拒绝（不依赖 token 过期）
+        if (user.getStatus() != null && user.getStatus() != 1) {
+            return writeJson(response, HttpServletResponse.SC_FORBIDDEN, "账号已被禁用");
+        }
+
+        // 密码被重置后，旧 token 立即失效（token 签发时间早于密码修改时间）
+        if (user.getLastPasswordChangeAt() != null
+                && payload.issuedAt() < user.getLastPasswordChangeAt().atZone(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()) {
+            return writeJson(response, HttpServletResponse.SC_UNAUTHORIZED, "密码已修改，请重新登录");
+        }
+
         boolean isAdmin = roles.contains("ROLE_ADMIN");
 
         // /admin/** 仅管理员可访问
@@ -92,7 +91,12 @@ public class AuthInterceptor implements HandlerInterceptor {
                 || path.equals("/reading/articles")
                 || path.equals("/reading/level-stats")
                 || path.equals("/writing/prompt")
-                || path.equals("/writing/prompts");
+                || path.equals("/writing/prompts")
+                // API 文档与健康检查（仅 health/info 对外暴露）
+                || path.startsWith("/swagger-ui")
+                || path.startsWith("/v3/api-docs")
+                || path.equals("/actuator/health")
+                || path.equals("/actuator/info");
         }
         // POST 仅放行登录与注册
         if ("POST".equalsIgnoreCase(method)) {
@@ -115,14 +119,6 @@ public class AuthInterceptor implements HandlerInterceptor {
             || "DELETE".equalsIgnoreCase(method);
     }
 
-    private List<String> queryRoles(Long userId) {
-        return jdbcTemplate.query(
-            "SELECT r.code FROM role r JOIN user_role ur ON r.id = ur.role_id WHERE ur.user_id = ?",
-            (rs, rowNum) -> rs.getString("code"),
-            userId
-        );
-    }
-
     private boolean writeJson(HttpServletResponse response, int status, String message) throws Exception {
         response.setStatus(status);
         response.setContentType("application/json;charset=UTF-8");
@@ -130,18 +126,14 @@ public class AuthInterceptor implements HandlerInterceptor {
         return false;
     }
 
-    private String getUserIdFromToken(HttpServletRequest request) {
+    private JwtUtil.TokenPayload getTokenPayload(HttpServletRequest request) {
         String token = request.getHeader("Authorization");
         if (token != null && token.startsWith("Bearer ")) {
             token = token.substring(7);
         }
         if (token == null || token.isEmpty()) {
-            token = request.getParameter("token");
-        }
-        if (token == null || token.isEmpty()) {
             return null;
         }
-        long userId = jwtUtil.parseToken(token);
-        return userId > 0 ? String.valueOf(userId) : null;
+        return jwtUtil.parseToken(token);
     }
 }

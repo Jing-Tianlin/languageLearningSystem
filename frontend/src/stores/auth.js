@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { userApi } from '@/api/user'
 import { API_BASE_URL } from '@/config'
+import fetchJson from '@/api/fetchJson'
 
 export const useAuthStore = defineStore('auth', () => {
   const user = ref(null)
@@ -44,7 +45,7 @@ export const useAuthStore = defineStore('auth', () => {
     targetLanguage.value = code
     localStorage.setItem('lastLangCode', code)
     if (isLoggedIn.value && user.value?.id) {
-      fetch(API_BASE_URL + '/user/preferences?userId=' + user.value.id + '&langCode=' + encodeURIComponent(code), {
+      fetchJson(API_BASE_URL + '/user/preferences?userId=' + user.value.id + '&langCode=' + encodeURIComponent(code), {
         method: 'PUT'
       }).catch(() => {})
     }
@@ -55,19 +56,17 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.setItem('lastLevel', level !== null ? String(level) : '')
     if (isLoggedIn.value && user.value?.id) {
       const levelStr = level !== null ? String(level) : ''
-      fetch(API_BASE_URL + '/user/preferences?userId=' + user.value.id + '&level=' + encodeURIComponent(levelStr), {
+      fetchJson(API_BASE_URL + '/user/preferences?userId=' + user.value.id + '&level=' + encodeURIComponent(levelStr), {
         method: 'PUT'
       }).catch(() => {})
     }
   }
 
   async function login(username, password) {
-    const res = await fetch(API_BASE_URL + '/user/login', {
+    const json = await fetchJson(API_BASE_URL + '/user/login', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password })
+      body: { username, password }
     })
-    const json = await res.json()
     if (json.code === 200 && json.data) {
       applyUserSession(json.data.user, json.data.token)
       return json.data.user
@@ -83,12 +82,10 @@ export const useAuthStore = defineStore('auth', () => {
     }
     if (form.email && form.email.trim()) payload.email = form.email.trim()
     if (form.phone && form.phone.trim()) payload.phone = form.phone.trim()
-    const res = await fetch(API_BASE_URL + '/user/register', {
+    const json = await fetchJson(API_BASE_URL + '/user/register', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
+      body: payload
     })
-    const json = await res.json()
     if (json.code === 200 && json.data) {
       applyUserSession(json.data.user, json.data.token)
       return json.data.user
@@ -115,10 +112,7 @@ export const useAuthStore = defineStore('auth', () => {
       try {
         user.value = await userApi.getUserById(userId)
         try {
-          const headers = { 'Content-Type': 'application/json' }
-          if (token.value) headers['Authorization'] = 'Bearer ' + token.value
-          const r = await fetch(API_BASE_URL + '/admin/user-roles/' + userId, { headers })
-          const j = await r.json()
+          const j = await fetchJson(API_BASE_URL + '/admin/user-roles/' + userId)
           if (j.code === 200 && j.data) user.value.roles = j.data.map(x => x.code || x.name)
         } catch (e) { /* 非关键 */ }
       } catch (e) {

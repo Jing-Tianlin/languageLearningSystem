@@ -33,6 +33,7 @@ const loadingStats = ref(false)
 const langStats = ref({ vocabCount: 0, studiedCount: 0, masteredCount: 0 })
 
 import { API_BASE_URL } from '@/config'
+import fetchJson from '@/api/fetchJson'
 
 const flagIcons = { en: '🇬🇧', ja: '🇯🇵', ko: '🇰🇷', fr: '🇫🇷', de: '🇩🇪' }
 const langDesc = {
@@ -120,8 +121,8 @@ async function loadLangStats() {
   const userId = authStore.user?.id || localStorage.getItem('userId')
   try {
     const [vocabRes, progressRes] = await Promise.all([
-      fetch(`${BASE}/vocabulary/vocabularies?langCode=${langCode.value}&pageSize=1`).then(r => r.json()),
-      fetch(`${BASE}/progress/progresses?userId=${userId}&langCode=${langCode.value}&pageSize=500`).then(r => r.json()),
+      fetchJson(`${BASE}/vocabulary/vocabularies?langCode=${langCode.value}&pageSize=1`),
+      fetchJson(`${BASE}/progress/progresses?userId=${userId}&langCode=${langCode.value}&pageSize=500`),
     ])
     langStats.value.vocabCount = vocabRes.data?.total || 0
     const records = progressRes.data?.records || []

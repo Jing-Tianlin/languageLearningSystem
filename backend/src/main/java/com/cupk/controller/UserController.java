@@ -2,7 +2,10 @@ package com.cupk.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.cupk.common.RegisterRequest;
 import com.cupk.common.Result;
+import com.cupk.config.AuthCacheService;
+import com.cupk.config.LoginAttemptService;
 import com.cupk.mapper.LoginLogMapper;
 import com.cupk.mapper.UserMapper;
 import com.cupk.pojo.LoginLog;
@@ -10,6 +13,7 @@ import com.cupk.pojo.User;
 import com.cupk.utils.PasswordUtil;
 import com.cupk.util.AuthUtil;
 import com.cupk.util.JwtUtil;
+import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +21,9 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -27,6 +34,11 @@ import java.util.Map;
 public class UserController {
 
     private static final Logger log = LoggerFactory.getLogger(UserController.class);
+
+    /** 注册密码长度限制（6-64 字符） */
+    private static final int PASSWORD_MIN_LENGTH = 6;
+    private static final int PASSWORD_MAX_LENGTH = 64;
+
     private final UserMapper userMapper;
 
     private final JdbcTemplate jdbcTemplate;
@@ -34,6 +46,10 @@ public class UserController {
     private final LoginLogMapper loginLogMapper;
 
     private final JwtUtil jwtUtil;
+
+    private final AuthCacheService authCacheService;
+
+    private final LoginAttemptService loginAttemptService;
 
     @GetMapping("/users")
     public Result<Page<User>> selectPages(@RequestParam(defaultValue = "") String username,
@@ -50,14 +66,10 @@ public class UserController {
         }
         queryWrapper.orderByDesc("create_time");
         userMapper.selectPage(page, queryWrapper);
-        // 为每个用户查询角色
+        // 批量查询角色，避免 N+1
+        Map<Long, List<String>> rolesMap = loadRolesBatch(page.getRecords().stream().map(User::getId).toList());
         for (User u : page.getRecords()) {
-            List<String> roleCodes = jdbcTemplate.query(
-                "SELECT r.code FROM role r JOIN user_role ur ON r.id = ur.role_id WHERE ur.user_id = ?",
-                (rs, rowNum) -> rs.getString("code"),
-                u.getId()
-            );
-            u.setRoles(roleCodes);
+            u.setRoles(rolesMap.getOrDefault(u.getId(), List.of()));
         }
         return Result.success(page);
     }
@@ -159,21 +171,49 @@ public class UserController {
     }
 
     @PostMapping("/login")
-    public Result<Map<String, Object>> login(@RequestBody Map<String, String> params) {
+    public Result<Map<String, Object>> login(@RequestBody Map<String, String> params, HttpServletRequest request) {
         String username = params.get("username");
         String password = params.get("password");
         if (username == null || username.isEmpty() || password == null || password.isEmpty()) {
             return Result.error(400, "用户名和密码不能为空");
         }
+
+        String attemptKey = username.trim().toLowerCase();
+        if (loginAttemptService.isLocked(attemptKey)) {
+            long remainSec = loginAttemptService.remainingLockSeconds(attemptKey);
+            return Result.error(429, "登录失败次数过多，请 " + Math.max(1, (remainSec + 59) / 60) + " 分钟后重试");
+        }
+        String ip = request.getRemoteAddr();
+
         QueryWrapper<User> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("username", username);
         User user = userMapper.selectOne(queryWrapper);
         if (user == null) {
+            loginAttemptService.recordFailure(attemptKey);
+            recordLoginLog(null, username, false, ip, "用户名不存在");
             return Result.error(401, "用户名或密码错误");
         }
         if (!PasswordUtil.matches(password, user.getPassword())) {
+            loginAttemptService.recordFailure(attemptKey);
+            recordLoginLog(user.getId(), username, false, ip, "密码错误");
             return Result.error(401, "用户名或密码错误");
         }
+
+        // 登录成功清零失败计数
+        loginAttemptService.recordSuccess(attemptKey);
+
+        // 旧格式（盐$SHA256）密码登录成功后自动升级为 BCrypt
+        if (PasswordUtil.needsRehash(user.getPassword())) {
+            try {
+                String upgraded = PasswordUtil.encode(password);
+                jdbcTemplate.update("UPDATE user SET password = ? WHERE id = ?", upgraded, user.getId());
+                log.info("用户密码已自动升级为 BCrypt: userId={}", user.getId());
+            } catch (Exception e) {
+                log.error("密码自动升级失败: userId={}", user.getId(), e);
+            }
+        }
+        // 登录成功后刷新鉴权缓存（角色/状态变更能立即生效）
+        authCacheService.evict(user.getId());
         List<String> roleCodes = jdbcTemplate.query(
             "SELECT r.code FROM role r JOIN user_role ur ON r.id = ur.role_id WHERE ur.user_id = ?",
             (rs, rowNum) -> rs.getString("code"),
@@ -184,29 +224,39 @@ public class UserController {
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("user", user);
         result.put("token", jwtUtil.generateToken(user.getId()));
-        recordLoginLog(user.getId(), username, true);
+        recordLoginLog(user.getId(), username, true, ip, null);
         return Result.success(result);
     }
 
     @PostMapping("/register")
-    public Result<Map<String, Object>> register(@RequestBody User user) {
-        if (user.getUsername() == null || user.getUsername().isEmpty()) {
+    public Result<Map<String, Object>> register(@RequestBody RegisterRequest req) {
+        String username = req.username();
+        String password = req.password();
+        if (username == null || username.isEmpty()) {
             return Result.error(400, "用户名不能为空");
         }
-        if (user.getPassword() == null || user.getPassword().isEmpty()) {
+        if (password == null || password.isEmpty()) {
             return Result.error(400, "密码不能为空");
         }
+        if (password.length() < PASSWORD_MIN_LENGTH || password.length() > PASSWORD_MAX_LENGTH) {
+            return Result.error(400, "密码长度需为 " + PASSWORD_MIN_LENGTH + "-" + PASSWORD_MAX_LENGTH + " 个字符");
+        }
         QueryWrapper<User> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("username", user.getUsername());
+        queryWrapper.eq("username", username);
         User exist = userMapper.selectOne(queryWrapper);
         if (exist != null) {
             return Result.error(400, "用户名已存在");
         }
-        user.setId(null);
-        user.setPassword(PasswordUtil.encode(user.getPassword()));
-        if (user.getNickname() == null || user.getNickname().isEmpty()) {
-            user.setNickname(user.getUsername());
-        }
+
+        User user = new User();
+        user.setUsername(username);
+        user.setPassword(PasswordUtil.encode(password));
+        user.setNickname((req.nickname() == null || req.nickname().isEmpty()) ? username : req.nickname());
+        user.setEmail(emptyToNull(req.email()));
+        user.setPhone(emptyToNull(req.phone()));
+        user.setStatus(1);
+        user.setLastPasswordChangeAt(LocalDateTime.now());
+
         int rows = userMapper.insert(user);
         if (rows > 0) {
             jdbcTemplate.update("INSERT INTO user_role (user_id, role_id) VALUES (?, 1)", user.getId());
@@ -220,18 +270,46 @@ public class UserController {
             Map<String, Object> result = new LinkedHashMap<>();
             result.put("user", user);
             result.put("token", jwtUtil.generateToken(user.getId()));
-            recordLoginLog(user.getId(), user.getUsername(), true);
+            recordLoginLog(user.getId(), username, true);
             return Result.success(result);
         }
         return Result.error("注册失败");
     }
 
+    /** 批量加载多个用户的角色，避免 N+1 查询 */
+    private Map<Long, List<String>> loadRolesBatch(List<Long> userIds) {
+        if (userIds == null || userIds.isEmpty()) {
+            return Map.of();
+        }
+        String inClause = String.join(",", Collections.nCopies(userIds.size(), "?"));
+        Map<Long, List<String>> map = new HashMap<>();
+        jdbcTemplate.query(
+            "SELECT ur.user_id, r.code FROM user_role ur JOIN role r ON ur.role_id = r.id WHERE ur.user_id IN (" + inClause + ")",
+            rs -> {
+                Long uid = rs.getLong("user_id");
+                map.computeIfAbsent(uid, k -> new ArrayList<>()).add(rs.getString("code"));
+            },
+            userIds.toArray()
+        );
+        return map;
+    }
+
+    private String emptyToNull(String s) {
+        return (s == null || s.isEmpty()) ? null : s;
+    }
+
     private void recordLoginLog(Long userId, String username, boolean success) {
+        recordLoginLog(userId, username, success, null, null);
+    }
+
+    private void recordLoginLog(Long userId, String username, boolean success, String ipAddress, String failReason) {
         try {
             LoginLog entry = new LoginLog();
             entry.setUserId(userId);
             entry.setUsername(username);
             entry.setSuccess(success ? 1 : 0);
+            entry.setIpAddress(ipAddress);
+            entry.setFailReason(failReason);
             entry.setLoginAt(LocalDateTime.now());
             loginLogMapper.insert(entry);
         } catch (Exception e) {

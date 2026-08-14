@@ -10,6 +10,7 @@ import { useVocabularyStore } from '@/stores/vocabulary'
 import { useAuthStore } from '@/stores/auth'
 import { useHesitationTracker } from '@/composables/useHesitationTracker'
 import { API_BASE_URL } from '@/config'
+import fetchJson from '@/api/fetchJson'
 
 const props = defineProps({
   words: { type: Array, required: true },
@@ -113,13 +114,13 @@ async function submitAnswer() {
   const hesitationMs = stats.avgMs || 0
   const userId = authStore.user?.id || localStorage.getItem('userId')
   if (userId) {
-    fetch(`${API_BASE_URL}/practice/record`, {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
+    fetchJson(`${API_BASE_URL}/practice/record`, {
+      method:'POST',
+      body:{
         userId:Number(userId), vocabId:q.id, langCode:props.langCode,
         quality: correct ? 4 : 1, hesitationMs,
         errorType: correct ? null : (q.type==='spell' ? 'spelling' : 'vocabulary'),
-      }),
+      },
     }).catch(()=>{})
   }
 

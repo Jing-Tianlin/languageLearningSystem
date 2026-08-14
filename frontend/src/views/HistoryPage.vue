@@ -2,6 +2,7 @@
 import { ref, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { API_BASE_URL } from '@/config'
+import fetchJson from '@/api/fetchJson'
 import LetterSwapTitle from '@/components/effects/LetterSwapTitle.vue'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
@@ -21,9 +22,9 @@ onMounted(async () => {
   const uid = authStore.user.id
   try {
     const [cRes, wRes, rRes] = await Promise.all([
-      fetch(`${BASE}/history/chat?userId=${uid}&limit=100`).then(r => r.json()),
-      fetch(`${BASE}/history/writing?userId=${uid}&limit=20`).then(r => r.json()),
-      fetch(`${BASE}/history/reading?userId=${uid}&limit=20`).then(r => r.json()),
+      fetchJson(`${BASE}/history/chat?userId=${uid}&limit=100`),
+      fetchJson(`${BASE}/history/writing?userId=${uid}&limit=20`),
+      fetchJson(`${BASE}/history/reading?userId=${uid}&limit=20`),
     ])
     chats.value = cRes.data || []
     writings.value = wRes.data || []

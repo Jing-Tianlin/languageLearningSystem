@@ -582,6 +582,11 @@ INSERT INTO `user` VALUES (1,'demo','aYF/yyfYC+VDK9FaRNDQzQ==$nBL7TNWmxFs6kaLoFa
 /*!40000 ALTER TABLE `user` ENABLE KEYS */;
 UNLOCK TABLES;
 
+-- 密码重置后旧 token 失效判定：新增最近修改密码时间列
+-- 已存在的数据库可单独执行此句：
+-- ALTER TABLE `user` ADD COLUMN `last_password_change_at` datetime DEFAULT NULL COMMENT '最近一次修改密码时间' AFTER `update_time`;
+ALTER TABLE `user` ADD COLUMN `last_password_change_at` datetime DEFAULT NULL COMMENT '最近一次修改密码时间' AFTER `update_time`;
+
 --
 -- Table structure for table `user_profile`
 --

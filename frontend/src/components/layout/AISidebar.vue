@@ -12,6 +12,7 @@ import { getExamLevels } from '@/data/examLevels'
 import PlainIcon from '@/components/common/PlainIcon.vue'
 import { toast } from '@/composables/useToast'
 import { API_BASE_URL } from '@/config'
+import fetchJson from '@/api/fetchJson'
 import { langName } from '@/config/languages'
 
 const authStore = useAuthStore()
@@ -42,9 +43,9 @@ async function askQuestion() {
   // 保存用户消息到后端
   const userId = authStore.user?.id
   if (userId) {
-    fetch(`${API_BASE_URL}/history/chat`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId, langCode: currentLang.value, role: 'user', content: q }),
+    fetchJson(`${API_BASE_URL}/history/chat`, {
+      method: 'POST',
+      body: { userId, langCode: currentLang.value, role: 'user', content: q },
     }).catch(() => {})
   }
 
@@ -64,7 +65,7 @@ async function askQuestion() {
     const res = await fetch(`${API_BASE_URL}/ai/ask/stream`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ question: q, lang: currentLang.value, history: recentHistory }),
+      body: JSON.stringify({ question: q, langCode: currentLang.value, history: recentHistory }),
     })
 
     if (!res.ok) {
@@ -111,9 +112,9 @@ async function askQuestion() {
 
     // 保存完整的 AI 回复到后端
     if (userId && fullAnswer) {
-      fetch(`${API_BASE_URL}/history/chat`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, langCode: currentLang.value, role: 'ai', content: fullAnswer }),
+      fetchJson(`${API_BASE_URL}/history/chat`, {
+        method: 'POST',
+        body: { userId, langCode: currentLang.value, role: 'ai', content: fullAnswer },
       }).catch(() => {})
     }
   } catch (e) {
@@ -133,11 +134,10 @@ async function generateExamples(append = false) {
   if (!append) examples.value = []
   loading.value = true
   try {
-    const res = await fetch(`${API_BASE_URL}/ai/examples`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ word, lang: currentLang.value, count: 3, level: currentLevelLabel.value }),
+    const data = await fetchJson(`${API_BASE_URL}/ai/examples`, {
+      method: 'POST',
+      body: { word, langCode: currentLang.value, count: 3, level: currentLevelLabel.value },
     })
-    const data = await res.json()
     const newOnes = data.data?.sentences || []
     if (newOnes.length === 0) { toast.info('未生成例句'); return }
     examples.value = [...examples.value, ...newOnes]
@@ -154,11 +154,10 @@ async function checkGrammar() {
   checkResult.value = null
   loading.value = true
   try {
-    const res = await fetch(`${API_BASE_URL}/ai/grammar-check`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text: checkText.value, lang: currentLang.value }),
+    const data = await fetchJson(`${API_BASE_URL}/ai/grammar-check`, {
+      method: 'POST',
+      body: { text: checkText.value, langCode: currentLang.value },
     })
-    const data = await res.json()
     checkResult.value = data.data
   } catch (e) { toast.error('AI 暂不可用') }
   finally { loading.value = false }
@@ -182,8 +181,7 @@ async function loadChatHistory() {
   if (!userId) return
   historyLoading.value = true
   try {
-    const res = await fetch(`${API_BASE_URL}/history/chat?userId=${userId}&limit=50`)
-    const json = await res.json()
+    const json = await fetchJson(`${API_BASE_URL}/history/chat?userId=${userId}&limit=50`)
     chatHistory.value = json.data || []
   } catch (e) { chatHistory.value = [] }
   finally { historyLoading.value = false }

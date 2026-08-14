@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { getLevelLabel } from '@/data/examLevels'
 import { API_BASE_URL } from '@/config'
+import fetchJson from '@/api/fetchJson'
 import { userApi } from '@/api/user'
 import LetterSwapTitle from '@/components/effects/LetterSwapTitle.vue'
 import { getReminderTime, setReminderTime, isReminderEnabled } from '@/composables/useStudyReminder'
@@ -69,8 +70,7 @@ async function loadStats() {
   statsError.value = false
   if (!authStore.isLoggedIn) return
   try {
-    const res = await fetch(`${BASE}/stats/overview`)
-    const json = await res.json()
+    const json = await fetchJson(`${BASE}/stats/overview`)
     if (json.code === 200 && json.data) stats.value = json.data
     else statsError.value = true
   } catch (e) {
