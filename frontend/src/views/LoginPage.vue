@@ -43,6 +43,11 @@ const errorMsg = ref('')
 const successMsg = ref('')
 const loading = ref(false)
 
+// 密码可见性切换
+const showLoginPwd = ref(false)
+const showRegPwd = ref(false)
+const showRegPwd2 = ref(false)
+
 async function handleLogin() {
   errorMsg.value = ''
   if (!loginUsername.value || !loginPassword.value) {
@@ -115,7 +120,8 @@ function toggleMode() {
   <div class="login-page">
     <div class="login-card">
       <div class="login-header">
-        <LetterSwapTitle :text="pageTitle" tag="h1" color="#3e5a6d" />
+        <div class="login-emojis"><span>📚</span><span>✨</span><span>🌍</span></div>
+        <LetterSwapTitle :text="pageTitle" tag="h1" color="#2a2438" />
         <p class="login-subtitle">{{ isRegister ? '创建你的学习账号' : '多语言学习平台' }}</p>
       </div>
 
@@ -127,7 +133,13 @@ function toggleMode() {
         </div>
         <div class="input-group">
           <label>密码</label>
-          <input v-model="loginPassword" type="password" placeholder="请输入密码" autocomplete="current-password" />
+          <div class="pwd-wrap">
+            <input v-model="loginPassword" :type="showLoginPwd ? 'text' : 'password'" placeholder="请输入密码" autocomplete="current-password" />
+            <button type="button" class="pwd-toggle" :aria-label="showLoginPwd ? '隐藏密码' : '显示密码'" @click="showLoginPwd = !showLoginPwd">
+              <svg v-if="!showLoginPwd" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+              <svg v-else width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+            </button>
+          </div>
         </div>
         <p v-if="errorMsg" class="login-error">{{ errorMsg }}</p>
         <button type="submit" class="login-btn btn btn-primary btn-block btn-lg" :disabled="loading">
@@ -155,11 +167,23 @@ function toggleMode() {
           </div>
           <div class="input-group">
             <label>密码 *</label>
-            <input v-model="regPassword" type="password" placeholder="至少4位密码" autocomplete="new-password" />
+            <div class="pwd-wrap">
+              <input v-model="regPassword" :type="showRegPwd ? 'text' : 'password'" placeholder="至少4位密码" autocomplete="new-password" />
+              <button type="button" class="pwd-toggle" :aria-label="showRegPwd ? '隐藏密码' : '显示密码'" @click="showRegPwd = !showRegPwd">
+                <svg v-if="!showRegPwd" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+                <svg v-else width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+              </button>
+            </div>
           </div>
           <div class="input-group">
             <label>确认密码 *</label>
-            <input v-model="regPassword2" type="password" placeholder="再次输入密码" autocomplete="new-password" />
+            <div class="pwd-wrap">
+              <input v-model="regPassword2" :type="showRegPwd2 ? 'text' : 'password'" placeholder="再次输入密码" autocomplete="new-password" />
+              <button type="button" class="pwd-toggle" :aria-label="showRegPwd2 ? '隐藏密码' : '显示密码'" @click="showRegPwd2 = !showRegPwd2">
+                <svg v-if="!showRegPwd2" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+                <svg v-else width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+              </button>
+            </div>
           </div>
         </template>
 
@@ -211,6 +235,22 @@ function toggleMode() {
   border-radius: var(--radius-lg);
   padding: 48px 40px 38px;
   box-shadow: var(--shadow-lg);
+  position: relative;
+  overflow: hidden;
+  animation: cardIn 0.55s var(--ease-out-expo);
+}
+/* 卡片顶部金色渐变细线装饰 */
+.login-card::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--color-gold), var(--color-gold-light), var(--color-gold));
+  opacity: 0.7;
+}
+@keyframes cardIn {
+  from { opacity: 0; transform: translateY(18px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 .login-header {
@@ -268,23 +308,41 @@ function toggleMode() {
 
 .input-group input:focus {
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(110, 122, 107, 0.1);
+  box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.1);
 }
+
+/* 密码可见性切换 */
+.pwd-wrap { position: relative; }
+.pwd-wrap input { width: 100%; padding-right: 44px; }
+.pwd-toggle {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 32px; height: 32px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border: none; background: transparent;
+  color: var(--color-text-muted);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: color 0.2s, background 0.2s;
+}
+.pwd-toggle:hover { color: var(--color-text); background: rgba(42, 36, 56, 0.04); }
 
 .login-error {
   color: #a85a4c;
   font-size: 13px;
   text-align: center;
-  background: #faf4f2;
+  background: #fff0ed;
   padding: 9px 14px;
   border-radius: var(--radius-sm);
 }
 
 .login-success {
-  color: #5c7248;
+  color: #3fa65a;
   font-size: 13px;
   text-align: center;
-  background: #f4f7f0;
+  background: #f2fbea;
   padding: 9px 14px;
   border-radius: var(--radius-sm);
 }
@@ -327,5 +385,5 @@ function toggleMode() {
   font-size: 13px; font-weight: 500;
   color: var(--color-text-secondary); cursor: pointer; text-align: center;
 }
-.level-opt.btn-secondary { color: var(--color-gold); border-color: var(--color-gold); background: rgba(176, 124, 79, 0.06); font-weight: 600; }
+.level-opt.btn-secondary { color: var(--color-gold); border-color: var(--color-gold); background: rgba(255, 107, 107, 0.06); font-weight: 600; }
 </style>

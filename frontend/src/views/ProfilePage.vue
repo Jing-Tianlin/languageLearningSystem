@@ -385,7 +385,7 @@ function formatDate(dateStr) {
   font-weight: 500;
   padding: 4px 14px;
   border-radius: var(--radius-full);
-  background: rgba(110, 122, 107, 0.1);
+  background: rgba(255, 107, 107, 0.1);
   color: var(--color-primary);
   letter-spacing: 0.6px;
 }
@@ -497,11 +497,11 @@ function formatDate(dateStr) {
 
 .form-group input:focus {
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(110, 122, 107, 0.1);
+  box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.1);
 }
 
 .form-group input:disabled {
-  background: #f7f6f4;
+  background: #fffaf0;
   color: var(--color-text-muted);
   cursor: not-allowed;
 }
@@ -520,11 +520,11 @@ function formatDate(dateStr) {
   border-radius: var(--radius-sm);
 }
 .form-msg.success {
-  background: #f2f6ee;
-  color: #5c7248;
+  background: #f0fae9;
+  color: #3fa65a;
 }
 .form-msg.error {
-  background: #faf4f2;
+  background: #fff0ed;
   color: #a85a4c;
 }
 
@@ -561,7 +561,7 @@ function formatDate(dateStr) {
   display: inline-block;
   padding: 4px 12px;
   border-radius: var(--radius-full);
-  background: rgba(110, 122, 107, 0.08);
+  background: rgba(255, 107, 107, 0.08);
   color: var(--color-primary);
   font-weight: 600;
   font-size: 13px;
@@ -594,7 +594,7 @@ function formatDate(dateStr) {
   margin: 0 0 6px;
 }
 .reminder-hint { font-size: 12px; color: var(--color-primary); margin: 0; }
-.reminder-hint.warn { color: #c77b4f; }
+.reminder-hint.warn { color: #ff6b6b; }
 .link-btn {
   background: none;
   border: none;
@@ -628,7 +628,7 @@ function formatDate(dateStr) {
   position: fixed;
   inset: 0;
   z-index: 8000;
-  background: rgba(45, 44, 42, 0.28);
+  background: rgba(42, 36, 56, 0.28);
   backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
@@ -649,7 +649,7 @@ function formatDate(dateStr) {
   height: 56px;
   margin: 0 auto 16px;
   border-radius: 50%;
-  background: #faf4f2;
+  background: #fff0ed;
   color: #a85a4c;
   display: flex;
   align-items: center;

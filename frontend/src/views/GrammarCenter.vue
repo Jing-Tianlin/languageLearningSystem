@@ -14,6 +14,19 @@ const authStore = useAuthStore()
 // 长难句展开状态
 const expandedSid = ref(null)
 
+// 本地课时进度（localStorage 持久化）
+const completedLessons = ref(new Set(JSON.parse(localStorage.getItem('grammarDone') || '[]')))
+const lessonProgress = computed(() => store.lessons.length > 0
+  ? Math.round((completedLessons.value.size / store.lessons.length) * 100)
+  : 0)
+function toggleLessonDone(id) {
+  const s = new Set(completedLessons.value)
+  if (s.has(id)) s.delete(id)
+  else s.add(id)
+  completedLessons.value = s
+  localStorage.setItem('grammarDone', JSON.stringify([...s]))
+}
+
 // 同步语言
 watch(() => authStore.targetLanguage, (v) => {
   if (v) store.setLang(v)
@@ -150,25 +163,60 @@ watch(() => store.tab, (tab) => {
       <span>正确率 {{ store.stats.accuracy }}%</span>
     </div>
 
-    <!-- ==================== 语法教程 ==================== -->
+    <!-- ==================== 语法教程（课程路径） ==================== -->
     <div v-if="store.tab === 'learn'">
       <LoadingSpinner v-if="store.loading.lessons" />
       <div v-else-if="store.lessons.length > 0" class="learn-area">
-        <div v-for="l in store.lessons" :key="l.id" class="lesson-card">
-          <div class="lesson-header" @click="l.expanded = !l.expanded">
-            <span>{{ l.title }}</span>
-            <span class="expand-icon">{{ l.expanded ? '▾' : '▸' }}</span>
+        <!-- 进度概览 -->
+        <div class="path-progress">
+          <div class="path-progress-text">
+            <span class="pp-title">语法课程路径</span>
+            <span class="pp-count">{{ completedLessons.size }} / {{ store.lessons.length }} 课时已学</span>
           </div>
-          <div v-if="l.expanded" class="lesson-body">
-            <div v-for="(s, i) in l.sections" :key="i" class="lesson-section">
-              <h4 class="lesson-subtitle">{{ s.subtitle }}</h4>
-              <p class="lesson-text">{{ s.content }}</p>
+          <div class="progress-bar"><div class="progress-fill" :style="{ width: lessonProgress + '%' }" /></div>
+        </div>
+
+        <!-- 课程时间线 -->
+        <div class="path-timeline">
+          <div
+            v-for="(l, idx) in store.lessons"
+            :key="l.id"
+            class="path-node"
+            :class="{ done: completedLessons.has(l.id), expanded: l.expanded }"
+          >
+            <div class="path-marker">
+              <span v-if="completedLessons.has(l.id)" class="path-check">✓</span>
+              <span v-else class="path-num">{{ idx + 1 }}</span>
             </div>
-            <div v-if="l.video_url" class="lesson-video">
-              <a :href="l.video_url" target="_blank" rel="noopener" class="video-link">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-                观看 B 站教学视频
-              </a>
+            <div class="path-card">
+              <div class="path-card-header" @click="l.expanded = !l.expanded">
+                <div class="path-card-title">
+                  <span class="path-card-name">{{ l.title }}</span>
+                  <span class="path-card-meta">{{ l.sections?.length || 0 }} 个知识点</span>
+                </div>
+                <div class="path-card-actions">
+                  <button
+                    class="btn btn-sm"
+                    :class="completedLessons.has(l.id) ? 'btn-ghost' : 'btn-secondary'"
+                    @click.stop="toggleLessonDone(l.id)"
+                  >
+                    {{ completedLessons.has(l.id) ? '✓ 已学' : '标记已学' }}
+                  </button>
+                  <span class="expand-icon">{{ l.expanded ? '▾' : '▸' }}</span>
+                </div>
+              </div>
+              <div v-if="l.expanded" class="lesson-body">
+                <div v-for="(s, i) in l.sections" :key="i" class="lesson-section">
+                  <h4 class="lesson-subtitle">{{ s.subtitle }}</h4>
+                  <p class="lesson-text">{{ s.content }}</p>
+                </div>
+                <div v-if="l.video_url" class="lesson-video">
+                  <a :href="l.video_url" target="_blank" rel="noopener" class="video-link">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                    观看 B 站教学视频
+                  </a>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -293,7 +341,8 @@ watch(() => store.tab, (tab) => {
 
     <!-- ==================== 长难句精析 ==================== -->
     <div v-if="store.tab === 'sentences'">
-      <div v-if="store.dailySentence" class="daily-card">
+      <div class="sentences-grid">
+        <div v-if="store.dailySentence" class="daily-card">
         <div class="daily-badge-row">
           <span class="daily-badge">
             每日一句 · {{ store.dailySentence.level === 'Advanced' ? '高级' : store.dailySentence.level === 'Intermediate' ? '中级' : '' }}
@@ -314,9 +363,10 @@ watch(() => store.tab, (tab) => {
           <summary>查看结构分析</summary>
           <pre class="analysis-text">{{ store.dailySentence.analysis }}</pre>
         </details>
-      </div>
+        </div>
 
-      <div v-if="store.sentenceList.length > 0" class="sentence-list">
+        <div class="sentences-right">
+          <div v-if="store.sentenceList.length > 0" class="sentence-list">
         <div v-for="s in store.sentenceList" :key="s.id" class="sentence-card"
           :class="{ expanded: expandedSid === s.id }">
           <div class="sentence-header" @click="expandedSid = expandedSid === s.id ? null : s.id">
@@ -345,13 +395,15 @@ watch(() => store.tab, (tab) => {
             </div>
           </div>
         </div>
+          </div>
+          <EmptyState
+            v-else
+            icon="book"
+            title="暂无长难句数据"
+            description="该语言还没有添加长难句，敬请期待"
+          />
+        </div>
       </div>
-      <EmptyState
-        v-else
-        icon="book"
-        title="暂无长难句数据"
-        description="该语言还没有添加长难句，敬请期待"
-      />
     </div>
   </div>
 </template>
@@ -363,197 +415,247 @@ watch(() => store.tab, (tab) => {
 .empty-text { text-align: center; color: var(--color-text-muted); padding: 60px 0; font-size: 14px; }
 
 /* ===== 通用容器（与全局卡片体系一致） ===== */
-.page-wrap { max-width: 760px; margin: 0 auto; padding: 0 16px 40px; }
+.page-wrap { max-width: 1120px; margin: 0 auto; padding: 0 16px 40px; }
 .tab-bar { display: flex; gap: 8px; justify-content: center; margin: 20px 0; }
-.tab-bar button { padding: 10px 24px; border-radius: 20px; border: 1.5px solid #ddd; background: rgba(255,255,255,0.6); font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.25s; color: #666; }
-.tab-bar button.active { border-color: #5a7d96; color: #5a7d96; background: rgba(90,125,150,0.06); }
 
-/* ===== 教程 ===== */
-.learn-area { display: flex; flex-direction: column; gap: 14px; }
-.lesson-card {
-  background: rgba(255,255,255,0.82); backdrop-filter: blur(16px);
-  border: 1px solid rgba(0,0,0,0.06); border-radius: 20px;
-  box-shadow: 0 10px 40px rgba(0,0,0,0.06); overflow: hidden;
+/* ===== 教程：课程路径 ===== */
+.learn-area { display: flex; flex-direction: column; gap: 20px; max-width: 880px; margin: 0 auto; }
+
+.path-progress {
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border); border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm); padding: 18px 22px;
 }
-.lesson-header { padding: 18px 22px; font-size: 17px; font-weight: 700; color: var(--color-text); cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
-.lesson-header:hover { background: rgba(0,0,0,0.02); }
-.expand-icon { font-size: 14px; color: #aaa; }
-.lesson-body { padding: 0 22px 22px; }
-.lesson-section { margin-top: 14px; padding: 14px 18px; background: rgba(90,125,150,0.04); border-radius: 12px; border: 1px solid rgba(90,125,150,0.1); }
-.lesson-subtitle { font-size: 14px; font-weight: 700; color: #5a7d96; margin-bottom: 6px; }
-.lesson-text { font-size: 14px; color: #555; line-height: 1.8; white-space: pre-wrap; }
+.path-progress-text { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.pp-title { font-size: 15px; font-weight: 700; color: var(--color-text); font-family: var(--font-heading); }
+.pp-count { font-size: 13px; color: var(--color-text-muted); font-weight: 600; }
 
-.lesson-video { margin-top: 12px; padding-top: 12px; border-top: 1px solid #f0f0f0; }
+.path-timeline { display: flex; flex-direction: column; }
+.path-node { display: flex; gap: 14px; position: relative; }
+.path-node:not(:last-child)::before {
+  content: ""; position: absolute; left: 15px; top: 34px; bottom: -14px; width: 2px;
+  background: var(--color-border);
+}
+.path-node.done:not(:last-child)::before { background: var(--color-primary); opacity: 0.5; }
+.path-marker {
+  flex-shrink: 0; width: 32px; height: 32px; border-radius: 50%;
+  background: var(--color-bg-card); border: 1.5px solid var(--color-border-hover);
+  display: flex; align-items: center; justify-content: center; z-index: 1;
+  margin-top: 14px;
+}
+.path-num { font-size: 13px; font-weight: 700; color: var(--color-text-secondary); font-family: var(--font-number); }
+.path-node.done .path-marker { background: var(--color-primary); border-color: var(--color-primary); }
+.path-check { font-size: 14px; font-weight: 800; color: #fff; }
+
+.path-card {
+  flex: 1; min-width: 0; margin-bottom: 14px;
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border); border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm); overflow: hidden;
+  transition: all 0.25s var(--ease-smooth);
+}
+.path-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+.path-node.done .path-card { border-color: rgba(255, 107, 107, 0.25); }
+.path-card-header { padding: 16px 20px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.path-card-title { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.path-card-name { font-size: 16px; font-weight: 700; color: var(--color-text); font-family: var(--font-heading); }
+.path-card-meta { font-size: 12px; color: var(--color-text-muted); }
+.path-card-actions { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.expand-icon { font-size: 14px; color: var(--color-text-muted); }
+.lesson-body { padding: 0 20px 20px; }
+.lesson-section { margin-top: 14px; padding: 14px 18px; background: rgba(255, 107, 107, 0.06); border-radius: var(--radius-sm); border: 1px solid rgba(255, 107, 107, 0.12); }
+.lesson-subtitle { font-size: 14px; font-weight: 700; color: var(--color-primary); margin-bottom: 6px; }
+.lesson-text { font-size: 14px; color: var(--color-text-secondary); line-height: 1.8; white-space: pre-wrap; }
+
+.lesson-video { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--color-border); }
 .video-link {
   display: inline-flex; align-items: center; gap: 6px;
-  padding: 8px 16px; border-radius: 10px; background: rgba(251,114,153,0.06);
-  border: 1px solid rgba(251,114,153,0.2); color: #fb7299;
+  padding: 8px 16px; border-radius: var(--radius-sm); background: rgba(255, 107, 107, 0.08);
+  border: 1px solid var(--color-border-gold); color: var(--color-gold);
   font-size: 13px; font-weight: 600; text-decoration: none;
   transition: all 0.2s;
 }
-.video-link:hover { background: #fb7299; color: #fff; border-color: #fb7299; }
+.video-link:hover { background: var(--color-gold); color: #fff; border-color: var(--color-gold); }
 .video-link svg { flex-shrink: 0; }
 
 /* ===== 练习介绍页 ===== */
 .practice-intro-card {
-  max-width: 520px; margin: 0 auto;
-  background: rgba(255,255,255,0.82); backdrop-filter: blur(16px);
-  border: 1px solid rgba(0,0,0,0.06); border-radius: 20px;
-  box-shadow: 0 10px 40px rgba(0,0,0,0.06);
+  max-width: 720px; margin: 0 auto;
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border); border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
   padding: 32px 30px; text-align: center;
+  transition: all 0.25s var(--ease-smooth);
 }
+.practice-intro-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
 .pi-title { font-size: 22px; font-weight: 800; color: var(--color-text); font-family: var(--font-heading); }
-.pi-sub { font-size: 14px; color: #888; margin-top: 6px; }
+.pi-sub { font-size: 14px; color: var(--color-text-muted); margin-top: 6px; }
 .pi-stats { display: flex; justify-content: center; gap: 30px; margin: 22px 0; }
 .pi-stat { display: flex; flex-direction: column; align-items: center; }
-.pi-stat-num { font-size: 26px; font-weight: 800; color: #5a7d96; }
-.pi-stat-lbl { font-size: 12px; color: #aaa; margin-top: 2px; }
-.pi-count { font-size: 13px; color: #666; margin: 16px 0; }
+.pi-stat-num { font-size: 26px; font-weight: 800; color: var(--color-primary); }
+.pi-stat-lbl { font-size: 12px; color: var(--color-text-muted); margin-top: 2px; }
+.pi-count { font-size: 13px; color: var(--color-text-secondary); margin: 16px 0; }
 .pi-actions { display: flex; gap: 12px; justify-content: center; margin-top: 8px; }
 
 /* ===== 逐题作答 ===== */
 .session-card {
-  max-width: 560px; margin: 0 auto;
-  background: rgba(255,255,255,0.82); backdrop-filter: blur(16px);
-  border: 1px solid rgba(0,0,0,0.06); border-radius: 20px;
-  box-shadow: 0 10px 40px rgba(0,0,0,0.06);
+  max-width: 720px; margin: 0 auto;
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border); border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
   padding: 22px 24px 26px;
   animation: session-in 0.25s ease;
+  transition: all 0.25s var(--ease-smooth);
 }
+.session-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
 @keyframes session-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 .session-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
 .sh-count { font-size: 20px; font-weight: 800; color: var(--color-text); font-family: var(--font-heading); }
-.sh-count i { font-style: normal; font-size: 13px; color: #b0b0b0; font-weight: 600; }
-.sh-score { font-size: 13px; color: #5a7d96; font-weight: 700; }
+.sh-count i { font-style: normal; font-size: 13px; color: var(--color-text-muted); font-weight: 600; }
+.sh-score { font-size: 13px; color: var(--color-primary); font-weight: 700; }
 .combo-badge {
-  padding: 3px 12px; border-radius: 12px;
-  background: linear-gradient(135deg, #f0975c, #e67e22);
+  padding: 3px 12px; border-radius: var(--radius-full);
+  background: linear-gradient(135deg, var(--color-gold-light), var(--color-gold));
   color: #fff; font-size: 12px; font-weight: 700;
   animation: combo-pop 0.3s ease;
 }
 @keyframes combo-pop { 0% { transform: scale(0.6); } 60% { transform: scale(1.15); } 100% { transform: scale(1); } }
-.progress-bar { height: 6px; border-radius: 3px; background: rgba(0,0,0,0.06); margin-bottom: 20px; overflow: hidden; }
-.progress-fill { height: 100%; border-radius: 3px; background: linear-gradient(90deg, #7c9db5, #5a7d96); transition: width 0.4s ease; }
+.progress-bar { height: 6px; border-radius: var(--radius-full); background: rgba(42, 36, 56, 0.08); margin-bottom: 20px; overflow: hidden; }
+.progress-fill { height: 100%; border-radius: var(--radius-full); background: linear-gradient(90deg, var(--color-primary), var(--color-primary-dark)); transition: width 0.4s ease; }
 
 .session-question {
-  padding: 20px 22px; border-radius: 16px;
-  border: 1.5px solid #ececec; background: rgba(250,249,246,0.7);
+  padding: 20px 22px; border-radius: var(--radius-md);
+  border: 1px solid var(--color-border); background: #fffdf4;
   transition: all 0.3s;
 }
-.session-question.correct { border-color: #c3e6cb; background: rgba(39,174,96,0.05); }
-.session-question.wrong { border-color: #f0c4c4; background: rgba(231,76,60,0.04); }
+.session-question.correct { border-color: rgba(255, 107, 107, 0.35); background: rgba(255, 107, 107, 0.06); }
+.session-question.wrong { border-color: rgba(255, 107, 107, 0.3); background: rgba(255, 107, 107, 0.05); }
 .sq-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
 .sq-type {
-  font-size: 11px; padding: 3px 12px; border-radius: 12px;
-  background: rgba(90,125,150,0.1); color: #5a7d96; font-weight: 700;
+  font-size: 11px; padding: 3px 12px; border-radius: var(--radius-full);
+  background: rgba(255, 107, 107, 0.1); color: var(--color-primary); font-weight: 700;
 }
 .sq-text { font-size: 17px; color: var(--color-text); line-height: 1.7; font-weight: 500; }
-.sq-hint { font-size: 12px; color: #999; margin-top: 8px; font-style: italic; }
+.sq-hint { font-size: 12px; color: var(--color-text-muted); margin-top: 8px; font-style: italic; }
 .sq-row { display: flex; gap: 10px; margin-top: 16px; }
 .sq-input {
-  flex: 1; padding: 12px 16px; border-radius: 12px;
-  border: 1.5px solid #e0e0e0; background: #fff; font-size: 16px;
-  color: var(--color-text); outline: none; transition: border-color 0.2s;
+  flex: 1; padding: 12px 16px; border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border); background: var(--color-bg-card); font-size: 16px;
+  color: var(--color-text); outline: none; transition: border-color 0.2s, box-shadow 0.2s;
 }
-.sq-input:focus { border-color: #7c9db5; box-shadow: 0 0 0 3px rgba(124,157,181,0.1); }
-.sq-input:disabled { background: #f5f5f5; color: #999; }
-.fb-ok { color: #27ae60; font-size: 15px; font-weight: 700; margin-top: 12px; }
+.sq-input:focus { border-color: var(--color-primary); box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.1); }
+.sq-input:disabled { background: #fffdf4; color: var(--color-text-muted); }
+.fb-ok { color: var(--color-primary); font-size: 15px; font-weight: 700; margin-top: 12px; }
 .fb-bad { margin-top: 12px; }
-.fb-wrong { color: #c0392b; font-size: 14px; }
-.fb-wrong strong { color: #27ae60; }
-.fb-explain { display: block; color: #888; font-size: 13px; margin-top: 6px; line-height: 1.6; }
+.fb-wrong { color: #a85a4c; font-size: 14px; }
+.fb-wrong strong { color: var(--color-primary); }
+.fb-explain { display: block; color: var(--color-text-muted); font-size: 13px; margin-top: 6px; line-height: 1.6; }
 .session-actions { display: flex; justify-content: flex-end; margin-top: 20px; }
-.kb-hint { text-align: center; font-size: 12px; color: #c0c0c0; margin-top: 14px; }
+.kb-hint { text-align: center; font-size: 12px; color: var(--color-text-muted); margin-top: 14px; }
 
 /* ===== 结果页 ===== */
 .result-card {
-  max-width: 520px; margin: 0 auto;
-  background: rgba(255,255,255,0.82); backdrop-filter: blur(16px);
-  border: 1px solid rgba(0,0,0,0.06); border-radius: 20px;
-  box-shadow: 0 10px 40px rgba(0,0,0,0.06);
+  max-width: 720px; margin: 0 auto;
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border); border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
   padding: 32px 30px; text-align: center;
   animation: session-in 0.25s ease;
+  transition: all 0.25s var(--ease-smooth);
 }
+.result-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
 .res-ring {
   width: 120px; height: 120px; margin: 0 auto 18px;
   border-radius: 50%;
-  background: conic-gradient(#5a7d96 calc(var(--p) * 1%), rgba(0,0,0,0.06) 0);
+  background: conic-gradient(var(--color-primary) var(--p), rgba(42, 36, 56, 0.08) 0);
   display: flex; align-items: center; justify-content: center;
 }
 .res-ring-inner {
   width: 88px; height: 88px; border-radius: 50%;
-  background: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  background: var(--color-bg-card); display: flex; flex-direction: column; align-items: center; justify-content: center;
 }
-.res-num { font-size: 24px; font-weight: 800; color: #5a7d96; }
-.res-lbl { font-size: 11px; color: #aaa; }
+.res-num { font-size: 24px; font-weight: 800; color: var(--color-primary); }
+.res-lbl { font-size: 11px; color: var(--color-text-muted); }
 .res-title { font-size: 20px; font-weight: 800; color: var(--color-text); font-family: var(--font-heading); }
 .res-stats { display: flex; justify-content: center; gap: 28px; margin: 20px 0; }
-.res-stat { font-size: 13px; color: #888; display: flex; flex-direction: column; align-items: center; }
+.res-stat { font-size: 13px; color: var(--color-text-muted); display: flex; flex-direction: column; align-items: center; }
 .res-n { font-size: 22px; font-weight: 800; color: var(--color-text); }
-.res-wrong { text-align: left; margin: 8px 0 18px; padding: 14px 18px; background: rgba(231,76,60,0.04); border: 1px solid rgba(231,76,60,0.12); border-radius: 12px; }
-.res-wrong h4 { font-size: 14px; font-weight: 700; color: #c0392b; margin-bottom: 8px; }
+.res-wrong { text-align: left; margin: 8px 0 18px; padding: 14px 18px; background: rgba(255, 107, 107, 0.05); border: 1px solid rgba(255, 107, 107, 0.15); border-radius: var(--radius-sm); }
+.res-wrong h4 { font-size: 14px; font-weight: 700; color: #a85a4c; margin-bottom: 8px; }
 .res-wrong-item { margin-bottom: 10px; }
 .res-wrong-item:last-child { margin-bottom: 0; }
-.rw-q { font-size: 14px; color: #555; line-height: 1.6; }
-.rw-a { font-size: 13px; color: #888; margin-top: 2px; }
-.rw-a strong { color: #27ae60; }
+.rw-q { font-size: 14px; color: var(--color-text-secondary); line-height: 1.6; }
+.rw-a { font-size: 13px; color: var(--color-text-muted); margin-top: 2px; }
+.rw-a strong { color: var(--color-primary); }
 .res-actions { display: flex; gap: 12px; justify-content: center; }
 
 .empty-practice { text-align: center; padding: 40px 0; color: var(--color-text-muted); }
 .empty-practice p { margin-bottom: 16px; font-size: 14px; }
 .ai-badge {
   display: flex; align-items: center; justify-content: space-between;
-  padding: 10px 16px; background: rgba(155,89,182,0.06);
-  border: 1px solid rgba(155,89,182,0.15); border-radius: 10px;
-  margin-top: 16px; font-size: 13px; color: #8e44ad;
+  padding: 10px 16px; background: rgba(255, 107, 107, 0.08);
+  border: 1px solid var(--color-border-gold); border-radius: var(--radius-sm);
+  margin-top: 16px; font-size: 13px; color: var(--color-gold-deep);
 }
 
 /* ===== 长难句 ===== */
 .daily-card {
-  background: linear-gradient(135deg, rgba(124,157,181,0.08), rgba(90,125,150,0.04));
-  border: 1.5px solid rgba(124,157,181,0.2); border-radius: 20px;
-  box-shadow: 0 10px 40px rgba(0,0,0,0.05);
+  background: linear-gradient(135deg, rgba(255, 107, 107, 0.12) 0%, rgba(244, 241, 234, 0.55) 100%);
+  border: 1px solid var(--color-border-gold); border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
   padding: 24px 28px; margin-bottom: 24px;
+  transition: all 0.25s var(--ease-smooth);
 }
+.daily-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
 .daily-badge-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-.daily-badge { font-size: 13px; font-weight: 700; color: #5a7d96; }
+.daily-badge { font-size: 13px; font-weight: 700; color: var(--color-gold-deep); }
 .daily-actions { display: flex; gap: 8px; align-items: center; }
-.daily-counter { font-size: 12px; color: #999; min-width: 44px; text-align: center; }
+.daily-counter { font-size: 12px; color: var(--color-text-muted); min-width: 44px; text-align: center; }
 .speak-btn {
   width: 30px; height: 30px; border-radius: 50%;
-  border: 1.5px solid #d8d8d8; background: rgba(255,255,255,0.8);
+  border: 1px solid var(--color-border-hover); background: var(--color-bg-card);
   font-size: 14px; cursor: pointer; transition: all 0.2s;
   display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
   padding: 0 !important;
 }
-.speak-btn:hover { border-color: #7c9db5; background: rgba(124,157,181,0.1); }
-.speak-btn.speaking { border-color: #27ae60; background: rgba(39,174,96,0.12); animation: speak-pulse 1s infinite; }
+.speak-btn:hover { border-color: var(--color-primary); background: rgba(255, 107, 107, 0.08); }
+.speak-btn.speaking { border-color: var(--color-primary); background: rgba(255, 107, 107, 0.12); animation: speak-pulse 1s infinite; }
 @keyframes speak-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.55; } }
 .daily-sentence { font-size: 18px; font-weight: 600; color: var(--color-text); line-height: 1.8; margin-bottom: 10px; }
-.daily-translation { font-size: 14px; color: #666; line-height: 1.7; margin-bottom: 8px; padding-left: 8px; border-left: 3px solid rgba(124,157,181,0.3); }
+.daily-translation { font-size: 14px; color: var(--color-text-secondary); line-height: 1.7; margin-bottom: 8px; padding-left: 8px; border-left: 3px solid rgba(255, 107, 107, 0.35); }
 .daily-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
 .daily-analysis { margin-top: 12px; }
-.daily-analysis summary { font-size: 13px; color: #5a7d96; cursor: pointer; font-weight: 600; }
-.grammar-tag { display: inline-block; padding: 3px 10px; border-radius: 100px; background: rgba(90,125,150,0.08); color: #5a7d96; font-size: 11px; font-weight: 600; }
+.daily-analysis summary { font-size: 13px; color: var(--color-primary); cursor: pointer; font-weight: 600; }
+.grammar-tag { display: inline-block; padding: 3px 10px; border-radius: 100px; background: rgba(255, 107, 107, 0.1); color: var(--color-primary); font-size: 11px; font-weight: 600; }
+
+/* 长难句双栏 */
+.sentences-grid { display: grid; grid-template-columns: 1fr; gap: 24px; align-items: start; }
+.sentences-right { min-width: 0; }
+@media (min-width: 960px) {
+  .sentences-grid { grid-template-columns: 400px 1fr; }
+  .daily-card { position: sticky; top: 92px; }
+}
 
 .sentence-list { display: flex; flex-direction: column; gap: 12px; }
 .sentence-card {
-  background: rgba(255,255,255,0.82); backdrop-filter: blur(16px);
-  border: 1px solid rgba(0,0,0,0.06); border-radius: 20px;
-  box-shadow: 0 10px 40px rgba(0,0,0,0.06); overflow: hidden;
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border); border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm); overflow: hidden;
+  transition: all 0.25s var(--ease-smooth);
 }
-.sentence-card.expanded { border-color: rgba(124,157,181,0.2); }
+.sentence-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+.sentence-card.expanded { border-color: rgba(255, 107, 107, 0.3); }
 .sentence-header { padding: 16px 20px; cursor: pointer; }
-.sentence-header:hover { background: rgba(0,0,0,0.01); }
+.sentence-header:hover { background: rgba(42, 36, 56, 0.02); }
 .sentence-top-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
-.sentence-level-tag { font-size: 10px; padding: 2px 8px; border-radius: 10px; background: rgba(0,0,0,0.05); color: #888; font-weight: 600; }
-.sentence-source { font-size: 11px; color: #bbb; font-style: italic; }
-.expand-arrow { margin-left: auto; font-size: 14px; color: #aaa; }
+.sentence-level-tag { font-size: 10px; padding: 2px 8px; border-radius: var(--radius-sm); background: rgba(42, 36, 56, 0.05); color: var(--color-text-secondary); font-weight: 600; }
+.sentence-source { font-size: 11px; color: var(--color-text-muted); font-style: italic; }
+.expand-arrow { margin-left: auto; font-size: 14px; color: var(--color-text-muted); }
 .sentence-text { font-size: 15px; color: var(--color-text); line-height: 1.7; margin: 0; }
 .sentence-body { padding: 0 20px 20px; }
 .sentence-section { margin-bottom: 14px; }
-.sentence-section h4 { font-size: 13px; font-weight: 700; color: #5a7d96; margin-bottom: 6px; }
-.sentence-section p { font-size: 14px; color: #555; line-height: 1.7; }
+.sentence-section h4 { font-size: 13px; font-weight: 700; color: var(--color-primary); margin-bottom: 6px; }
+.sentence-section p { font-size: 14px; color: var(--color-text-secondary); line-height: 1.7; }
 .grammar-tags { display: flex; flex-wrap: wrap; gap: 6px; }
-.analysis-text { font-size: 13px; color: #555; line-height: 1.8; white-space: pre-wrap; background: #f8f9fa; padding: 12px 16px; border-radius: 8px; font-family: var(--font-body); }
+.analysis-text { font-size: 13px; color: var(--color-text-secondary); line-height: 1.8; white-space: pre-wrap; background: #fffdf4; padding: 12px 16px; border-radius: var(--radius-sm); font-family: var(--font-body); }
 </style>

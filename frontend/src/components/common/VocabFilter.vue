@@ -74,7 +74,7 @@ function reset() {
 
 .lang-label {
   padding: 4px 14px; border-radius: 10px;
-  background: rgba(90,125,150,0.1); color: #5a7d96;
+  background: rgba(77,150,255,0.1); color: #4d96ff;
   font-size: 13px; font-weight: 700;
 }
 
@@ -83,34 +83,34 @@ function reset() {
 }
 .chip {
   padding: 5px 12px; border-radius: 16px;
-  border: 1.5px solid #ddd; background: rgba(255,255,255,0.6);
-  font-size: 12px; font-weight: 600; color: #666; cursor: pointer;
+  border: 1.5px solid #ddd8e9; background: rgba(255,255,255,0.6);
+  font-size: 12px; font-weight: 600; color: #5f5a70; cursor: pointer;
   transition: all 0.25s; white-space: nowrap;
 }
-.chip:hover { border-color: #aaa; }
-.chip.active { border-color: #5a7d96; color: #fff; background: #5a7d96; }
+.chip:hover { border-color: #a49ec0; }
+.chip.active { border-color: #4d96ff; color: #fff; background: #4d96ff; }
 
 .search-row {
   display: flex; gap: 8px; align-items: center;
 }
 .search-row input {
-  padding: 8px 16px; border-radius: 22px; border: 1.5px solid #ddd;
+  padding: 8px 16px; border-radius: 22px; border: 1.5px solid #ddd8e9;
   background: rgba(255,255,255,0.6); color: var(--color-text);
   font-size: 14px; outline: none; width: 220px;
   transition: border-color 0.3s, box-shadow 0.3s;
 }
-.search-row input:focus { border-color: #7c9db5; box-shadow: 0 0 0 3px rgba(124,157,181,0.08); }
-.search-row input::placeholder { color: #bbb; }
+.search-row input:focus { border-color: #7bb7ff; box-shadow: 0 0 0 3px rgba(123,183,255,0.08); }
+.search-row input::placeholder { color: #b9b3d0; }
 
 .search-btn {
   padding: 8px 18px; border-radius: 22px; border: none;
-  background: #5a7d96; color: #fff; font-size: 13px; font-weight: 600; cursor: pointer;
+  background: #4d96ff; color: #fff; font-size: 13px; font-weight: 600; cursor: pointer;
 }
-.search-btn:hover { background: #4a6d86; }
+.search-btn:hover { background: #4d96ff; }
 
 .reset-btn {
-  padding: 8px 14px; border-radius: 22px; border: 1.5px solid #ddd;
-  background: transparent; color: #999; font-size: 13px; font-weight: 500; cursor: pointer;
+  padding: 8px 14px; border-radius: 22px; border: 1.5px solid #ddd8e9;
+  background: transparent; color: #8f88a8; font-size: 13px; font-weight: 500; cursor: pointer;
 }
-.reset-btn:hover { background: rgba(0,0,0,0.04); color: #666; }
+.reset-btn:hover { background: rgba(0,0,0,0.04); color: #5f5a70; }
 </style>

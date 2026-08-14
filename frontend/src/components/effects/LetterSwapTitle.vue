@@ -5,13 +5,13 @@
  * 规范要求：
  * - hover 时字母随机交换位置
  * - 动画持续 0.2s (ease-in-out)，恢复原状
- * - 文字颜色 #007bff (蓝色)
+ * - 文字颜色默认墨色，适合 Playful 主题
  * - 字体 Arial Regular 18px
  *
  * Props:
  *   text  - 要显示的文字
  *   tag   - 渲染的 HTML 标签 (默认 h2)
- *   color - 文字颜色 (默认 #007bff)
+ *   color - 文字颜色 (默认 #2a2438)
  *   fontSize - 字体大小 (默认 18px)
  */
 import { useLetterSwap } from '@/composables/useLetterSwap'
@@ -19,9 +19,9 @@ import { useLetterSwap } from '@/composables/useLetterSwap'
 const props = defineProps({
   text: { type: String, required: true },
   tag: { type: String, default: 'h2' },
-  color: { type: String, default: '#007bff' },
+  color: { type: String, default: '#2a2438' },
   fontSize: { type: String, default: '18px' },
-  fontWeight: { type: [String, Number], default: 400 },
+  fontWeight: { type: [String, Number], default: 800 },
   letterSpacing: { type: String, default: 'normal' },
 })
 
@@ -59,10 +59,10 @@ const { displayChars, startSwap, resetSwap } = useLetterSwap(props.text)
 .letter-swap-title {
   cursor: default;
   user-select: none;
-  font-family: 'Georgia', 'Times New Roman', 'Noto Serif SC', 'STSong', 'SimSun', serif;
-  font-weight: var(--swap-font-weight, 400);
+  font-family: 'Arial Rounded MT Bold', ui-rounded, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', system-ui, sans-serif;
+  font-weight: var(--swap-font-weight, 700);
   font-size: var(--swap-font-size, 18px);
-  color: var(--swap-color, #007bff);
+  color: var(--swap-color, #2a2438);
   letter-spacing: var(--swap-letter-spacing, normal);
 }
 
@@ -74,7 +74,7 @@ const { displayChars, startSwap, resetSwap } = useLetterSwap(props.text)
 
 /* hover 时字符微微发光，增强交互反馈 */
 .letter-swap-title:hover .letter-swap-char {
-  text-shadow: 0 0 8px var(--swap-color, #007bff);
+  text-shadow: 2px 2px 0 rgba(255, 107, 107, 0.25);
 }
 
 /* 空格保留宽度 */

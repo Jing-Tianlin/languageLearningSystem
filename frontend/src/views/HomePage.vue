@@ -21,6 +21,24 @@ const activeSection = ref(0)
 const stats = ref({ totalWords: 0, masteredWords: 0, masteryRate: 0, totalReviews: 0, avgHesitationMs: 0, studyStreak: 0 })
 const statsLoading = ref(false)
 
+// 数字滚动动画（用于概览核心指标）
+const animWords = ref(0)
+const animMastered = ref(0)
+const animRate = ref(0)
+
+function animateTo(setter, target, duration = 900) {
+  const from = setter.value
+  if (from === target) return
+  const start = performance.now()
+  function frame(now) {
+    const p = Math.min((now - start) / duration, 1)
+    const eased = 1 - Math.pow(1 - p, 3)
+    setter.value = Math.round(from + (target - from) * eased)
+    if (p < 1) requestAnimationFrame(frame)
+  }
+  requestAnimationFrame(frame)
+}
+
 // 首页推荐
 const homeRecs = ref([])
 const homeRecLoading = ref(false)
@@ -77,6 +95,9 @@ async function loadStats() {
     const json = await fetchJson(`${BASE}/stats/overview?userId=${authStore.user.id}`)
     if (json.code === 200 && json.data) {
       stats.value = json.data
+      animateTo(animWords, stats.value.totalWords || 0)
+      animateTo(animMastered, stats.value.masteredWords || 0)
+      animateTo(animRate, stats.value.masteryRate || 0)
     }
   } catch (e) { /* 静默 */ }
   finally { statsLoading.value = false }
@@ -154,10 +175,14 @@ onUnmounted(() => {
     <!-- ===== Section 1: Hero ===== -->
     <section class="fp-section fp-hero">
       <div class="fp-content">
+        <span class="hero-sticker hs-1">🎈</span>
+        <span class="hero-sticker hs-2">⭐</span>
+        <span class="hero-sticker hs-3">💛</span>
+        <span class="hero-sticker hs-4">🎧</span>
         <div class="hero-badge">
           <span class="badge-dot" /> 创新的语言学习方式
         </div>
-        <LetterSwapTitle text="探索语言之美" tag="h1" color="#3e463b" font-size="54px" :font-weight="600" letter-spacing="-0.5px" />
+        <LetterSwapTitle text="探索语言之美" tag="h1" color="#2a2438" font-size="54px" :font-weight="600" letter-spacing="-0.5px" />
         <p class="hero-desc">
           沉浸式多语言学习体验，通过 AI 驱动的个性化课程<br />
           让每一门语言都触手可及
@@ -179,7 +204,7 @@ onUnmounted(() => {
         <h2 class="section-title">核心能力</h2>
         <p class="section-sub">围绕记忆曲线与 AI，构建完整学习闭环</p>
         <div class="features">
-          <div v-for="f in features" :key="f.title" class="feat">
+          <div v-for="(f, i) in features" :key="f.title" class="feat" :style="{ animationDelay: `${i * 90}ms` }">
             <span class="feat-icon icon-svg" :class="f.icon" />
             <div class="feat-text">
               <h3 class="feat-title">{{ f.title }}</h3>
@@ -225,21 +250,21 @@ onUnmounted(() => {
                 <div class="sh-card">
                   <span class="sh-icon icon-svg vocab" />
                   <div class="sh-body">
-                    <span class="sh-num">{{ stats.totalWords || 0 }}</span>
+                    <span class="sh-num">{{ animWords }}</span>
                     <span class="sh-lbl">学习词汇</span>
                   </div>
                 </div>
                 <div class="sh-card">
                   <span class="sh-icon icon-svg book" />
                   <div class="sh-body">
-                    <span class="sh-num">{{ stats.masteredWords || 0 }}</span>
+                    <span class="sh-num">{{ animMastered }}</span>
                     <span class="sh-lbl">已掌握</span>
                   </div>
                 </div>
                 <div class="sh-card accent">
                   <span class="sh-icon icon-svg trophy" />
                   <div class="sh-body">
-                    <span class="sh-num">{{ stats.masteryRate || 0 }}%</span>
+                    <span class="sh-num">{{ animRate }}%</span>
                     <span class="sh-lbl">掌握率</span>
                   </div>
                 </div>
@@ -349,12 +374,12 @@ onUnmounted(() => {
 .nav-dot {
   width: 10px; height: 10px;
   border-radius: 50%;
-  background: rgba(62, 54, 44, 0.16);
+  background: rgba(42, 36, 56, 0.16);
   cursor: pointer;
   transition: all 0.4s var(--ease-smooth);
 }
-.nav-dot:hover { background: rgba(62, 54, 44, 0.35); transform: scale(1.3); }
-.nav-dot.active { background: var(--color-gold); box-shadow: 0 0 0 3px rgba(176, 124, 79, 0.15); }
+.nav-dot:hover { background: rgba(42, 36, 56, 0.35); transform: scale(1.3); }
+.nav-dot.active { background: var(--color-gold); box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.15); }
 
 /* === Hero === */
 .hero-badge {
@@ -396,6 +421,11 @@ onUnmounted(() => {
   box-shadow: var(--shadow-sm);
   text-align: left;
   transition: all 0.25s ease;
+  animation: featIn 0.5s var(--ease-out-expo) backwards;
+}
+@keyframes featIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 .feat:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); border-color: var(--color-border-hover); }
 .feat-icon { font-size: 30px; flex-shrink: 0; margin-top: 2px; }
@@ -424,8 +454,8 @@ onUnmounted(() => {
 .welcome-level {
   display: inline-flex; align-items: center; gap: 7px;
   padding: 7px 16px; border-radius: var(--radius-full);
-  background: rgba(176, 124, 79, 0.1);
-  border: 1px solid rgba(176, 124, 79, 0.18);
+  background: rgba(255, 107, 107, 0.1);
+  border: 1px solid rgba(255, 107, 107, 0.18);
   font-size: 13px; font-weight: 600; color: var(--color-gold);
   white-space: nowrap; flex-shrink: 0;
 }
@@ -443,10 +473,10 @@ onUnmounted(() => {
 .sh-icon {
   display: inline-flex; align-items: center; justify-content: center;
   width: 52px; height: 52px; border-radius: 14px;
-  background: rgba(110, 122, 107, 0.1);
+  background: rgba(255, 107, 107, 0.1);
   font-size: 24px; flex-shrink: 0;
 }
-.sh-card.accent .sh-icon { background: rgba(176, 124, 79, 0.12); }
+.sh-card.accent .sh-icon { background: rgba(255, 107, 107, 0.12); }
 .sh-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .sh-num { font-size: 28px; font-weight: 600; color: var(--color-text); letter-spacing: -0.8px; font-family: var(--font-number); font-variant-numeric: tabular-nums; line-height: 1.2; }
 .sh-card.accent .sh-num { color: var(--color-gold); }
@@ -464,7 +494,7 @@ onUnmounted(() => {
 .sd-icon {
   display: inline-flex; align-items: center; justify-content: center;
   width: 34px; height: 34px; border-radius: 50%;
-  background: rgba(110, 122, 107, 0.08);
+  background: rgba(255, 107, 107, 0.08);
   font-size: 16px; margin-bottom: 2px;
 }
 .sd-val { font-size: 15px; font-weight: 600; color: var(--color-text); font-family: var(--font-number); font-variant-numeric: tabular-nums; }
@@ -480,7 +510,7 @@ onUnmounted(() => {
 .hr-header { display: flex; align-items: center; justify-content: center; gap: 14px; margin-bottom: 12px; }
 .hr-header h3 { font-size: 16px; font-weight: 600; color: var(--color-text); margin: 0; font-family: var(--font-heading); letter-spacing: 0.3px; display: inline-flex; align-items: center; gap: 6px; }
 .hr-refresh { color: var(--color-gold); }
-.hr-refresh:hover:not(:disabled) { color: var(--color-gold); background: rgba(176, 124, 79, 0.05); }
+.hr-refresh:hover:not(:disabled) { color: var(--color-gold); background: rgba(255, 107, 107, 0.05); }
 .hr-refresh:disabled { opacity: 0.5; cursor: not-allowed; }
 .hr-card {
   padding: 16px 22px; border-radius: var(--radius-md);

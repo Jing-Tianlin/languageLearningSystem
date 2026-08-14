@@ -34,7 +34,15 @@ public class WebConfig implements WebMvcConfigurer {
                 .addPathPatterns("/**")
                 .excludePathPatterns("/error");
         // AI 配额限流（注册顺序在鉴权之后，能拿到 AuthUtil.ATTR_USER_ID）
+        // 注意：所有会触发 DeepSeek API 调用的路径都必须纳入，
+        // 否则任意登录用户可无限刷接口放大 API 成本
         registry.addInterceptor(aiQuotaInterceptor)
-                .addPathPatterns("/ai/**");
+                .addPathPatterns(
+                    "/ai/**",
+                    "/vocabulary/quiz-options",
+                    "/vocabulary/quiz-options/batch",
+                    "/vocabulary/generate-example",
+                    "/vocabulary/generate-batch"
+                );
     }
 }

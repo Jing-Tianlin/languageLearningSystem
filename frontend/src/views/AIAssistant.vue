@@ -252,11 +252,11 @@ onMounted(async () => {
 .page-header :deep(.letter-swap-title) { font-size: 28px; font-weight: 800; color: var(--color-text); }
 .page-sub { font-size: 14px; color: var(--color-text-muted); display: flex; align-items: center; gap: 8px; justify-content: center; }
 .lang-badge {
-  padding: 2px 10px; border-radius: 8px; background: rgba(90,125,150,0.1); color: #5a7d96;
+  padding: 2px 10px; border-radius: 8px; background: rgba(77,150,255,0.1); color: #4d96ff;
   font-size: 12px; font-weight: 700;
 }
 .level-badge {
-  padding: 2px 10px; border-radius: 8px; background: rgba(39,174,96,0.1); color: #27ae60;
+  padding: 2px 10px; border-radius: 8px; background: rgba(107,203,119,0.1); color: #3fa65a;
   font-size: 12px; font-weight: 700;
 }
 
@@ -264,12 +264,12 @@ onMounted(async () => {
 .tab-bar { display: flex; gap: 8px; justify-content: center; margin: 16px 0; }
 .tab-bar button {
   display: inline-flex; align-items: center; gap: 6px;
-  padding: 10px 20px; border-radius: 22px; border: 1.5px solid #ddd;
+  padding: 10px 20px; border-radius: 22px; border: 1.5px solid #ddd8e9;
   background: rgba(255,255,255,0.6); font-size: 14px; font-weight: 600;
-  cursor: pointer; transition: all 0.25s; color: #666;
+  cursor: pointer; transition: all 0.25s; color: #5f5a70;
 }
 .tab-bar button:hover, .tab-bar button.active {
-  border-color: #5a7d96; color: #5a7d96; background: rgba(90,125,150,0.06);
+  border-color: #4d96ff; color: #4d96ff; background: rgba(77,150,255,0.06);
 }
 .tab-icon { font-size: 16px; }
 
@@ -280,7 +280,7 @@ onMounted(async () => {
   padding: 28px;
 }
 .section-title { font-size: 17px; font-weight: 700; color: var(--color-text); margin-bottom: 4px; }
-.section-hint { font-size: 13px; color: #999; margin-bottom: 16px; }
+.section-hint { font-size: 13px; color: #8f88a8; margin-bottom: 16px; }
 
 /* 按钮 */
 .btn {
@@ -288,48 +288,48 @@ onMounted(async () => {
   font-size: 15px; font-weight: 600; cursor: pointer; margin: 8px 0 16px;
   transition: all 0.25s;
 }
-.btn.primary { background: linear-gradient(135deg, #7c9db5, #5a7d96); color: #fff; }
-.btn.primary:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(90,125,150,0.3); }
+.btn.primary { background: linear-gradient(135deg, #7bb7ff, #4d96ff); color: #fff; }
+.btn.primary:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(77,150,255,0.3); }
 .btn.secondary {
-  background: #fff; border: 1.5px solid #7c9db5; color: #5a7d96; margin-top: 4px;
+  background: #fff; border: 1.5px solid #7bb7ff; color: #4d96ff; margin-top: 4px;
 }
-.btn.secondary:hover:not(:disabled) { background: rgba(124,157,181,0.06); }
+.btn.secondary:hover:not(:disabled) { background: rgba(123,183,255,0.06); }
 .btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
 /* 输入框 */
 .input-area {
-  width: 100%; padding: 14px; border-radius: 12px; border: 1.5px solid #e0e0e0;
+  width: 100%; padding: 14px; border-radius: 12px; border: 1.5px solid #e6e0f2;
   background: #fafafa; color: var(--color-text); font-size: 15px; line-height: 1.7;
   resize: vertical; outline: none; font-family: var(--font-body); margin-bottom: 4px;
 }
-.input-area:focus { border-color: #7c9db5; box-shadow: 0 0 0 3px rgba(124,157,181,0.1); }
+.input-area:focus { border-color: #7bb7ff; box-shadow: 0 0 0 3px rgba(123,183,255,0.1); }
 .input-field {
-  width: 100%; padding: 12px 16px; border-radius: 12px; border: 1.5px solid #e0e0e0;
+  width: 100%; padding: 12px 16px; border-radius: 12px; border: 1.5px solid #e6e0f2;
   background: #fafafa; font-size: 15px; outline: none; margin-bottom: 4px;
   color: var(--color-text);
 }
-.input-field:focus { border-color: #7c9db5; box-shadow: 0 0 0 3px rgba(124,157,181,0.1); }
+.input-field:focus { border-color: #7bb7ff; box-shadow: 0 0 0 3px rgba(123,183,255,0.1); }
 
 /* 答案 */
-.answer-block { margin-top: 16px; padding: 18px; background: #f8fafb; border-radius: 12px; border: 1px solid #eee; }
+.answer-block { margin-top: 16px; padding: 18px; background: #f6f9ff; border-radius: 12px; border: 1px solid #edeaf5; }
 .answer-block h4 { font-size: 14px; font-weight: 700; color: var(--color-text); margin-bottom: 8px; }
-.answer-text { font-size: 15px; color: #444; line-height: 1.8; white-space: pre-wrap; }
+.answer-text { font-size: 15px; color: #3f3a4d; line-height: 1.8; white-space: pre-wrap; }
 
 /* 例句列表 */
 .example-list { margin-top: 12px; }
-.example-card { padding: 14px 18px; background: #f8fafb; border-radius: 10px; border: 1px solid #eee; margin-bottom: 8px; }
+.example-card { padding: 14px 18px; background: #f6f9ff; border-radius: 10px; border: 1px solid #edeaf5; margin-bottom: 8px; }
 .ex-sentence { font-size: 16px; font-weight: 600; color: var(--color-text); }
-.ex-translation { font-size: 14px; color: #888; margin-top: 4px; }
+.ex-translation { font-size: 14px; color: #6b647e; margin-top: 4px; }
 
 /* 语法纠错 */
 .check-result { margin-top: 16px; }
-.result-block-error { padding: 16px; background: #fef9f9; border-radius: 10px; border: 1px solid #fde0e0; }
+.result-block-error { padding: 16px; background: #fff5f5; border-radius: 10px; border: 1px solid #ffd9d9; }
 .result-block-error h4 { font-size: 14px; font-weight: 700; color: var(--color-text); margin: 12px 0 8px; }
-.no-error { color: #27ae60; font-weight: 600; font-size: 15px; }
+.no-error { color: #3fa65a; font-weight: 600; font-size: 15px; }
 .error-list { margin-top: 8px; }
 .error-card { padding: 8px 12px; background: #fff; border-radius: 8px; margin: 6px 0; font-size: 13px; display: flex; align-items: center; gap: 8px; }
-.e-orig { color: #e74c3c; text-decoration: line-through; }
-.e-correct { color: #27ae60; font-weight: 600; }
-.e-rule { color: #888; font-size: 12px; margin-left: auto; }
-.e-arrow { color: #bbb; }
+.e-orig { color: #ff6b6b; text-decoration: line-through; }
+.e-correct { color: #3fa65a; font-weight: 600; }
+.e-rule { color: #6b647e; font-size: 12px; margin-left: auto; }
+.e-arrow { color: #b9b3d0; }
 </style>

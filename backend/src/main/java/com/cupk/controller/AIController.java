@@ -26,6 +26,7 @@ public class AIController {
     private static final int MAX_COUNT = 10;            // 生成数量
     private static final int MAX_LIST_SIZE = 100;       // 词汇列表长度
     private static final int MAX_HISTORY = 20;          // 历史对话条数
+    private static final int MAX_HISTORY_ITEM_LEN = 1000; // 单条历史内容长度
     private static final int MAX_LEVEL = 3;             // 材料等级上限
 
     private final DeepSeekService aiService;
@@ -123,10 +124,8 @@ public class AIController {
         String question = String.valueOf(body.getOrDefault("question", ""));
         String lang = String.valueOf(body.getOrDefault("langCode", "en"));
 
-        List<Map<String, String>> history = (List<Map<String, String>>) body.get("history");
-        if (history == null) {
-            history = List.of();
-        }
+        Object rawHistory = body.get("history");
+        List<?> history = rawHistory instanceof List<?> l ? l : List.of();
 
         SseEmitter emitter = new SseEmitter(90_000L);
 
@@ -145,7 +144,22 @@ public class AIController {
             history = history.subList(history.size() - MAX_HISTORY, history.size());
         }
 
-        List<Map<String, String>> finalHistory = history;
+        // 防御性清洗：过滤非法条目并限制单条长度，防止超长 history 放大 token 成本
+        List<Map<String, String>> sanitized = new ArrayList<>(history.size());
+        for (Object item : history) {
+            if (!(item instanceof Map<?, ?> m)) continue;
+            Object role = m.get("role");
+            Object content = m.get("content");
+            if (!(role instanceof String r) || !(content instanceof String c)) continue;
+            if (!"user".equals(r) && !"assistant".equals(r)) continue;
+            if (c.isBlank()) continue;
+            if (c.length() > MAX_HISTORY_ITEM_LEN) {
+                c = c.substring(0, MAX_HISTORY_ITEM_LEN);
+            }
+            sanitized.add(Map.of("role", r, "content", c));
+        }
+
+        List<Map<String, String>> finalHistory = sanitized;
         aiService.streamAnswerQuestion(question, lang, finalHistory,
             token -> {
                 try {

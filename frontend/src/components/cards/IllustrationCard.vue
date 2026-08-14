@@ -4,9 +4,9 @@
  *
  * 规范要求：
  * - 圆角矩形，300×200px (宽×高)，圆角 8px
- * - 背景粉紫渐变 (#f8e7f3 → #d4a5ff)
+ * - 背景粉紫渐变 (#fde3f2 → #dcbaff)
  * - 悬停时弹出项目详情
- * - 标题 Helvetica Bold 24px #333，正文 Helvetica Regular 16px #666
+ * - 标题 Helvetica Bold 24px #2a2438，正文 Helvetica Regular 16px #5f5a70
  *
  * Props:
  *   imageUrl   - 插画图片 URL
@@ -59,7 +59,7 @@ defineProps({
   border-radius: 8px;
   overflow: hidden;
   /* 粉紫渐变背景 */
-  background: linear-gradient(135deg, #f8e7f3, #d4a5ff);
+  background: linear-gradient(135deg, #fde3f2, #dcbaff);
   border: 1px solid rgba(0, 0, 0, 0.05);
   transition: transform 0.45s cubic-bezier(0.25, 0.46, 0.45, 0.94), box-shadow 0.4s ease;
   cursor: pointer;
@@ -101,7 +101,7 @@ defineProps({
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #f8e7f3, #d4a5ff);
+  background: linear-gradient(135deg, #fde3f2, #dcbaff);
   font-size: 48px;
 }
 
@@ -110,18 +110,18 @@ defineProps({
   padding: 16px 18px;
   background: rgba(255, 255, 255, 0.7);
 }
-/* 标题 — Helvetica Bold 24px #333 */
+/* 标题 — Helvetica Bold 24px #2a2438 */
 .illustration-title {
   font-size: 24px;
   font-weight: 700;
-  color: #333;
+  color: #2a2438;
   margin-bottom: 8px;
   font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
 }
-/* 作者 — #666 16px */
+/* 作者 — #5f5a70 16px */
 .illustration-author {
   font-size: 16px;
-  color: #666;
+  color: #5f5a70;
   margin-bottom: 10px;
   font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
 }
@@ -137,7 +137,7 @@ defineProps({
   padding: 3px 12px;
   border-radius: 10px;
   background: rgba(106, 68, 117, 0.1);
-  color: #6a4475;
+  color: #6b4fa3;
   font-weight: 500;
 }
 
@@ -152,9 +152,9 @@ defineProps({
   transform: translateY(100%);
   transition: transform 0.35s ease-in-out;
   font-size: 14px;
-  color: #555;
+  color: #4b4659;
   line-height: 1.5;
-  border-top: 1px solid #f0e0f5;
+  border-top: 1px solid #f3e6ff;
 }
 .illustration-card:hover .card-hover-detail {
   transform: translateY(0);

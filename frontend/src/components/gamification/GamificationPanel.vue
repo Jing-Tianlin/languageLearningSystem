@@ -152,41 +152,41 @@ onMounted(loadStats)
 /* 连胜 */
 .streak-card { text-align: center; }
 .streak-icon { font-size: 30px; line-height: 1; }
-.streak-num { font-size: 34px; font-weight: 800; color: #c2622e; font-family: var(--font-heading); line-height: 1.1; }
-.streak-label { font-size: 12px; color: #888; margin-top: 2px; }
-.streak-tier { margin-top: 6px; font-size: 12px; font-weight: 700; color: #b07c4f; background: rgba(176, 124, 79, 0.1); padding: 2px 10px; border-radius: 100px; }
-.streak-hint { margin-top: 6px; font-size: 12px; color: #aaa; }
+.streak-num { font-size: 34px; font-weight: 800; color: #ff6b6b; font-family: var(--font-heading); line-height: 1.1; }
+.streak-label { font-size: 12px; color: #6b647e; margin-top: 2px; }
+.streak-tier { margin-top: 6px; font-size: 12px; font-weight: 700; color: #ff6b6b; background: rgba(255, 107, 107, 0.1); padding: 2px 10px; border-radius: 100px; }
+.streak-hint { margin-top: 6px; font-size: 12px; color: #a49ec0; }
 /* 今日目标 */
 .goal-card { padding-top: 16px; }
 .goal-ring-wrap { position: relative; width: 64px; height: 64px; flex-shrink: 0; }
 .goal-ring { width: 64px; height: 64px; transform: rotate(-90deg); }
-.goal-ring-bg { fill: none; stroke: rgba(110, 122, 107, 0.15); stroke-width: 5; }
-.goal-ring-fill { fill: none; stroke: #6e7a6b; stroke-width: 5; stroke-linecap: round; transition: stroke-dashoffset 0.6s ease; }
+.goal-ring-bg { fill: none; stroke: rgba(255, 107, 107, 0.15); stroke-width: 5; }
+.goal-ring-fill { fill: none; stroke: #ff6b6b; stroke-width: 5; stroke-linecap: round; transition: stroke-dashoffset 0.6s ease; }
 .goal-center { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: 2px; }
-.goal-num { font-size: 18px; font-weight: 800; color: #6e7a6b; }
-.goal-div { font-size: 12px; color: #bbb; }
-.goal-target { font-size: 12px; color: #999; }
-.goal-text { margin-top: 8px; font-size: 12px; color: #888; display: flex; align-items: center; gap: 6px; }
-.goal-edit { border: none; background: none; cursor: pointer; color: #b07c4f; font-size: 13px; padding: 0; display: inline-flex; }
-.goal-edit .icon-svg::after { background: #b07c4f; }
-.goal-done { margin-top: 4px; font-size: 12px; font-weight: 700; color: #6e7a6b; display: inline-flex; align-items: center; gap: 5px; animation: goal-pop 0.4s ease; }
+.goal-num { font-size: 18px; font-weight: 800; color: #ff6b6b; }
+.goal-div { font-size: 12px; color: #b9b3d0; }
+.goal-target { font-size: 12px; color: #8f88a8; }
+.goal-text { margin-top: 8px; font-size: 12px; color: #6b647e; display: flex; align-items: center; gap: 6px; }
+.goal-edit { border: none; background: none; cursor: pointer; color: #ff6b6b; font-size: 13px; padding: 0; display: inline-flex; }
+.goal-edit .icon-svg::after { background: #ff6b6b; }
+.goal-done { margin-top: 4px; font-size: 12px; font-weight: 700; color: #ff6b6b; display: inline-flex; align-items: center; gap: 5px; animation: goal-pop 0.4s ease; }
 .goal-check { font-size: 13px; }
 @keyframes goal-pop { 0% { transform: scale(0.6); opacity: 0; } 60% { transform: scale(1.15); } 100% { transform: scale(1); opacity: 1; } }
 /* 待复习 */
 .due-card { text-align: center; }
-.due-num { font-size: 34px; font-weight: 800; color: #5a7d96; font-family: var(--font-heading); line-height: 1.1; }
-.due-label { font-size: 12px; color: #888; margin-top: 2px; }
-.due-hint { margin-top: 6px; font-size: 12px; color: #aaa; }
+.due-num { font-size: 34px; font-weight: 800; color: #4d96ff; font-family: var(--font-heading); line-height: 1.1; }
+.due-label { font-size: 12px; color: #6b647e; margin-top: 2px; }
+.due-hint { margin-top: 6px; font-size: 12px; color: #a49ec0; }
 /* 徽章 */
 .badge-section { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(16px); border: 1px solid rgba(0, 0, 0, 0.06); border-radius: 20px; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.05); padding: 20px 22px; }
 .badge-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
 .badge-title { font-size: 15px; font-weight: 800; color: var(--color-text); font-family: var(--font-heading); }
-.badge-count { font-size: 12px; color: #999; font-weight: 600; }
+.badge-count { font-size: 12px; color: #8f88a8; font-weight: 600; }
 .badge-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 12px; }
-.badge-item { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 2px; padding: 12px 6px; border-radius: 14px; background: rgba(110, 122, 107, 0.05); transition: all 0.2s; }
+.badge-item { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 2px; padding: 12px 6px; border-radius: 14px; background: rgba(255, 107, 107, 0.05); transition: all 0.2s; }
 .badge-item.locked { background: rgba(0, 0, 0, 0.025); opacity: 0.55; filter: grayscale(0.6); }
 .badge-item:not(.locked):hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08); }
 .badge-icon { font-size: 24px; line-height: 1.2; }
 .badge-name { font-size: 12px; font-weight: 700; color: var(--color-text); }
-.badge-desc { font-size: 10px; color: #aaa; }
+.badge-desc { font-size: 10px; color: #a49ec0; }
 </style>

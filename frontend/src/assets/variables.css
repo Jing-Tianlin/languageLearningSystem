@@ -1,64 +1,89 @@
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;0,8..60,600;1,8..60,400&family=Noto+Serif+SC:wght@400;500;600;700&family=Cousine:wght@400;700&display=swap');
-
+/* ============================================================
+   Playful Memphis Theme
+   奶油底 · 粗描边 · 撞色 · 大圆角 · 硬投影
+   ============================================================ */
 :root {
-  /* === 主色 — 自然大地色系，低调温润 === */
-  --color-primary: #6e7a6b;
-  --color-primary-dark: #545f52;
-  --color-primary-deep: #3e463b;
-  --color-secondary: #8e8b7e;
-  --color-gold: #b07c4f;
-  --color-gold-light: #c99b73;
-  --color-gold-deep: #8a623d;
-  --color-accent: #a98c6a;
+  /* === 孟菲斯撞色 === */
+  --color-primary: #ff6b6b;
+  --color-primary-dark: #2a2438;
+  --color-primary-deep: #2a2438;
+  --color-secondary: #4d96ff;
+  --color-gold: #ffd93d;
+  --color-gold-light: #ffe680;
+  --color-gold-deep: #e6b800;
+  --color-accent: #9b5de5;
+  --color-accent-soft: rgba(155, 93, 229, 0.14);
+  --color-mint: #6bcb77;
+  --color-sky: #4d96ff;
+  --color-purple: #9b5de5;
 
-  /* === 背景系 — 纸张与亚麻质感 === */
-  --color-bg-main: #f4f1ea;
-  --color-bg-card: rgba(255, 252, 247, 0.96);
-  --color-bg-glass: rgba(255, 252, 247, 0.78);
+  /* === 奶油与纸卡背景 === */
+  --color-bg-main: #fff6e9;
+  --color-bg-card: #ffffff;
+  --color-bg-glass: rgba(255, 255, 255, 0.82);
 
-  /* === 边框 — 温润极细线 === */
-  --color-border: rgba(62, 54, 44, 0.08);
-  --color-border-hover: rgba(62, 54, 44, 0.16);
-  --color-border-gold: rgba(176, 124, 79, 0.25);
+  /* === 墨色（描边 / 硬投影专用） === */
+  --color-ink: #2a2438;
 
-  /* === 文字 — 暖灰层级 === */
-  --color-text: #2d2c2a;
-  --color-text-secondary: rgba(45, 44, 42, 0.62);
-  --color-text-muted: rgba(45, 44, 42, 0.42);
-  --color-text-inverse: #ffffff;
+  /* === 孟菲斯淡彩底（卡片五色循环） === */
+  --tint-yellow: #fff2b8;
+  --tint-coral: #ffe3dd;
+  --tint-mint: #e4f8e7;
+  --tint-sky: #e1ecff;
+  --tint-purple: #f0e3ff;
 
-  /* === 字体系统 — 衬线人文感 === */
-  --font-heading: 'Cormorant Garamond', 'Noto Serif SC', 'Songti SC', 'STSong', Georgia, serif;
-  --font-body: 'Source Serif 4', 'Noto Serif SC', 'Songti SC', 'STSong', Georgia, serif;
-  --font-english: 'Cormorant Garamond', 'Source Serif 4', Georgia, serif;
-  --font-number: 'Cousine', 'Source Serif 4', monospace;
+  /* === 粗描边 === */
+  --color-border: rgba(42, 36, 56, 0.2);
+  --color-border-hover: rgba(42, 36, 56, 0.55);
+  --color-border-gold: rgba(255, 107, 107, 0.45);
+  /* 贴纸卡标准描边：3px 实线墨色 */
+  --border-sticker: 3px solid var(--color-ink);
 
-  /* === 圆角 — 柔和自然 === */
-  --radius-xs: 6px;
-  --radius-sm: 10px;
-  --radius-md: 14px;
-  --radius-lg: 18px;
-  --radius-xl: 24px;
+  /* === 文字 === */
+  --color-text: #2a2438;
+  --color-text-secondary: rgba(42, 36, 56, 0.68);
+  --color-text-muted: rgba(42, 36, 56, 0.5);
+  --color-text-inverse: #fff6e9;
+
+  /* === 圆润无衬线字体（本地优先，离线可用） === */
+  --font-heading: 'Arial Rounded MT Bold', ui-rounded, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', system-ui, sans-serif;
+  --font-body: 'Arial Rounded MT Bold', ui-rounded, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', system-ui, sans-serif;
+  --font-english: 'Arial Rounded MT Bold', ui-rounded, 'Trebuchet MS', system-ui, sans-serif;
+  --font-number: 'Arial Rounded MT Bold', ui-rounded, 'Trebuchet MS', sans-serif;
+
+  /* === 大圆角 === */
+  --radius-xs: 8px;
+  --radius-sm: 12px;
+  --radius-md: 16px;
+  --radius-lg: 20px;
+  --radius-xl: 26px;
   --radius-full: 9999px;
 
-  /* === 阴影 — 极淡，模拟纸张浮起 === */
-  --shadow-xs: 0 1px 2px rgba(62, 54, 44, 0.04);
-  --shadow-sm: 0 2px 6px rgba(62, 54, 44, 0.04), 0 1px 2px rgba(62, 54, 44, 0.03);
-  --shadow-md: 0 4px 12px rgba(62, 54, 44, 0.05), 0 2px 4px rgba(62, 54, 44, 0.03);
-  --shadow-lg: 0 8px 24px rgba(62, 54, 44, 0.06), 0 4px 8px rgba(62, 54, 44, 0.04);
-  --shadow-gold: 0 4px 16px rgba(176, 124, 79, 0.1);
-  --shadow-glow: 0 2px 12px rgba(110, 122, 107, 0.14);
+  /* === 硬投影：硬边 offset，色块错位感（无模糊） === */
+  --shadow-xs: 2px 3px 0 var(--color-ink);
+  --shadow-sm: 3px 4px 0 var(--color-ink);
+  --shadow-md: 5px 6px 0 var(--color-ink);
+  /* 贴纸卡标准投影：右下 6px 7px 硬投影 */
+  --shadow-card: 6px 7px 0 var(--color-ink);
+  --shadow-lg: 7px 9px 0 var(--color-ink);
+  --shadow-gold: 4px 5px 0 #e6b800;
+  --shadow-glow: 4px 5px 0 rgba(255, 107, 107, 0.4);
+  /* 输入框 focus：浅珊瑚硬投影 */
+  --shadow-focus-coral: 3px 4px 0 rgba(255, 107, 107, 0.35);
 
-  /* === 渐变 — 温润单向 === */
-  --gradient-primary: linear-gradient(180deg, #6e7a6b 0%, #545f52 100%);
-  --gradient-gold: linear-gradient(180deg, #b07c4f 0%, #8a623d 100%);
+  /* === 卡片 / 按钮标准圆角 === */
+  --radius-card: 22px;
+  --radius-input: 14px;
+
+  /* === 明快渐变 === */
+  --gradient-primary: linear-gradient(135deg, #ff9f6e 0%, #ff6b6b 100%);
+  --gradient-gold: linear-gradient(135deg, #ffe680 0%, #ffd93d 100%);
   --gradient-text-gold: none;
 
-  /* === 动画 === */
-  --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+  /* === 弹跳动画 === */
+  --ease-smooth: cubic-bezier(0.34, 1.56, 0.64, 1);
   --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
 
-  /* === 过渡 === */
-  --transition-base: 0.3s var(--ease-smooth);
+  --transition-base: 0.22s var(--ease-bounce);
 }

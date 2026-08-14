@@ -292,6 +292,13 @@ public class VocabularyController {
             @RequestParam(defaultValue = "3") Integer count,
             @RequestParam(defaultValue = "true") Boolean useAI) {
 
+        // count 上限保护：防止恶意传大数值放大 AI 成本
+        if (count == null || count < 1) {
+            count = 3;
+        } else if (count > 6) {
+            count = 6;
+        }
+
         Vocabulary correctVocab = vocabularyMapper.selectById(vocabId);
         if (correctVocab == null) {
             return Result.error(404, "单词不存在");
@@ -361,6 +368,15 @@ public class VocabularyController {
 
         if (vocabIds == null || vocabIds.isEmpty()) {
             return Result.error(400, "vocabIds 不能为空");
+        }
+        // 批量上限保护：防止单次请求触发海量 AI 调用
+        if (vocabIds.size() > 50) {
+            return Result.error(400, "单次最多处理 50 个单词");
+        }
+        if (count == null || count < 1) {
+            count = 3;
+        } else if (count > 6) {
+            count = 6;
         }
 
         List<Map<String, Object>> results = new ArrayList<>();
@@ -521,14 +537,25 @@ public class VocabularyController {
      */
     @PostMapping("/generate-batch")
     public Result<Map<String, Object>> generateVocabularyBatch(@RequestBody Map<String, Object> body) {
-        String langCode = (String) body.getOrDefault("langCode", "en");
-        String level = (String) body.getOrDefault("level", "");
+        // 批量 AI 生成并写入库属于内容管理操作，仅管理员可用
+        if (!AuthUtil.hasRole("ROLE_ADMIN")) {
+            return Result.error(403, "无权限：AI 批量生成词汇仅管理员可用");
+        }
+
+        String langCode = String.valueOf(body.getOrDefault("langCode", "en"));
+        String level = String.valueOf(body.getOrDefault("level", ""));
         Object countRaw = body.getOrDefault("count", 20);
         Integer count = countRaw instanceof Number ? ((Number) countRaw).intValue() : 20;
-        String category = (String) body.getOrDefault("category", "");
+        String category = String.valueOf(body.getOrDefault("category", ""));
 
-        if (level == null || level.isEmpty()) {
+        if (level.isEmpty()) {
             return Result.error(400, "等级不能为空");
+        }
+        if (level.length() > 50) {
+            return Result.error(400, "等级描述过长（最多 50 字符）");
+        }
+        if (category.length() > 50) {
+            return Result.error(400, "类别描述过长（最多 50 字符）");
         }
         if (count == null || count <= 0 || count > 200) {
             count = 20;

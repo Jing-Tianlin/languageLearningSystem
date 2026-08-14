@@ -102,27 +102,27 @@ onMounted(async () => {
 .page-header { text-align: center; padding: 20px 0 8px; }
 .page-header :deep(.letter-swap-title) { font-size: 28px; font-weight: 800; color: var(--color-text); }
 .page-sub { font-size: 14px; color: var(--color-text-muted); }
-.loading { text-align: center; padding: 40px; color: #aaa; }
-.empty { text-align: center; padding: 40px; color: #bbb; font-size: 14px; }
+.loading { text-align: center; padding: 40px; color: #a49ec0; }
+.empty { text-align: center; padding: 40px; color: #b9b3d0; font-size: 14px; }
 
 .tab-bar { display: flex; gap: 8px; justify-content: center; margin: 16px 0; }
 .tab-bar button {
-  padding: 8px 20px; border-radius: 20px; border: 1.5px solid #ddd;
-  background: rgba(255,255,255,0.6); font-size: 14px; font-weight: 600; color: #666; cursor: pointer;
+  padding: 8px 20px; border-radius: 20px; border: 1.5px solid #ddd8e9;
+  background: rgba(255,255,255,0.6); font-size: 14px; font-weight: 600; color: #5f5a70; cursor: pointer;
   transition: all 0.2s;
 }
-.tab-bar button.active { border-color: #5a7d96; color: #5a7d96; background: rgba(90,125,150,0.06); }
+.tab-bar button.active { border-color: #4d96ff; color: #4d96ff; background: rgba(77,150,255,0.06); }
 
 /* 对话 */
 .chat-list { display: flex; flex-direction: column; gap: 10px; }
 .chat-item {
   padding: 10px 14px; border-radius: 10px; display: flex; gap: 8px; align-items: flex-start;
 }
-.chat-item.user { background: #f0f4f7; }
-.chat-item.ai { background: #f8fafb; }
-.chat-role { font-size: 11px; font-weight: 700; color: #5a7d96; white-space: nowrap; min-width: 24px; }
-.chat-content { font-size: 14px; color: #444; line-height: 1.6; flex: 1; }
-.chat-time { font-size: 11px; color: #ccc; white-space: nowrap; }
+.chat-item.user { background: #eef5ff; }
+.chat-item.ai { background: #f6f9ff; }
+.chat-role { font-size: 11px; font-weight: 700; color: #4d96ff; white-space: nowrap; min-width: 24px; }
+.chat-content { font-size: 14px; color: #3f3a4d; line-height: 1.6; flex: 1; }
+.chat-time { font-size: 11px; color: #cdc7de; white-space: nowrap; }
 
 /* 记录 */
 .record-list { display: flex; flex-direction: column; gap: 8px; }
@@ -133,7 +133,7 @@ onMounted(async () => {
 }
 .ri-top { display: flex; justify-content: space-between; margin-bottom: 6px; }
 .ri-topic { font-size: 15px; font-weight: 600; color: var(--color-text); }
-.ri-type { font-size: 12px; color: #5a7d96; padding: 2px 8px; border-radius: 8px; background: rgba(90,125,150,0.08); }
-.ri-score { font-size: 14px; font-weight: 700; color: #5a7d96; }
-.ri-meta { display: flex; gap: 12px; font-size: 12px; color: #aaa; }
+.ri-type { font-size: 12px; color: #4d96ff; padding: 2px 8px; border-radius: 8px; background: rgba(77,150,255,0.08); }
+.ri-score { font-size: 14px; font-weight: 700; color: #4d96ff; }
+.ri-meta { display: flex; gap: 12px; font-size: 12px; color: #a49ec0; }
 </style>

@@ -26,7 +26,7 @@ const steps = [
     subtitle: '掌握书写系统',
     icon: 'vocab',
     desc: '学习字母表、音标、发音规则。这是语言学习的基础，就像建房的砖块。',
-    color: '#7c9db5',
+    color: '#7bb7ff',
   },
   {
     step: 2,
@@ -34,7 +34,7 @@ const steps = [
     subtitle: '积累核心 500 词',
     icon: 'book',
     desc: '掌握日常高频词汇。建议先学问候语、数字、颜色、食物等实用主题。',
-    color: '#5a7d96',
+    color: '#4d96ff',
   },
   {
     step: 3,
@@ -42,7 +42,7 @@ const steps = [
     subtitle: '理解句子结构',
     icon: 'grammar',
     desc: '学习基本句型（主谓宾）、时态变化、词性搭配。语法是沟通的骨架。',
-    color: '#8faec4',
+    color: '#b5d3ff',
   },
   {
     step: 4,
@@ -50,7 +50,7 @@ const steps = [
     subtitle: '从短文学起',
     icon: 'book',
     desc: '阅读简易文章、儿童故事、新闻标题。在语境中巩固词汇和语法。',
-    color: '#6b8fa8',
+    color: '#7bb7ff',
   },
   {
     step: 5,
@@ -58,7 +58,7 @@ const steps = [
     subtitle: '磨耳朵阶段',
     icon: 'ai',
     desc: '听播客、看视频、跟读对话。让耳朵熟悉语音语调，培养语感。',
-    color: '#4a7d96',
+    color: '#4d96ff',
   },
   {
     step: 6,
@@ -66,7 +66,7 @@ const steps = [
     subtitle: '开口说出来',
     icon: 'speak',
     desc: '模仿发音、朗读句子、与外教对话。语言最终是为了交流。',
-    color: '#3d6d85',
+    color: '#4d96ff',
   },
   {
     step: 7,
@@ -74,7 +74,7 @@ const steps = [
     subtitle: '每日巩固提升',
     icon: 'star',
     desc: '每日复习 + 做练习 + 看原声内容。让语言成为生活的一部分。',
-    color: '#5a7d96',
+    color: '#4d96ff',
   },
 ]
 
@@ -123,13 +123,13 @@ function select(index) {
             class="rm-line"
             :class="{ 'line-first': i === 0, 'line-last': i === steps.length - 1 }"
           />
-          <div class="rm-dot" :style="{ background: activeIndex === i ? s.color : '#ccc' }">
+          <div class="rm-dot" :style="{ background: activeIndex === i ? s.color : '#cdc7de' }">
             <span class="rm-dot-icon icon-svg" :class="s.icon"></span>
           </div>
         </div>
         <!-- 步骤信息 -->
         <div class="rm-content">
-          <span class="rm-title" :style="{ color: activeIndex === i ? s.color : '#666' }">
+          <span class="rm-title" :style="{ color: activeIndex === i ? s.color : '#5f5a70' }">
             {{ s.title }}
           </span>
           <span class="rm-subtitle">{{ s.subtitle }}</span>
@@ -225,7 +225,7 @@ function select(index) {
   font-size: 11px;
   padding: 4px 12px;
   border-radius: 12px;
-  background: rgba(124, 157, 181, 0.12);
+  background: rgba(123, 183, 255, 0.12);
   color: var(--color-primary-dark);
   font-weight: 600;
 }
@@ -269,7 +269,7 @@ function select(index) {
 }
 
 .roadmap-item.active {
-  background: rgba(124, 157, 181, 0.06);
+  background: rgba(123, 183, 255, 0.06);
 }
 
 /* 圆点 + 线 */
@@ -314,7 +314,7 @@ function select(index) {
   top: 0;
   bottom: 0;
   width: 2px;
-  background: #ddd;
+  background: #ddd8e9;
   transform: translateX(-50%);
 }
 
@@ -342,7 +342,7 @@ function select(index) {
 
 .rm-subtitle {
   font-size: 12px;
-  color: #aaa;
+  color: #a49ec0;
 }
 
 /* 完成勾 */
@@ -350,7 +350,7 @@ function select(index) {
   width: 24px;
   height: 24px;
   border-radius: 50%;
-  background: #27ae60;
+  background: #3fa65a;
   color: #fff;
   font-size: 12px;
   font-weight: 700;

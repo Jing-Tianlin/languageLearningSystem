@@ -109,7 +109,7 @@ function toggleAll() {
 }
 
 const masteryLabels = { 0: '新词', 1: '学习中', 2: '熟悉', 3: '已掌握' }
-const masteryColors = { 0: '#bbb', 1: '#f0975c', 2: '#5a7d96', 3: '#27ae60' }
+const masteryColors = { 0: '#b9b3d0', 1: '#ff9f6e', 2: '#4d96ff', 3: '#3fa65a' }
 
 onMounted(async () => {
   await languageStore.fetchLanguages()
@@ -184,7 +184,7 @@ onMounted(async () => {
                 <span
                   v-if="progressMeta(fav.vocabId).masteryLevel !== undefined"
                   class="fav-mastery"
-                  :style="{ color: masteryColors[progressMeta(fav.vocabId).masteryLevel] || '#bbb' }"
+                  :style="{ color: masteryColors[progressMeta(fav.vocabId).masteryLevel] || '#b9b3d0' }"
                 >{{ masteryLabels[progressMeta(fav.vocabId).masteryLevel] || '' }}</span>
               </div>
               <button class="btn btn-icon btn-danger" @click.stop="removeFav(fav)" title="取消收藏">★</button>
@@ -213,16 +213,16 @@ onMounted(async () => {
 .page-header { text-align: center; padding: 24px 0 10px; }
 .page-header :deep(.letter-swap-title) { font-size: 28px; font-weight: 800; color: var(--color-text); margin-bottom: 4px; }
 .page-sub { font-size: 14px; color: var(--color-text-muted); }
-.page-sub strong { color: #5a7d96; }
+.page-sub strong { color: #4d96ff; }
 
 /* 语言标签 */
 .lang-tabs { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin: 16px 0; }
 .lang-tabs button {
-  padding: 8px 18px; border-radius: 20px; border: 1.5px solid #ddd;
+  padding: 8px 18px; border-radius: 20px; border: 1.5px solid #ddd8e9;
   background: rgba(255,255,255,0.6); font-size: 13px; font-weight: 600; cursor: pointer;
-  transition: all 0.2s; color: #666;
+  transition: all 0.2s; color: #5f5a70;
 }
-.lang-tabs button.active { border-color: #5a7d96; color: #5a7d96; background: rgba(90,125,150,0.06); }
+.lang-tabs button.active { border-color: #4d96ff; color: #4d96ff; background: rgba(77,150,255,0.06); }
 
 /* 工具栏 */
 .toolbar {
@@ -233,59 +233,59 @@ onMounted(async () => {
 }
 .search-input {
   flex: 1; min-width: 180px; padding: 9px 14px; border-radius: 10px;
-  border: 1.5px solid #e0e0e0; background: #fff; font-size: 14px; color: var(--color-text); outline: none;
+  border: 1.5px solid #e6e0f2; background: #fff; font-size: 14px; color: var(--color-text); outline: none;
 }
-.search-input:focus { border-color: #7c9db5; }
+.search-input:focus { border-color: #7bb7ff; }
 .batch-enter-btn {
-  padding: 8px 18px; border-radius: 8px; border: 1.5px solid #ddd;
+  padding: 8px 18px; border-radius: 8px; border: 1.5px solid #ddd8e9;
   background: rgba(255,255,255,0.8); color: var(--color-text-secondary);
   font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.2s; white-space: nowrap;
 }
-.batch-enter-btn:hover { border-color: #bbb; background: #f5f5f5; }
-.select-all-label { font-size: 13px; color: #666; display: flex; align-items: center; gap: 6px; cursor: pointer; }
+.batch-enter-btn:hover { border-color: #b9b3d0; background: #fbf8ff; }
+.select-all-label { font-size: 13px; color: #5f5a70; display: flex; align-items: center; gap: 6px; cursor: pointer; }
 .batch-btn {
-  padding: 8px 18px; border-radius: 8px; border: 1px solid #e74c3c;
-  background: #fef5f5; color: #e74c3c; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; white-space: nowrap;
+  padding: 8px 18px; border-radius: 8px; border: 1px solid #ff6b6b;
+  background: #fff0f0; color: #ff6b6b; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; white-space: nowrap;
 }
 .batch-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-.batch-btn:not(:disabled):hover { background: #fde8e8; }
+.batch-btn:not(:disabled):hover { background: #ffdcdc; }
 .batch-cancel-btn {
-  padding: 8px 18px; border-radius: 8px; border: 1.5px solid #5a7d96;
-  background: rgba(90,125,150,0.06); color: #5a7d96;
+  padding: 8px 18px; border-radius: 8px; border: 1.5px solid #4d96ff;
+  background: rgba(77,150,255,0.06); color: #4d96ff;
   font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; white-space: nowrap;
 }
-.batch-cancel-btn:hover { background: rgba(90,125,150,0.12); }
+.batch-cancel-btn:hover { background: rgba(77,150,255,0.12); }
 
 /* 列表 */
 .fav-list { display: flex; flex-direction: column; gap: 10px; }
 .fav-item { display: flex; align-items: flex-start; gap: 10px; }
-.fav-checkbox { margin-top: 20px; width: 17px; height: 17px; cursor: pointer; flex-shrink: 0; accent-color: #5a7d96; }
+.fav-checkbox { margin-top: 20px; width: 17px; height: 17px; cursor: pointer; flex-shrink: 0; accent-color: #4d96ff; }
 .fav-card {
   flex: 1; background: rgba(255,255,255,0.72); backdrop-filter: blur(12px);
   border: 1px solid rgba(0,0,0,0.05); border-radius: var(--radius-md);
   padding: 16px 20px; transition: all 0.3s;
   position: relative; min-width: 0;
 }
-.fav-card:hover { border-color: rgba(124,157,181,0.2); box-shadow: 0 4px 20px rgba(90,125,150,0.08); }
+.fav-card:hover { border-color: rgba(123,183,255,0.2); box-shadow: 0 4px 20px rgba(77,150,255,0.08); }
 
 .fav-top { display: flex; align-items: flex-start; justify-content: space-between; }
 .fav-word-row { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
 .fav-word { font-size: 19px; font-weight: 700; color: var(--color-text); font-family: var(--font-heading); }
-.fav-phonetic { font-size: 13px; color: #999; }
-.fav-pos { font-size: 11px; padding: 2px 8px; border-radius: 8px; background: rgba(124,92,191,0.08); color: #7c5cbf; font-weight: 500; }
-.fav-lang-tag { font-size: 10px; padding: 2px 8px; border-radius: 8px; background: rgba(0,0,0,0.05); color: #888; }
+.fav-phonetic { font-size: 13px; color: #8f88a8; }
+.fav-pos { font-size: 11px; padding: 2px 8px; border-radius: 8px; background: rgba(155,93,229,0.08); color: #9b5de5; font-weight: 500; }
+.fav-lang-tag { font-size: 10px; padding: 2px 8px; border-radius: 8px; background: rgba(0,0,0,0.05); color: #6b647e; }
 .fav-mastery { font-size: 11px; font-weight: 700; }
 
 .fav-unstar {
-  background: none; border: none; font-size: 18px; color: #f0975c; cursor: pointer;
+  background: none; border: none; font-size: 18px; color: #ff9f6e; cursor: pointer;
   transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1); flex-shrink: 0;
 }
 .fav-unstar:hover { transform: scale(1.3); }
 
-.fav-def { font-size: 15px; color: #555; margin-top: 8px; line-height: 1.6; }
-.fav-example { font-size: 13px; color: #999; font-style: italic; margin-top: 6px; }
-.fav-example-tr { color: #bbb; font-style: normal; }
-.fav-hint { font-size: 13px; color: #aaa; margin-top: 8px; font-style: italic; text-align: center; }
+.fav-def { font-size: 15px; color: #4b4659; margin-top: 8px; line-height: 1.6; }
+.fav-example { font-size: 13px; color: #8f88a8; font-style: italic; margin-top: 6px; }
+.fav-example-tr { color: #b9b3d0; font-style: normal; }
+.fav-hint { font-size: 13px; color: #a49ec0; margin-top: 8px; font-style: italic; text-align: center; }
 .fav-revealed { margin-top: 8px; animation: fadeIn 0.25s ease; }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
 

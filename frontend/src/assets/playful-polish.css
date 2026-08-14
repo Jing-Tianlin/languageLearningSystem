@@ -1,0 +1,338 @@
+/* ============================================================
+   Playful Polish Layer
+   第二轮细节优化：导航、空态、加载、闪卡、AI、按钮、表格、布局
+   ============================================================ */
+
+/* ---------- 导航细节 ---------- */
+body .navbar .nav-link {
+  position: relative;
+  white-space: nowrap;
+}
+body .navbar .nav-link.router-link-active::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -11px;
+  width: 20px;
+  height: 5px;
+  border-radius: 99px;
+  background: #ff6b6b;
+  transform: translateX(-50%);
+  opacity: 0.95;
+}
+
+/* ---------- 页面容器统一 ---------- */
+body .main-content .page-wrap {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding-bottom: 72px;
+}
+
+body .main-content .setup-card,
+body .main-content .practice-intro-card,
+body .main-content .session-card {
+  max-width: 760px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+body .main-content .study-area {
+  max-width: 640px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* ---------- 空状态贴纸化 ---------- */
+body .empty-state {
+  background: #fff !important;
+  border: 3px solid #2a2438 !important;
+  border-radius: 24px !important;
+  box-shadow: 6px 7px 0 #2a2438 !important;
+  padding: 48px 30px !important;
+  max-width: 560px;
+  margin: 18px auto !important;
+}
+
+body .empty-icon {
+  width: 76px;
+  height: 76px;
+  display: grid;
+  place-items: center;
+  background: #ffd93d !important;
+  border: 3px solid #2a2438;
+  border-radius: 50%;
+  box-shadow: 3px 4px 0 #2a2438;
+  transform: rotate(-6deg);
+  animation: empty-bob 3.4s ease-in-out infinite;
+}
+body .empty-icon .icon-svg::after {
+  background: #2a2438 !important;
+}
+@keyframes empty-bob {
+  0%, 100% { transform: rotate(-6deg) translateY(0); }
+  50% { transform: rotate(4deg) translateY(-8px); }
+}
+
+body .empty-title {
+  font-size: 20px !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.02em;
+}
+body .empty-desc {
+  font-size: 14px !important;
+  line-height: 1.7 !important;
+  color: rgba(42, 36, 56, 0.65) !important;
+}
+
+/* ---------- Loading / Skeleton ---------- */
+body .loading-spinner {
+  gap: 14px;
+}
+body .loading-spinner .spinner {
+  width: 48px;
+  height: 48px;
+  border: 5px solid #2a2438;
+  border-top-color: #ff6b6b;
+  border-right-color: #ffd93d;
+  border-bottom-color: #6bcb77;
+  border-left-color: #4d96ff;
+  box-shadow: 3px 4px 0 rgba(42, 36, 56, 0.16);
+}
+body .loading-spinner p {
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: rgba(42, 36, 56, 0.6);
+}
+
+body .skeleton-row {
+  height: 20px !important;
+  border-radius: 12px !important;
+  background: rgba(42, 36, 56, 0.07) !important;
+  border: 2px solid rgba(42, 36, 56, 0.1);
+}
+body .skeleton-shimmer {
+  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.75) 50%, transparent 100%) !important;
+}
+
+/* ---------- 按钮尺寸 ---------- */
+body .btn-sm {
+  padding: 7px 16px !important;
+  font-size: 13px !important;
+}
+body .btn-lg {
+  padding: 15px 34px !important;
+  font-size: 16px !important;
+}
+body .btn-icon {
+  width: 40px;
+  height: 40px;
+  padding: 0 !important;
+  display: inline-grid !important;
+  place-items: center;
+}
+body .btn-icon.btn-sm {
+  width: 32px;
+  height: 32px;
+}
+
+/* ---------- 表单细节 ---------- */
+body .input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+body .input-group label {
+  font-size: 13px;
+  letter-spacing: 0.03em;
+}
+body input,
+body textarea,
+body select {
+  padding: 12px 14px !important;
+  font-size: 14px !important;
+}
+body .pwd-wrap input {
+  padding-right: 48px !important;
+}
+
+/* ---------- 闪卡学习 ---------- */
+body .study-card {
+  padding: 26px 24px 28px !important;
+}
+body .flashcard .card-inner {
+  min-height: 330px;
+}
+body .card-face {
+  min-height: 330px;
+  padding: 38px 30px !important;
+}
+body .card-word {
+  font-size: clamp(34px, 4.2vw, 48px) !important;
+  line-height: 1.08 !important;
+  letter-spacing: -0.03em;
+}
+body .card-def {
+  font-size: 20px !important;
+  font-weight: 700;
+  line-height: 1.65;
+}
+body .card-hint {
+  font-size: 12px !important;
+  letter-spacing: 0.08em;
+  color: rgba(42, 36, 56, 0.45) !important;
+}
+
+body .quality-row {
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 12px !important;
+}
+body .quality-btn {
+  border: 3px solid #2a2438 !important;
+  border-radius: 16px !important;
+  box-shadow: 3px 4px 0 #2a2438 !important;
+  color: #fff !important;
+  text-shadow: none;
+}
+body .quality-btn i {
+  background: rgba(255, 255, 255, 0.24) !important;
+  border-radius: 99px;
+  font-weight: 800;
+}
+body .quality-btn.forget { background: #ff6b6b !important; }
+body .quality-btn.vague { background: #ffb37e !important; color: #2a2438 !important; }
+body .quality-btn.known { background: #4d96ff !important; }
+body .quality-btn.mastered { background: #6bcb77 !important; }
+body .quality-btn:hover {
+  transform: translateY(-3px) rotate(-1deg) scale(1.02) !important;
+  box-shadow: 5px 6px 0 #2a2438 !important;
+}
+
+@media (max-width: 620px) {
+  body .quality-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+/* ---------- AI 侧边栏 ---------- */
+.ai-sidebar {
+  animation: ai-slide-in 0.32s var(--ease-bounce) both;
+}
+@keyframes ai-slide-in {
+  from { transform: translateX(8%) scale(0.99); opacity: 0.4; }
+  to { transform: translateX(0) scale(1); opacity: 1; }
+}
+
+.ai-overlay {
+  animation: ai-overlay-in 0.2s ease both;
+}
+@keyframes ai-overlay-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+body .chat-msg {
+  animation: msg-pop 0.28s var(--ease-bounce) both;
+}
+@keyframes msg-pop {
+  from { opacity: 0; transform: translateY(8px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+body .chat-input {
+  border: 3px solid #2a2438 !important;
+  border-radius: 999px !important;
+  padding: 11px 16px !important;
+  box-shadow: 2px 3px 0 rgba(42, 36, 56, 0.2);
+}
+body .send-btn {
+  background: #ff6b6b !important;
+  color: #fff !important;
+  border: 3px solid #2a2438 !important;
+  box-shadow: 2px 3px 0 #2a2438 !important;
+}
+body .send-btn:hover:not(:disabled) {
+  transform: scale(1.08) rotate(-6deg) !important;
+}
+
+/* ---------- Modal ---------- */
+body .modal-overlay {
+  animation: overlay-fade 0.2s ease both;
+}
+@keyframes overlay-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+body .modal,
+body .modal-card,
+body .confirm-card {
+  animation: modal-pop 0.32s var(--ease-bounce) both;
+}
+@keyframes modal-pop {
+  from { opacity: 0; transform: translateY(14px) scale(0.96) rotate(-0.6deg); }
+  to { opacity: 1; transform: translateY(0) scale(1) rotate(0); }
+}
+
+/* ---------- 表格 ---------- */
+table {
+  border-collapse: separate;
+  border-spacing: 0;
+  width: 100%;
+}
+tbody tr {
+  transition: background 0.18s ease, transform 0.18s var(--ease-smooth);
+}
+tbody tr:hover {
+  background: #fff7e8;
+}
+td,
+th {
+  padding: 10px 12px;
+}
+
+/* ---------- 首页细节 ---------- */
+body .fp-hero .hero-actions {
+  gap: 16px !important;
+}
+body .fp-hero .scroll-hint {
+  margin-top: 34px !important;
+}
+body .feat-title {
+  font-size: 16px !important;
+  margin-bottom: 6px !important;
+}
+body .feat-desc {
+  font-size: 13px !important;
+  line-height: 1.7 !important;
+}
+
+/* ---------- 词汇卡文本层级 ---------- */
+body .vocab-word {
+  font-size: 26px !important;
+  letter-spacing: -0.02em;
+}
+body .vocab-definition {
+  font-size: 15px !important;
+  line-height: 1.72 !important;
+}
+body .vocab-example {
+  font-size: 14px !important;
+  line-height: 1.7 !important;
+}
+
+/* ---------- 跑马灯细节 ---------- */
+.playful-marquee {
+  padding: 15px 0;
+}
+.playful-marquee-track {
+  gap: 42px;
+  font-size: 18px;
+}
+
+/* ---------- 页脚细节 ---------- */
+.playful-footer {
+  margin-top: 12px;
+}
+.playful-footer .wrap {
+  font-size: 13.5px;
+}

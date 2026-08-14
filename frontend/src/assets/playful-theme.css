@@ -1,0 +1,1272 @@
+/* ============================================================
+   Playful Memphis Theme — 全局覆盖层
+   奶油底、粗描边、大圆角、硬投影、撞色弹跳
+   ============================================================ */
+
+html {
+  background: var(--color-bg-main);
+}
+
+/* 规范禁止玻璃拟态：全局禁用背景模糊（贴纸卡一律实底） */
+*,
+*::before,
+*::after {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+body {
+  background:
+    radial-gradient(circle at 12% 18%, rgba(255, 217, 61, 0.16) 0 7%, transparent 7.5%),
+    radial-gradient(circle at 86% 10%, rgba(107, 203, 119, 0.14) 0 6%, transparent 6.5%),
+    radial-gradient(circle at 78% 82%, rgba(155, 93, 229, 0.12) 0 8%, transparent 8.5%),
+    var(--color-bg-main);
+  letter-spacing: 0.01em;
+}
+
+/* 可交互元素：圆胖手型光标（保留系统 pointer，保证可用性） */
+a,
+button,
+select,
+input,
+textarea,
+[role="button"] {
+  cursor: pointer;
+}
+
+::selection {
+  background: var(--color-gold);
+  color: var(--color-text);
+}
+
+/* 数字一律等宽对齐（游戏化计分类 UI 必需） */
+body {
+  font-variant-numeric: tabular-nums;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: #fff0d9;
+  border-radius: 99px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-primary);
+  border-radius: 99px;
+  border: 2px solid var(--color-text);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-gold);
+}
+
+/* ===== 标题：圆润粗体、像贴纸 ===== */
+.main-content h1,
+.main-content h2,
+.main-content h3,
+.auth-layout h1,
+.auth-layout h2,
+.auth-layout h3 {
+  font-family: var(--font-heading);
+  font-style: normal;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--color-text);
+}
+
+.letter-swap-title {
+  font-family: var(--font-heading) !important;
+  font-style: normal;
+}
+.letter-swap-title:hover .letter-swap-char {
+  text-shadow: 2px 2px 0 rgba(255, 107, 107, 0.22);
+}
+
+a:hover {
+  color: var(--color-primary);
+}
+
+/* ===== 页面头部：像一张大贴纸 ===== */
+.page-header,
+.section-header {
+  text-align: center !important;
+  margin-bottom: 34px !important;
+  padding: 22px 20px 20px !important;
+  background: #fff;
+  border: 3px solid var(--color-text);
+  border-radius: 26px;
+  box-shadow: 6px 7px 0 var(--color-text);
+  position: relative;
+}
+
+.page-header::before,
+.section-header::before {
+  content: "✦";
+  position: absolute;
+  top: -17px;
+  left: 26px;
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--color-gold);
+  border: 3px solid var(--color-text);
+  box-shadow: 2px 3px 0 var(--color-text);
+  font-size: 16px;
+}
+
+.page-header .letter-swap-title,
+.section-header .letter-swap-title,
+.page-header h1,
+.section-header h1 {
+  font-weight: 800 !important;
+  letter-spacing: -0.02em !important;
+  color: var(--color-text) !important;
+}
+
+.page-sub,
+.section-sub {
+  font-weight: 700;
+  color: var(--color-text-muted) !important;
+}
+
+.section-title {
+  font-weight: 800 !important;
+  letter-spacing: -0.03em !important;
+}
+
+/* ===== 卡片：粗描边 + 硬投影 + 弹跳悬停 ===== */
+body [class$="-card"],
+body .card,
+body .flashcard {
+  background: #fff !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border: var(--border-sticker) !important;
+  border-radius: var(--radius-card) !important;
+  box-shadow: var(--shadow-card) !important;
+}
+
+body [class$="-card"]:hover,
+body .card:hover,
+body .flashcard:hover {
+  transform: translateY(-3px) rotate(-1deg) scale(1.02);
+  border-color: var(--color-ink) !important;
+  box-shadow: 8px 10px 0 var(--color-ink) !important;
+}
+
+/* 淡色内部区块 */
+body .example-block,
+body .no-example,
+body .msg-content {
+  background: #fff7e8 !important;
+  border: 2px solid var(--color-text) !important;
+  border-radius: 14px !important;
+}
+
+body .badge-section {
+  background: #fff !important;
+  backdrop-filter: none !important;
+  border: 3px solid var(--color-text) !important;
+  border-radius: 22px !important;
+  box-shadow: 6px 7px 0 var(--color-text) !important;
+}
+
+/* ===== 按钮：胶囊大圆角 + 3D 硬投影 ===== */
+body .btn {
+  border-radius: 999px !important;
+  border-width: 3px !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.02em !important;
+  text-transform: none;
+  box-shadow: 3px 4px 0 var(--color-text) !important;
+}
+
+body .btn:hover:not(:disabled) {
+  transform: translateY(-3px) rotate(-1deg) scale(1.02);
+}
+
+body .btn:active {
+  transform: translateY(2px);
+  box-shadow: 1px 2px 0 var(--color-text) !important;
+}
+
+body .btn-primary {
+  background: var(--color-primary) !important;
+  border-color: var(--color-text) !important;
+  color: #fff !important;
+  box-shadow: 4px 5px 0 var(--color-text) !important;
+}
+body .btn-primary:hover:not(:disabled) {
+  background: #ff8f5e !important;
+  box-shadow: 6px 8px 0 var(--color-text) !important;
+}
+
+body .btn-secondary {
+  background: var(--color-gold) !important;
+  border-color: var(--color-text) !important;
+  color: var(--color-text) !important;
+}
+body .btn-secondary:hover:not(:disabled) {
+  background: #ffe680 !important;
+}
+
+body .btn-ghost {
+  background: #fff !important;
+  border-color: var(--color-text) !important;
+  color: var(--color-text-secondary) !important;
+}
+body .btn-ghost:hover:not(:disabled) {
+  background: var(--color-sky) !important;
+  border-color: var(--color-text) !important;
+  color: #fff !important;
+}
+
+body .btn-danger {
+  background: #fff !important;
+  border-color: var(--color-text) !important;
+  color: var(--color-primary) !important;
+}
+body .btn-danger:hover:not(:disabled) {
+  background: #ffe0db !important;
+}
+
+body .btn-danger-solid {
+  background: var(--color-primary) !important;
+  border-color: var(--color-text) !important;
+  color: #fff !important;
+}
+body .btn-danger-solid:hover:not(:disabled) {
+  background: #ff8f5e !important;
+}
+
+/* ===== 表单：奶油输入框 ===== */
+input,
+textarea,
+select {
+  background: #fffdf7 !important;
+  border: 3px solid var(--color-text) !important;
+  border-radius: 14px !important;
+  color: var(--color-text) !important;
+  font-family: var(--font-body) !important;
+  font-weight: 600;
+}
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none !important;
+  border-color: var(--color-primary) !important;
+  box-shadow: 3px 4px 0 rgba(255, 107, 107, 0.35) !important;
+}
+input::placeholder,
+textarea::placeholder {
+  color: rgba(42, 36, 56, 0.36) !important;
+}
+
+/* ===== 全局 AI 侧边栏 ===== */
+.ai-fab {
+  border-radius: 50% !important;
+  background: var(--color-gold) !important;
+  border: 3px solid var(--color-text) !important;
+  color: var(--color-text) !important;
+  box-shadow: 4px 5px 0 var(--color-text) !important;
+}
+.ai-fab:hover {
+  transform: rotate(-8deg) scale(1.08) !important;
+}
+
+.ai-sidebar {
+  background: var(--color-bg-main) !important;
+  border-left: 3px solid var(--color-text) !important;
+  border-radius: 26px 0 0 26px !important;
+  box-shadow: -6px 0 0 rgba(42, 36, 56, 0.12);
+}
+.ai-sidebar .sidebar-tabs {
+  border-bottom: 3px solid var(--color-text) !important;
+}
+.ai-sidebar .sidebar-tabs button {
+  border-radius: 999px !important;
+  font-weight: 800;
+}
+.chat-msg.user .msg-content {
+  background: var(--color-sky) !important;
+  color: #fff !important;
+}
+.chat-msg.ai .msg-content {
+  background: #fff !important;
+  border: 2px solid var(--color-text) !important;
+}
+
+/* ===== 进度条、徽章、标签 ===== */
+/* ===== 进度条：白底 3px 粗边框 + 黄→珊瑚渐变 ===== */
+body .progress-bar,
+body .bar {
+  background: #fff !important;
+  border: 3px solid var(--color-ink) !important;
+  border-radius: 999px !important;
+  height: 16px !important;
+  padding: 2px !important;
+  overflow: hidden;
+}
+body .progress-fill {
+  border-radius: 999px !important;
+  background: linear-gradient(90deg, var(--color-gold), var(--color-primary)) !important;
+}
+body .progress-bar-track {
+  background: #fff !important;
+  border: 3px solid var(--color-ink) !important;
+  border-radius: 999px !important;
+  padding: 2px !important;
+}
+body .progress-bar-fill {
+  border-radius: 999px !important;
+  background: linear-gradient(90deg, var(--color-gold), var(--color-primary)) !important;
+}
+body .exam-name,
+body .lang-badge,
+body .level-badge-inline {
+  border-radius: 999px !important;
+  background: var(--color-gold) !important;
+  border: 3px solid var(--color-ink) !important;
+  color: var(--color-text) !important;
+  font-weight: 800;
+  box-shadow: 2px 3px 0 var(--color-ink);
+}
+
+/* ===== 认证页：玩趣分屏 ===== */
+.auth-layout {
+  background:
+    radial-gradient(circle at 80% 12%, rgba(255, 107, 107, 0.18) 0 10%, transparent 10.5%),
+    radial-gradient(circle at 12% 80%, rgba(107, 203, 119, 0.16) 0 9%, transparent 9.5%),
+    var(--color-bg-main);
+}
+.auth-layout .login-card {
+  border: 3px solid var(--color-text) !important;
+  border-radius: 28px !important;
+  box-shadow: 9px 10px 0 var(--color-text) !important;
+  background: #fff !important;
+  backdrop-filter: none !important;
+}
+.auth-layout .login-card::before {
+  background: linear-gradient(90deg, #ff6b6b, #ffd93d, #6bcb77, #4d96ff, #9b5de5) !important;
+  height: 8px !important;
+  opacity: 1 !important;
+}
+.auth-layout .input-group label {
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: var(--color-text);
+}
+
+/* ===== 表格与列表 ===== */
+table {
+  border-color: rgba(42, 36, 56, 0.35) !important;
+}
+th {
+  font-family: var(--font-heading);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  border-bottom: 3px solid var(--color-text) !important;
+}
+td,
+th {
+  border-color: rgba(42, 36, 56, 0.2) !important;
+}
+
+/* ===== 跑马灯 ===== */
+/* 跑马灯区域：黄色主条 + 珊瑚色错位底条（孟菲斯叠层） */
+.marquee-zone {
+  position: relative;
+  margin: 42px -1.5% 0;
+  z-index: 2;
+}
+.marquee-back {
+  position: absolute;
+  inset: 0;
+  background: var(--color-primary);
+  border-top: 3px solid var(--color-text);
+  border-bottom: 3px solid var(--color-text);
+  transform: rotate(1.1deg) translateY(7px);
+}
+.playful-marquee {
+  position: relative;
+  border-top: 3px solid var(--color-text);
+  border-bottom: 3px solid var(--color-text);
+  background: var(--color-gold);
+  overflow: hidden;
+  padding: 14px 0;
+  transform: rotate(-1.2deg);
+}
+.playful-marquee-track {
+  display: flex;
+  gap: 34px;
+  white-space: nowrap;
+  width: max-content;
+  animation: marquee-roll 18s linear infinite;
+  font-weight: 800;
+  font-size: 19px;
+  letter-spacing: 0.06em;
+  color: var(--color-text);
+}
+.playful-marquee-track span::after {
+  content: " ✦";
+  color: var(--color-primary);
+}
+@keyframes marquee-roll {
+  to { transform: translateX(-50%); }
+}
+
+/* 全局光标光斑（由 App.vue 用 rAF 插值驱动 transform） */
+.playful-cursor-blob {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 340px;
+  height: 340px;
+  border-radius: 50%;
+  z-index: 2;
+  pointer-events: none;
+  background: radial-gradient(circle, rgba(255, 251, 240, 0.6), rgba(255, 236, 190, 0.3) 42%, transparent 70%);
+  transform: translate(-500px, -500px);
+  will-change: transform;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+.playful-cursor-blob.is-ready {
+  opacity: 1;
+}
+
+/* 触屏设备（无鼠标）不显示光斑 */
+@media (hover: none), (pointer: coarse) {
+  .playful-cursor-blob {
+    display: none;
+  }
+}
+
+/* ===== 移动端 ===== */
+@media (max-width: 860px) {
+  body [class$="-card"],
+  body .card,
+  body .flashcard {
+    box-shadow: 4px 5px 0 var(--color-text) !important;
+  }
+  .marquee-zone {
+    margin-left: -4%;
+    margin-right: -4%;
+  }
+  .playful-marquee {
+    transform: rotate(-0.6deg);
+  }
+}
+
+/* ===== 非 -card 的方块元素也改成贴纸卡 ===== */
+body .feat,
+body .sd-item,
+body .stat-item,
+body .welcome-level,
+body .lang-opt,
+body .level-opt,
+body .exam-name,
+body .choice-option {
+  background: #fff !important;
+  border: 2px solid var(--color-text) !important;
+  border-radius: 14px !important;
+  box-shadow: 3px 4px 0 var(--color-text) !important;
+}
+
+body .feat:hover,
+body .sd-item:hover,
+body .stat-item:hover,
+body .lang-opt:hover,
+body .level-opt:hover {
+  transform: translateY(-3px) rotate(-0.6deg) !important;
+  box-shadow: 5px 6px 0 var(--color-primary) !important;
+}
+
+/* 首页 hero 徽章：黄底圆角标签 */
+body .hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 10px 20px;
+  border-radius: 999px;
+  background: var(--color-gold) !important;
+  border: 3px solid var(--color-text) !important;
+  box-shadow: 3px 4px 0 var(--color-text) !important;
+  color: var(--color-text) !important;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  backdrop-filter: none !important;
+}
+body .badge-dot {
+  width: 10px;
+  height: 10px;
+  background: var(--color-primary) !important;
+  box-shadow: none;
+}
+
+/* 首页右侧导航点：变成彩色胶囊 */
+body .nav-dot {
+  width: 13px;
+  height: 13px;
+  border: 2px solid var(--color-text);
+  background: #fff !important;
+}
+body .nav-dot.active {
+  background: var(--color-primary) !important;
+  box-shadow: 2px 3px 0 var(--color-text) !important;
+  transform: scale(1.25);
+}
+
+/* 学习中心统计条 */
+body .stats-strip {
+  background: #fff !important;
+  border: 3px solid var(--color-text) !important;
+  border-radius: 20px !important;
+  box-shadow: 5px 6px 0 var(--color-text) !important;
+}
+
+/* 语音、复习等圆形小按钮保持俏皮 */
+body .vocab-speak-btn,
+body .vocab-speak-btn-sm {
+  border: 2px solid var(--color-text) !important;
+  border-radius: 50% !important;
+  box-shadow: 2px 3px 0 var(--color-text) !important;
+}
+
+/* 正确 / 错误反馈用薄荷和珊瑚区分 */
+body .feedback-correct,
+body .no-err,
+body .goal-done {
+  color: #2f8f4e !important;
+}
+body .feedback-wrong {
+  color: var(--color-primary) !important;
+}
+
+/* 闪卡正反面：白色厚卡，保留翻转动画 */
+body .card-face {
+  background: #fff !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border: 3px solid var(--color-text) !important;
+  border-radius: 22px !important;
+  box-shadow: 6px 7px 0 var(--color-text) !important;
+}
+
+/* 历史记录条目 */
+body .history-item {
+  background: #fff !important;
+  border: 2px solid var(--color-text) !important;
+  border-radius: 14px !important;
+  box-shadow: 3px 4px 0 var(--color-text) !important;
+}
+
+/* Toast：小贴纸 */
+body .toast-item {
+  background: #fff !important;
+  backdrop-filter: none !important;
+  border: 3px solid var(--color-text) !important;
+  border-radius: 18px !important;
+  box-shadow: 4px 5px 0 var(--color-text) !important;
+  font-weight: 800;
+}
+
+/* ============================================================
+   Playful 强化层：彩色贴纸卡 + 弹跳入场 + 页面装饰
+   ============================================================ */
+
+/* 卡片弹跳入场 */
+body [class$="-card"],
+body .card,
+body .flashcard,
+body .feat,
+body .sd-item {
+  animation: playful-pop 0.5s var(--ease-bounce) backwards;
+}
+
+@keyframes playful-pop {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.94) rotate(-1.5deg);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1) rotate(0);
+  }
+}
+
+/* ===== 学习中心卡片：五色循环（黄 → 珊瑚 → 薄荷 → 天蓝 → 紫） ===== */
+body .pick-card:nth-child(5n + 1),
+body .center-card:nth-child(5n + 1),
+body .feat:nth-child(5n + 1) {
+  background: var(--tint-yellow) !important;
+}
+
+body .pick-card:nth-child(5n + 2),
+body .center-card:nth-child(5n + 2),
+body .feat:nth-child(5n + 2) {
+  background: var(--tint-coral) !important;
+}
+
+body .pick-card:nth-child(5n + 3),
+body .center-card:nth-child(5n + 3),
+body .feat:nth-child(5n + 3) {
+  background: var(--tint-mint) !important;
+}
+
+body .pick-card:nth-child(5n + 4),
+body .center-card:nth-child(5n + 4),
+body .feat:nth-child(5n + 4) {
+  background: var(--tint-sky) !important;
+}
+
+body .pick-card:nth-child(5n + 5),
+body .center-card:nth-child(5n + 5),
+body .feat:nth-child(5n + 5) {
+  background: var(--tint-purple) !important;
+}
+
+/* 首页学习概览大卡片：黄、珊瑚、薄荷 */
+body .sh-card:nth-child(1) {
+  background: #fff2b8 !important;
+}
+body .sh-card:nth-child(2) {
+  background: #ffe3dd !important;
+}
+body .sh-card:nth-child(3) {
+  background: #e4f8e7 !important;
+}
+
+/* 首页统计小方块：五色循环 */
+body .sd-item:nth-child(5n + 1) {
+  background: var(--tint-yellow) !important;
+}
+body .sd-item:nth-child(5n + 2) {
+  background: var(--tint-coral) !important;
+}
+body .sd-item:nth-child(5n + 3) {
+  background: var(--tint-mint) !important;
+}
+body .sd-item:nth-child(5n + 4) {
+  background: var(--tint-sky) !important;
+}
+body .sd-item:nth-child(5n + 5) {
+  background: var(--tint-purple) !important;
+}
+
+/* 游戏化三卡：连续打卡黄、目标薄荷、待复习天蓝 */
+body .streak-card {
+  background: #fff2b8 !important;
+}
+body .goal-card {
+  background: #e4f8e7 !important;
+}
+body .due-card {
+  background: #e1ecff !important;
+}
+
+/* 模块图标底座换成对应撞色 */
+body .card-icon.icon-vocab,
+body .card-icon.icon-practice,
+body .card-icon.icon-ai {
+  background: #ff6b6b !important;
+  border: 3px solid #2a2438;
+  border-radius: 14px !important;
+}
+body .card-icon.icon-grammar,
+body .card-icon.icon-link {
+  background: #ffd93d !important;
+  border: 3px solid #2a2438;
+  border-radius: 14px !important;
+}
+body .card-icon.icon-reading {
+  background: #6bcb77 !important;
+  border: 3px solid #2a2438;
+  border-radius: 14px !important;
+}
+body .card-icon.icon-writing {
+  background: #9b5de5 !important;
+  border: 3px solid #2a2438;
+  border-radius: 14px !important;
+}
+
+/* 彩卡上的图标颜色统一为墨色/白色，保证辨识度 */
+body [class$="-card"] .card-icon::after {
+  background: #fff !important;
+}
+body .pick-card:nth-child(4n + 1) .card-icon::after,
+body .center-card:nth-child(4n + 1) .card-icon::after,
+body .pick-card:nth-child(4n + 2) .card-icon::after,
+body .center-card:nth-child(4n + 2) .card-icon::after {
+  background: #2a2438 !important;
+}
+
+/* ===== 页面头部：摇摆贴纸 ===== */
+body .page-header,
+body .section-header {
+  animation: header-wiggle 0.6s var(--ease-bounce) both;
+}
+
+@keyframes header-wiggle {
+  0% { transform: translateY(-10px) rotate(-2deg) scale(0.96); opacity: 0; }
+  60% { transform: translateY(2px) rotate(1deg) scale(1.01); opacity: 1; }
+  100% { transform: translateY(0) rotate(0) scale(1); opacity: 1; }
+}
+
+/* ===== 首页 Hero 强化 ===== */
+body .fp-hero .fp-content {
+  position: relative;
+}
+
+body .fp-hero .hero-badge {
+  transform: rotate(-2deg);
+}
+
+body .fp-hero .letter-swap-title {
+  position: relative;
+  z-index: 1;
+}
+
+body .fp-hero .letter-swap-title::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: 6px;
+  width: min(360px, 82%);
+  height: 18px;
+  background: #ffd93d;
+  border-radius: 8px;
+  transform: translateX(-50%) rotate(-1deg);
+  z-index: -1;
+  opacity: 0.85;
+}
+
+body .fp-hero .hero-desc {
+  position: relative;
+  display: inline-block;
+  padding: 4px 18px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.62);
+  font-weight: 700;
+}
+
+body .fp-hero .scroll-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 18px;
+  border-radius: 999px;
+  background: #fff;
+  border: 2px solid #2a2438;
+  box-shadow: 3px 4px 0 #2a2438;
+  font-weight: 800;
+}
+
+/* ===== 移除剩余玻璃拟态 ===== */
+body .stats-strip,
+body .pagination,
+body .modal-card,
+body .modal-overlay,
+body .filter-panel,
+body .ai-sidebar {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* 学习中心统计条内的分隔线更明显 */
+body .stat-divider {
+  background: #2a2438 !important;
+  height: 40px !important;
+  width: 3px !important;
+  border-radius: 99px;
+}
+
+/* 分页按钮：彩色小胶囊 */
+body .pagination button {
+  border: 2px solid #2a2438 !important;
+  border-radius: 999px !important;
+  background: #fff !important;
+  box-shadow: 2px 3px 0 #2a2438 !important;
+  font-weight: 800;
+}
+body .pagination button.active {
+  background: #ffd93d !important;
+  color: #2a2438 !important;
+}
+body .pagination button:hover:not(:disabled) {
+  transform: translateY(-2px) rotate(-3deg);
+  background: #ff6b6b !important;
+  color: #fff !important;
+}
+
+/* 关闭按钮、圆形操作按钮更 Q 弹 */
+body .close-btn,
+body .pwd-toggle,
+body .speak-btn,
+body .vocab-fav-btn {
+  border: 2px solid #2a2438 !important;
+  border-radius: 50% !important;
+  background: #fff !important;
+  box-shadow: 2px 3px 0 #2a2438 !important;
+}
+body .close-btn:hover,
+body .pwd-toggle:hover,
+body .speak-btn:hover,
+body .vocab-fav-btn:hover {
+  transform: scale(1.08) rotate(-6deg);
+}
+
+/* 正确/错误选择：粗边薄荷和珊瑚 */
+body .listen-opt,
+body .choice-option,
+body .quality-btn {
+  border-radius: 14px !important;
+}
+body .listen-opt.listen-correct,
+body .choice-option.correct {
+  background: #e4f8e7 !important;
+  border-color: #2f8f4e !important;
+}
+body .listen-opt.listen-wrong,
+body .choice-option.wrong {
+  background: #ffe3dd !important;
+  border-color: #ff6b6b !important;
+}
+
+/* 首页英雄区漂浮表情贴纸 */
+body .hero-sticker {
+  position: absolute;
+  z-index: 0;
+  font-size: 42px;
+  pointer-events: none;
+  user-select: none;
+  filter: drop-shadow(3px 4px 0 rgba(42, 36, 56, 0.18));
+  animation: sticker-float 3.8s ease-in-out infinite;
+}
+body .hero-sticker.hs-1 { top: 12%; left: 6%; transform: rotate(-10deg); animation-delay: 0.2s; }
+body .hero-sticker.hs-2 { top: 8%; right: 8%; transform: rotate(9deg); animation-delay: 0.8s; }
+body .hero-sticker.hs-3 { bottom: 16%; left: 10%; transform: rotate(6deg); animation-delay: 1.4s; }
+body .hero-sticker.hs-4 { bottom: 10%; right: 10%; transform: rotate(-7deg); animation-delay: 2s; }
+
+@keyframes sticker-float {
+  0%, 100% { transform: translateY(0) rotate(-10deg) scale(1); }
+  50% { transform: translateY(-16px) rotate(8deg) scale(1.08); }
+}
+
+@media (max-width: 900px) {
+  body .hero-sticker {
+    font-size: 28px;
+    opacity: 0.75;
+  }
+}
+
+/* 学习中心模块卡上的 emoji 贴纸 */
+body .card-emoji {
+  display: inline-block;
+  font-size: 38px;
+  line-height: 1;
+  margin: 8px 0 2px;
+  transform: rotate(-6deg);
+  filter: drop-shadow(3px 4px 0 rgba(42, 36, 56, 0.16));
+  transition: transform 0.25s var(--ease-bounce);
+}
+body [class$="-card"]:hover .card-emoji {
+  transform: rotate(8deg) scale(1.15);
+}
+
+/* 登录页顶部 emoji */
+body .login-emojis {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+body .login-emojis span {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  background: #fff;
+  border: 3px solid #2a2438;
+  border-radius: 50%;
+  font-size: 22px;
+  box-shadow: 3px 4px 0 #2a2438;
+}
+body .login-emojis span:nth-child(1) { transform: rotate(-8deg); background: #fff2b8; }
+body .login-emojis span:nth-child(2) { transform: rotate(7deg); background: #ffe3dd; }
+body .login-emojis span:nth-child(3) { transform: rotate(-5deg); background: #e1ecff; }
+body .login-emojis span:hover {
+  transform: translateY(-4px) rotate(0) scale(1.1);
+}
+
+/* ===== 列表条目：白色小卡片，粗边轻投影 ===== */
+body .article-item,
+body .history-item,
+body .ai-entry,
+body .corr-item,
+body .quiz-item,
+body .q-opt,
+body .lang-drop-item,
+body .option-row {
+  background: #fff !important;
+  border: 2px solid #2a2438 !important;
+  border-radius: 14px !important;
+  box-shadow: 3px 4px 0 rgba(42, 36, 56, 0.85) !important;
+  transition: transform 0.2s var(--ease-bounce);
+}
+
+body .article-item:hover,
+body .history-item:hover,
+body .ai-entry:hover,
+body .corr-item:hover,
+body .quiz-item:hover,
+body .q-opt:hover {
+  transform: translateX(4px) rotate(-0.4deg);
+  border-color: #ff6b6b !important;
+  box-shadow: 4px 5px 0 #ff6b6b !important;
+}
+
+/* 选择题正确 / 错误态优先于普通条目 */
+body .q-opt.correct {
+  background: #e4f8e7 !important;
+  border-color: #2f8f4e !important;
+}
+body .q-opt.wrong {
+  background: #ffe3dd !important;
+  border-color: #ff6b6b !important;
+}
+
+/* 阅读三阶段指示：彩色圆形节点 */
+body .phase-num {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: 2px solid #2a2438;
+  border-radius: 50%;
+  background: #fff !important;
+  box-shadow: 2px 3px 0 #2a2438;
+  font-weight: 800;
+}
+body .phase-step.active .phase-num {
+  background: #ffd93d !important;
+}
+body .phase-step.done .phase-num {
+  background: #6bcb77 !important;
+  color: #fff;
+}
+
+/* 阅读文章与练习卡保留明快底色 */
+body .reading-card {
+  background: #fffdf4 !important;
+}
+body .quiz-card {
+  background: #fff2f0 !important;
+}
+body .daily-card {
+  background: #fffbe6 !important;
+}
+
+/* ===== 管理后台：面板与日志条目贴纸化 ===== */
+body .dash-panel,
+body .log-item,
+body .recent-user-item,
+body .modal {
+  background: #fff !important;
+  border: 3px solid #2a2438 !important;
+  border-radius: 18px !important;
+  box-shadow: 5px 6px 0 #2a2438 !important;
+  backdrop-filter: none !important;
+}
+
+body .modal-overlay {
+  background: rgba(42, 36, 56, 0.42) !important;
+}
+
+body .role-chip,
+body .role-tag,
+body .admin-badge,
+body .log-module-tag {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px !important;
+  border: 2px solid #2a2438 !important;
+  font-weight: 800 !important;
+  box-shadow: 2px 3px 0 #2a2438;
+}
+
+body .role-tag.admin { background: #ffd93d !important; color: #2a2438 !important; }
+body .role-tag.user { background: #e1ecff !important; color: #2a2438 !important; }
+body .role-tag.disabled { background: #ff6b6b !important; color: #fff !important; }
+
+/* 状态统计卡颜色：五色循环 */
+body .stat-card:nth-child(5n + 1) { background: var(--tint-yellow) !important; }
+body .stat-card:nth-child(5n + 2) { background: var(--tint-coral) !important; }
+body .stat-card:nth-child(5n + 3) { background: var(--tint-mint) !important; }
+body .stat-card:nth-child(5n + 4) { background: var(--tint-sky) !important; }
+body .stat-card:nth-child(5n + 5) { background: var(--tint-purple) !important; }
+
+/* ============================================================
+   Playful 细节优化层
+   typography / micro-animation / responsive layout / a11y
+   ============================================================ */
+
+/* ---------- 文字排版 ---------- */
+body {
+  font-size: 15.5px;
+  line-height: 1.7;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body .main-content h1,
+body .main-content h2,
+body .main-content h3 {
+  text-wrap: balance;
+}
+
+body .main-content p,
+body .page-sub,
+body .section-sub {
+  text-wrap: pretty;
+}
+
+/* 页面主标题：随视口缩放，更醒目 */
+body .page-header .letter-swap-title,
+body .section-header .letter-swap-title,
+body .page-header h1,
+body .section-header h1 {
+  font-size: clamp(28px, 4.4vw, 42px) !important;
+  line-height: 1.12 !important;
+}
+
+/* 首页 Hero 标题：大而有弹性 */
+body .fp-hero .letter-swap-title {
+  font-size: clamp(46px, 7.5vw, 82px) !important;
+  font-weight: 800 !important;
+  line-height: 1.05 !important;
+  letter-spacing: -0.035em !important;
+}
+
+/* 首页分区标题更像杂志栏目头 */
+body .section-title {
+  font-size: clamp(26px, 3.6vw, 40px) !important;
+  line-height: 1.15 !important;
+  position: relative;
+  display: inline-block;
+}
+body .section-title::before {
+  content: "";
+  position: absolute;
+  left: -18px;
+  top: 50%;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  border: 2px solid var(--color-text);
+  transform: translateY(-50%);
+}
+
+/* 描述文字留白更松弛 */
+body .page-sub,
+body .section-sub {
+  font-size: 14.5px !important;
+  line-height: 1.85 !important;
+  margin-top: 10px !important;
+}
+
+/* ---------- 动画节奏 ---------- */
+body .btn {
+  transition: transform 0.2s var(--ease-bounce),
+              background 0.25s var(--ease-smooth),
+              box-shadow 0.2s var(--ease-bounce),
+              color 0.2s ease !important;
+}
+
+body .btn:hover:not(:disabled) {
+  transform: translateY(-3px) rotate(-1deg) scale(1.02);
+}
+
+body .btn:active:not(:disabled) {
+  transform: translateY(2px) scale(0.98) !important;
+}
+
+/* 让卡片依次弹入，不再一窝蜂 */
+body .center-card,
+body .pick-card,
+body .feat,
+body .sd-item,
+body .stat-card {
+  animation-duration: 0.45s;
+}
+
+body .center-card:nth-child(2),
+body .pick-card:nth-child(2),
+body .feat:nth-child(2),
+body .sd-item:nth-child(2),
+body .stat-card:nth-child(2) { animation-delay: 0.06s; }
+body .center-card:nth-child(3),
+body .pick-card:nth-child(3),
+body .feat:nth-child(3),
+body .sd-item:nth-child(3),
+body .stat-card:nth-child(3) { animation-delay: 0.12s; }
+body .center-card:nth-child(4),
+body .pick-card:nth-child(4),
+body .feat:nth-child(4),
+body .sd-item:nth-child(4),
+body .stat-card:nth-child(4) { animation-delay: 0.18s; }
+body .center-card:nth-child(5),
+body .pick-card:nth-child(5) { animation-delay: 0.24s; }
+body .center-card:nth-child(6),
+body .pick-card:nth-child(6) { animation-delay: 0.3s; }
+
+/* 卡片 hover 的 emoji 与图标一起 Q 弹 */
+body [class$="-card"]:hover .card-icon,
+body [class$="-card"]:hover .card-emoji,
+body [class$="-card"]:hover .feat-icon {
+  transform: translateY(-4px) rotate(6deg) scale(1.1);
+}
+
+/* 跑马灯悬停暂停，便于阅读 */
+.playful-marquee:hover .playful-marquee-track {
+  animation-play-state: paused;
+}
+
+/* 数字滚动等宽 */
+body .sh-num,
+body .stat-val,
+body .stat-item-val,
+body .sd-val {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+/* ---------- 布局优化 ---------- */
+body .main-content {
+  max-width: 1200px;
+  padding-left: clamp(1.1rem, 3vw, 2.5rem);
+  padding-right: clamp(1.1rem, 3vw, 2.5rem);
+}
+
+/* 学习中心：更疏朗的三列网格 */
+@media (min-width: 861px) {
+  body .main-content .center-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 22px !important;
+  }
+  body .main-content .pick-grid {
+    grid-template-columns: repeat(auto-fill, minmax(265px, 1fr)) !important;
+    gap: 18px !important;
+  }
+  body .main-content .features {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 20px !important;
+  }
+  body .main-content .stats-detail {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 12px !important;
+  }
+}
+
+/* 大屏下首页 Hero 保持中心聚焦 */
+@media (min-width: 1200px) {
+  body .fp-hero .fp-content {
+    max-width: 1040px;
+  }
+}
+
+/* 平板 */
+@media (max-width: 1024px) and (min-width: 701px) {
+  body .main-content .features {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+  body .main-content .center-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+/* 手机端：留白更集中，导航点隐藏，首页全屏滚动改为自然滚动 */
+@media (max-width: 700px) {
+  body .main-content .center-grid,
+  body .main-content .pick-grid,
+  body .main-content .features,
+  body .main-content .stats-detail {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+  }
+
+  body .page-header,
+  body .section-header {
+    padding: 20px 16px 16px !important;
+    margin-bottom: 26px !important;
+    border-radius: 20px;
+  }
+
+  body .fp-section {
+    min-height: auto !important;
+    padding: 5rem 1.25rem 2.5rem !important;
+  }
+
+  body .fp-hero {
+    min-height: 100vh !important;
+    padding-top: 6rem !important;
+  }
+
+  body .nav-dots {
+    display: none !important;
+  }
+
+  body .playful-footer .wrap {
+    justify-content: center;
+    text-align: center;
+  }
+}
+
+/* ---------- 可访问性 ---------- */
+:focus-visible {
+  outline: 4px solid rgba(255, 107, 107, 0.55) !important;
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+
+/* 对键盘用户不隐藏焦点 */
+body .btn:focus-visible,
+body .nav-link:focus-visible {
+  box-shadow: 0 0 0 3px #fff6e9, 0 0 0 6px #ff6b6b !important;
+}
+
+/* 减少动态偏好 */
+/* 减少动态偏好 */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  /* 装饰性动态元素直接停用动画 */
+  .playful-cursor-blob {
+    display: none !important;
+  }
+  .playful-marquee-track {
+    animation: none !important;
+    transform: none !important;
+  }
+  .playful-bg .blob,
+  .playful-bg .sticker,
+  .memphis-doodle,
+  .hero-sticker,
+  .card-emoji,
+  .empty-icon,
+  .brand-face {
+    animation: none !important;
+  }
+}

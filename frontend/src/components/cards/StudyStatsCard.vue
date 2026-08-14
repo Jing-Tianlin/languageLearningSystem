@@ -31,14 +31,14 @@ defineProps({
 }
 .stats-card:hover {
   transform: translateY(-3px);
-  border-color: rgba(124, 92, 191, 0.2);
-  box-shadow: 0 8px 28px rgba(124, 92, 191, 0.12);
+  border-color: rgba(155, 93, 229, 0.2);
+  box-shadow: 0 8px 28px rgba(155, 93, 229, 0.12);
 }
 .stats-icon {
   width: 28px; height: 28px;
   flex-shrink: 0;
 }
 .stats-body { display: flex; flex-direction: column; }
-.stats-value { font-size: 22px; font-weight: 800; color: #1a1028; font-family: var(--font-heading); }
-.stats-label { font-size: 13px; color: rgba(26, 16, 40, 0.4); margin-top: 2px; }
+.stats-value { font-size: 22px; font-weight: 800; color: #2a2438; font-family: var(--font-heading); }
+.stats-label { font-size: 13px; color: rgba(42, 36, 56, 0.4); margin-top: 2px; }
 </style>

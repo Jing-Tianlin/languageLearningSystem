@@ -54,10 +54,10 @@ onMounted(async () => {
       const values = Object.values(data).map((v) => Math.round(v * 100))
       // 检查是否有任何维度数据 > 0
       const hasAnyData = values.some(v => v > 0)
-      const areaColor = hasAnyData ? 'rgba(90,125,150,0.2)' : 'rgba(200,200,200,0.08)'
-      const lineColor = hasAnyData ? '#5a7d96' : '#ccc'
+      const areaColor = hasAnyData ? 'rgba(77,150,255,0.2)' : 'rgba(200,200,200,0.08)'
+      const lineColor = hasAnyData ? '#4d96ff' : '#cdc7de'
       radarOption.value = {
-        tooltip: {}, radar: { indicator: indicators, center: ['50%','55%'], radius:'65%', axisName:{fontSize:12,color:'#666'} },
+        tooltip: {}, radar: { indicator: indicators, center: ['50%','55%'], radius:'65%', axisName:{fontSize:12,color:'#5f5a70'} },
         series: [{ type:'radar', data: [{ value:values, name:'掌握度', areaStyle:{color:areaColor} }], lineStyle:{color:lineColor,width:2}, itemStyle:{color:lineColor} }]
       }
     }
@@ -111,50 +111,50 @@ onMounted(async () => {
           data: ['词汇复习', '写作', '阅读'],
           bottom: 0,
           itemGap: 30,
-          textStyle: { fontSize: 12, color: '#888' },
+          textStyle: { fontSize: 12, color: '#6b647e' },
         },
         grid: { left: '3%', right: '10%', top: 20, bottom: 50 },
         xAxis: {
           type: 'category',
           data: days,
-          axisLine: { lineStyle: { color: '#ddd' } },
-          axisLabel: { color: '#999', fontSize: 11 },
+          axisLine: { lineStyle: { color: '#ddd8e9' } },
+          axisLabel: { color: '#8f88a8', fontSize: 11 },
         },
         yAxis: {
           type: 'value',
           minInterval: 1,
-          splitLine: { lineStyle: { color: '#f0f0f0', type: 'dashed' } },
-          axisLabel: { color: '#999', fontSize: 11 },
+          splitLine: { lineStyle: { color: '#f3eefb', type: 'dashed' } },
+          axisLabel: { color: '#8f88a8', fontSize: 11 },
         },
         series: [
           {
             name: '词汇复习', type: 'bar', stack: 'total',
             data: vocab, barWidth: 36,
-            itemStyle: { color: '#7c9db5', borderRadius: [0, 0, 0, 0] },
-            emphasis: { itemStyle: { color: '#5a7d96' } },
+            itemStyle: { color: '#7bb7ff', borderRadius: [0, 0, 0, 0] },
+            emphasis: { itemStyle: { color: '#4d96ff' } },
           },
           {
             name: '写作', type: 'bar', stack: 'total',
             data: writing, barWidth: 36,
-            itemStyle: { color: '#8ab5a0', borderRadius: [0, 0, 0, 0] },
-            emphasis: { itemStyle: { color: '#6a9a80' } },
+            itemStyle: { color: '#85d69a', borderRadius: [0, 0, 0, 0] },
+            emphasis: { itemStyle: { color: '#5bbf7b' } },
           },
           {
             name: '阅读', type: 'bar', stack: 'total',
             data: reading, barWidth: 36,
-            itemStyle: { color: '#d4a76a', borderRadius: [6, 6, 0, 0] },
-            emphasis: { itemStyle: { color: '#c09050' } },
+            itemStyle: { color: '#ffd98a', borderRadius: [6, 6, 0, 0] },
+            emphasis: { itemStyle: { color: '#ffb37e' } },
           },
           {
             name: '日均参考线', type: 'line',
           data: days.map(() => avg),
           silent: true,
           symbol: 'none',
-          lineStyle: { color: '#e88', width: 1.5, type: 'dashed' },
+          lineStyle: { color: '#ff9f6e', width: 1.5, type: 'dashed' },
           label: {
             show: true, position: 'end',
             formatter: `日均 ${avg}`,
-            color: '#c55', fontSize: 10,
+            color: '#ff6b6b', fontSize: 10,
           },
           },
         ],
@@ -240,6 +240,6 @@ function getLabel(k) { const m={spelling:'拼写',preposition:'介词',tense:'�
 .chart-card { background: rgba(255,255,255,0.78); backdrop-filter: blur(14px); border: 1px solid rgba(0,0,0,0.05); border-radius: var(--radius-lg); padding: 22px 24px; margin-top: 16px; }
 .chart-card.half { flex: 1; min-width: 300px; }
 .chart-title { font-size: 15px; font-weight: 700; color: var(--color-text); margin-bottom: 10px; }
-.no-data { text-align: center; color: #bbb; padding: 40px 0; font-size: 13px; }
+.no-data { text-align: center; color: #b9b3d0; padding: 40px 0; font-size: 13px; }
 .loading { text-align: center; color: var(--color-text-muted); padding: 60px 0; }
 </style>

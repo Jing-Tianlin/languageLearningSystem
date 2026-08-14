@@ -104,14 +104,24 @@ public class DeepSeekService {
     /** 本地语法检查 (API不可用时的回退) */
     private Map<String, Object> localGrammarCheck(String text) {
         List<Map<String, String>> errors = new ArrayList<>();
-        StringBuilder corrected = new StringBuilder();
+
+        // 助动词/系动词集合：这些词跟在 he/she/it 后不需要加 -s
+        // 注意必须用集合判等，旧实现 "can,will,may,must".contains(word) 是子串匹配，
+        // 会把 "an"、"ill" 等误判为助动词
+        Set<String> noInflect = Set.of(
+            "is", "has", "does", "was", "did",
+            "can", "will", "may", "must", "could", "should", "would", "shall", "might"
+        );
 
         // 规则1: He/She/It + 动词原形 (缺 -s/-es)
         String[] words = text.split("\\s+");
         for (int i = 0; i < words.length - 1; i++) {
             String w = words[i].toLowerCase();
-            String next = words[i + 1].toLowerCase();
-            if (("he".equals(w) || "she".equals(w) || "it".equals(w)) && next.matches("[a-z]+") && !next.endsWith("s") && !next.equals("is") && !next.equals("has") && !next.equals("does") && !"can,will,may,must".contains(next)) {
+            String next = words[i + 1].toLowerCase().replaceAll("[^a-z]", "");
+            if (("he".equals(w) || "she".equals(w) || "it".equals(w))
+                && next.matches("[a-z]+")
+                && !next.endsWith("s") && !next.endsWith("ed")
+                && !noInflect.contains(next)) {
                 errors.add(Map.of("original", next, "correction", next + "s", "rule", "一般现在时第三人称单数需加 -s/-es"));
             }
         }
@@ -323,6 +333,8 @@ public class DeepSeekService {
         ObjectNode body = mapper.createObjectNode();
         body.put("model", "deepseek-chat");
         body.put("max_tokens", maxTokens);
+        // 结构化 JSON 输出使用低温度，避免默认温度(~1.0)导致格式不稳定、频繁落入 fallback
+        body.put("temperature", 0.3);
         ArrayNode msgs = mapper.createArrayNode();
         ObjectNode msg = mapper.createObjectNode();
         msg.put("role", "user");
@@ -376,12 +388,17 @@ public class DeepSeekService {
             String reply = chatCompletion(prompt, 1000);
             log.info("AI 例句生成: word={}, lang={}, reply_preview={}", wordOrPhrase, targetLang,
                 reply.substring(0, Math.min(200, reply.length())));
-            String[] lines = reply.trim().split("\\n");
+            // prompt 要求例句对之间用空行分隔，必须先过滤空行再两两配对，
+            // 否则空行会打乱 (例句, 翻译) 的配对偏移，导致后续例句全部丢失
+            List<String> lines = Arrays.stream(reply.split("\\n"))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .toList();
             List<Map<String, String>> sList = new ArrayList<>();
-            for (int i = 0; i + 1 < lines.length; i += 2) {
-                String s = lines[i].trim();
-                String t = lines[i + 1].trim();
-                if (!s.isEmpty() && !t.isEmpty() && !s.contains("{") && !s.contains("[")) {
+            for (int i = 0; i + 1 < lines.size(); i += 2) {
+                String s = lines.get(i);
+                String t = lines.get(i + 1);
+                if (!s.contains("{") && !s.contains("[")) {
                     sList.add(Map.of("sentence", s, "translation", t));
                 }
             }
@@ -655,37 +672,42 @@ public class DeepSeekService {
         // 去掉 markdown 代码块标记
         text = text.replaceAll("^```(?:json)?\\s*", "").replaceAll("\\s*```$", "");
 
-        // 找最外层 JSON 对象
         int braceOpen = text.indexOf('{');
-        if (braceOpen >= 0) {
-            int depth = 0, end = -1;
-            for (int i = braceOpen; i < text.length(); i++) {
-                char ch = text.charAt(i);
-                if (ch == '{') depth++;
-                else if (ch == '}') {
-                    depth--;
-                    if (depth == 0) { end = i; break; }
-                }
-            }
-            if (end > braceOpen) return text.substring(braceOpen, end + 1);
-        }
-
-        // 找最外层 JSON 数组
         int bracketOpen = text.indexOf('[');
-        if (bracketOpen >= 0) {
-            int depth = 0, end = -1;
-            for (int i = bracketOpen; i < text.length(); i++) {
-                char ch = text.charAt(i);
-                if (ch == '[') depth++;
-                else if (ch == ']') {
-                    depth--;
-                    if (depth == 0) { end = i; break; }
-                }
-            }
-            if (end > bracketOpen) return text.substring(bracketOpen, end + 1);
-        }
+
+        // 关键：取文本中最先出现的结构类型。
+        // 旧实现固定先找 '{'，导致 JSON 数组（[{...},{...}]）被误截取为第一个内部对象，
+        // 使 i+1 句子 / 语法练习 / 批量词汇等数组型生成全部解析失败。
+        boolean arrayFirst = bracketOpen >= 0 && (braceOpen < 0 || bracketOpen < braceOpen);
+
+        String primary = arrayFirst
+            ? matchBalanced(text, bracketOpen, '[', ']')
+            : matchBalanced(text, braceOpen, '{', '}');
+        if (primary != null) return primary;
+
+        // 首选结构不完整时，再尝试另一种结构
+        String secondary = arrayFirst
+            ? matchBalanced(text, braceOpen, '{', '}')
+            : matchBalanced(text, bracketOpen, '[', ']');
+        if (secondary != null) return secondary;
 
         return "{}";
+    }
+
+    /** 从 start 位置起做开/闭括号配平扫描，返回完整子串；失败返回 null */
+    private String matchBalanced(String text, int start, char open, char close) {
+        if (start < 0) return null;
+        int depth = 0, end = -1;
+        for (int i = start; i < text.length(); i++) {
+            char ch = text.charAt(i);
+            if (ch == open) depth++;
+            else if (ch == close) {
+                depth--;
+                if (depth == 0) { end = i; break; }
+            }
+        }
+        if (end > start) return text.substring(start, end + 1);
+        return null;
     }
 
     /**
@@ -768,7 +790,21 @@ public class DeepSeekService {
         return s.toLowerCase().replaceAll("[^a-zA-Z0-9\\u4e00-\\u9fff\\u3040-\\u309f\\u30a0-\\u30ff\\uac00-\\ud7af]", "");
     }
 
-    private static String getLangName(String code) { return switch (code) { case "ja" -> "日语"; case "ko" -> "韩语"; case "fr" -> "法语"; case "de" -> "德语"; default -> "英语"; }; }
+    private static String getLangName(String code) {
+        if (code == null) return "英语";
+        return switch (code) {
+            case "ja" -> "日语";
+            case "ko" -> "韩语";
+            case "fr" -> "法语";
+            case "de" -> "德语";
+            case "es" -> "西班牙语";
+            case "it" -> "意大利语";
+            case "pt" -> "葡萄牙语";
+            case "ru" -> "俄语";
+            case "zh" -> "中文";
+            default -> "英语";
+        };
+    }
 
     /**
      * 批量生成词汇
@@ -880,7 +916,8 @@ public class DeepSeekService {
             fallback.put("level", "Intermediate");
             fallback.put("coreVocabulary", List.of());
             fallback.put("quizQuestions", List.of());
-            fallback.put("aiGenerated", true);
+            // 静态兜底内容不是 AI 生成的，前端依据该字段展示 "AI 生成" 徽章
+            fallback.put("aiGenerated", false);
             return fallback;
         }
     }
@@ -951,7 +988,8 @@ public class DeepSeekService {
         Map<String, Object> p = new LinkedHashMap<>();
         p.put("level", level);
         p.put("langCode", langCode);
-        p.put("aiGenerated", true);
+        // 静态兜底题目不是 AI 生成的
+        p.put("aiGenerated", false);
         switch (level) {
             case 1 -> {
                 p.put("type", "仿写");

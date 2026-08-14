@@ -106,18 +106,18 @@ function stopSpeaking() {
   border-radius: 16px;
   padding: 20px;
   transition: all 0.3s ease;
-  box-shadow: 0 2px 12px rgba(124, 92, 191, 0.06);
+  box-shadow: 0 2px 12px rgba(155, 93, 229, 0.06);
 }
 .vocab-card:hover {
   transform: translateY(-3px);
-  border-color: rgba(124, 157, 181, 0.3);
-  box-shadow: 0 8px 28px rgba(124, 157, 181, 0.15);
+  border-color: rgba(123, 183, 255, 0.3);
+  box-shadow: 0 8px 28px rgba(123, 183, 255, 0.15);
 }
 
 .card-header {
   margin-bottom: 14px;
   padding-bottom: 14px;
-  border-bottom: 1px solid rgba(124, 157, 181, 0.1);
+  border-bottom: 1px solid rgba(123, 183, 255, 0.1);
 }
 
 .word-section {
@@ -131,7 +131,7 @@ function stopSpeaking() {
 .vocab-word {
   font-size: 24px;
   font-weight: 700;
-  color: #2c3e50;
+  color: #2a2438;
   font-family: var(--font-heading, 'Georgia', serif);
   line-height: 1.2;
 }
@@ -141,7 +141,7 @@ function stopSpeaking() {
   height: 32px;
   border-radius: 50%;
   border: none;
-  background: linear-gradient(135deg, #7c9db5 0%, #5a7d96 100%);
+  background: linear-gradient(135deg, #7bb7ff 0%, #4d96ff 100%);
   font-size: 13px;
   cursor: pointer;
   display: flex;
@@ -150,16 +150,16 @@ function stopSpeaking() {
   transition: all 0.25s ease;
   flex-shrink: 0;
   color: white;
-  box-shadow: 0 2px 8px rgba(124, 157, 181, 0.3);
+  box-shadow: 0 2px 8px rgba(123, 183, 255, 0.3);
 }
 .vocab-speak-btn:hover {
   transform: scale(1.08);
-  box-shadow: 0 4px 12px rgba(124, 157, 181, 0.4);
+  box-shadow: 0 4px 12px rgba(123, 183, 255, 0.4);
 }
 .vocab-speak-btn.speaking {
-  background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+  background: linear-gradient(135deg, #3fa65a 0%, #6bcb77 100%);
   animation: vocabPulse 1s ease-in-out infinite;
-  box-shadow: 0 2px 12px rgba(39, 174, 96, 0.4);
+  box-shadow: 0 2px 12px rgba(107, 203, 119, 0.4);
 }
 .sound-wave {
   font-size: 14px;
@@ -174,16 +174,16 @@ function stopSpeaking() {
 
 .vocab-phonetic {
   font-size: 13px;
-  color: #7f8c8d;
+  color: #6b647e;
   font-style: italic;
 }
 
 .vocab-pos {
   font-size: 11px;
-  background: linear-gradient(135deg, rgba(124, 157, 181, 0.15) 0%, rgba(90, 125, 150, 0.15) 100%);
+  background: linear-gradient(135deg, rgba(123, 183, 255, 0.15) 0%, rgba(77, 150, 255, 0.15) 100%);
   padding: 3px 10px;
   border-radius: 6px;
-  color: #5a7d96;
+  color: #4d96ff;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -195,17 +195,17 @@ function stopSpeaking() {
 
 .vocab-definition {
   font-size: 15px;
-  color: #34495e;
+  color: #2a2438;
   margin: 0 0 14px 0;
   line-height: 1.6;
   font-weight: 500;
 }
 
 .example-block {
-  background: linear-gradient(135deg, rgba(124, 157, 181, 0.06) 0%, rgba(90, 125, 150, 0.06) 100%);
+  background: linear-gradient(135deg, rgba(123, 183, 255, 0.06) 0%, rgba(77, 150, 255, 0.06) 100%);
   border-radius: 10px;
   padding: 12px 14px;
-  border-left: 3px solid #7c9db5;
+  border-left: 3px solid #7bb7ff;
 }
 
 .example-header {
@@ -218,14 +218,14 @@ function stopSpeaking() {
 .example-label {
   font-size: 11px;
   font-weight: 600;
-  color: #5a7d96;
+  color: #4d96ff;
   text-transform: uppercase;
   letter-spacing: 1px;
 }
 
 .vocab-example {
   font-size: 13px;
-  color: #34495e;
+  color: #2a2438;
   margin: 0 0 4px 0;
   line-height: 1.5;
   font-style: italic;
@@ -236,7 +236,7 @@ function stopSpeaking() {
   height: 20px;
   border-radius: 50%;
   border: none;
-  background: rgba(124, 157, 181, 0.15);
+  background: rgba(123, 183, 255, 0.15);
   font-size: 9px;
   cursor: pointer;
   display: flex;
@@ -244,21 +244,21 @@ function stopSpeaking() {
   justify-content: center;
   flex-shrink: 0;
   transition: all 0.2s;
-  color: #5a7d96;
+  color: #4d96ff;
 }
 .vocab-speak-btn-sm:hover {
-  background: rgba(124, 157, 181, 0.25);
+  background: rgba(123, 183, 255, 0.25);
   transform: scale(1.1);
 }
 .vocab-speak-btn-sm.speaking {
-  background: rgba(39, 174, 96, 0.2);
-  color: #27ae60;
+  background: rgba(107, 203, 119, 0.2);
+  color: #3fa65a;
   animation: vocabPulse 1s ease-in-out infinite;
 }
 
 .vocab-example-tr {
   font-size: 12px;
-  color: #7f8c8d;
+  color: #6b647e;
   margin: 0;
   line-height: 1.4;
 }
@@ -269,9 +269,9 @@ function stopSpeaking() {
   justify-content: center;
   gap: 8px;
   padding: 10px 12px;
-  background: rgba(127, 140, 141, 0.06);
+  background: rgba(107, 100, 126, 0.06);
   border-radius: 10px;
-  border: 1px dashed rgba(127, 140, 141, 0.2);
+  border: 1px dashed rgba(107, 100, 126, 0.2);
   flex-wrap: wrap;
 }
 
@@ -281,14 +281,14 @@ function stopSpeaking() {
 
 .no-example-text {
   font-size: 12px;
-  color: #95a5a6;
+  color: #8f88a8;
 }
 
 .gen-example-btn {
   padding: 4px 10px;
   border-radius: 6px;
   border: none;
-  background: linear-gradient(135deg, #7c9db5 0%, #5a7d96 100%);
+  background: linear-gradient(135deg, #7bb7ff 0%, #4d96ff 100%);
   color: white;
   font-size: 11px;
   font-weight: 600;
@@ -299,7 +299,7 @@ function stopSpeaking() {
 
 .gen-example-btn:hover {
   transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(124, 157, 181, 0.4);
+  box-shadow: 0 2px 8px rgba(123, 183, 255, 0.4);
 }
 
 .gen-example-btn:active {
@@ -320,12 +320,12 @@ function stopSpeaking() {
 }
 .vocab-fav-btn:hover:not(:disabled) {
   transform: scale(1.18);
-  color: var(--color-gold, #b07c4f);
+  color: var(--color-gold, #ff6b6b);
   background: transparent;
   border-color: transparent;
 }
 .vocab-fav-btn.active {
-  color: var(--color-gold, #b07c4f);
+  color: var(--color-gold, #ff6b6b);
 }
 
 @keyframes vocabPulse {
